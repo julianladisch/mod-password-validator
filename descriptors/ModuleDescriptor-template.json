@@ -1,0 +1,39 @@
+{
+  "id": "${artifactId}-${version}",
+  "name": "Password Validator Module",
+  "provides": [
+    {
+      "id": "${artifactId}",
+      "version": "1.0",
+      "handlers": [
+        {
+          "methods": ["GET"],
+          "pathPattern": "/password/validators"
+        },
+        {
+          "methods": ["POST"],
+          "pathPattern": "/password/validate"
+        }
+      ]
+    },
+    {
+      "id": "_tenant",
+      "version": "1.0",
+      "interfaceType": "system",
+      "handlers": [
+        {
+          "methods": ["POST"],
+          "pathPattern": "/_/tenant"
+        }
+      ]
+    }
+  ],
+  "requires": [],
+  "launchDescriptor": {
+    "dockerImage": "${artifactId}:${version}",
+    "dockerArgs": {
+      "HostConfig": {"PortBindings": {"8081/tcp": [{"HostPort": "%p" }] } }
+    },
+    "dockerPull": false
+  }
+}
