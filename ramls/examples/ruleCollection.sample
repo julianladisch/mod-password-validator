@@ -1,0 +1,10 @@
+{
+  "rules": [
+    {
+      "ruleId": "111111111111111",
+      "name": "first rule",
+      "type": "strong"
+    }
+  ],
+  "totalRecords": "1"
+}
