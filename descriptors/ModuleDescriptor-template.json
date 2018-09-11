@@ -13,6 +13,22 @@
         {
           "methods": ["POST"],
           "pathPattern": "/password/validate"
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/tenant/rules"
+        },
+        {
+          "methods": ["POST"],
+          "pathPattern": "/tenant/rules"
+        },
+        {
+          "methods": ["PUT"],
+          "pathPattern": "/tenant/rules"
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/tenant/rules/{ruleId}"
         }
       ]
     },
