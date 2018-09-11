@@ -67,24 +67,6 @@ public class PasswordResourceTest {
     sendRequest(validatorsUrl, HttpMethod.GET, handler);
   }
 
-  @Test
-  public void shouldReturnOkWhenValidPassword(final TestContext context) {
-    //TODO Replace testing stub
-    final Async async = context.async();
-    final String url = HOST + port;
-    final String validationUrl = url + VALIDATION_PATH;
-
-    final Handler<HttpClientResponse> handler = response -> {
-      context.assertEquals(response.statusCode(), org.apache.http.HttpStatus.SC_OK);
-      response.bodyHandler(body -> {
-        context.assertTrue(body.toJsonObject().equals(getPasswordValidationStub()));
-        async.complete();
-      });
-    };
-
-    sendRequest(validationUrl, HttpMethod.POST, handler, POST_VALIDATION_CREDENTIALS);
-  }
-
   private void sendRequest(final String url, final HttpMethod method, final Handler<HttpClientResponse> handler) {
     sendRequest(url, method, handler, "");
   }
@@ -95,17 +77,18 @@ public class PasswordResourceTest {
       .requestAbs(method, url, handler)
       .putHeader(HEADER_X_OKAPI_TENANT, TENANT)
       .putHeader(HEADER_ACCEPT, ACCEPT_VALUES)
+      .putHeader(HEADER_CONTENT_TYPE, APPLICATION_JSON)
       .end(buffer);
   }
 
   private JsonObject getRuleCollectionStub() {
     return new JsonObject()
-             .put("rules", new JsonArray()
-                             .add(new JsonObject()
-                                    .put("ruleId", "111111111111111")
-                                    .put("name", "first rule")
-                                    .put("type", "strong")))
-             .put("totalRecords", "1");
+      .put("rules", new JsonArray()
+        .add(new JsonObject()
+          .put("ruleId", "111111111111111")
+          .put("name", "first rule")
+          .put("type", "strong")))
+      .put("totalRecords", "1");
   }
 
   private JsonObject getPasswordValidationStub() {
