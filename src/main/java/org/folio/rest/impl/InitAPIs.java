@@ -11,7 +11,7 @@ import org.folio.rest.resource.interfaces.InitAPI;
  * Performs preprocessing operations before the verticle is deployed,
  * e.g. components registration, initializing, binding.
  *
- * @author Igor-Gorchakov
+ * @author Igor Gorchakov
  */
 public class InitAPIs implements InitAPI {
   @Override

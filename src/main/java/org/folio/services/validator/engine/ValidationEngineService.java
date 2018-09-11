@@ -11,7 +11,7 @@ import io.vertx.core.json.JsonObject;
  * The root interface for validation engine implementations.
  * The main concept is to validate incoming password.
  *
- * @author Igor_Gorchakov
+ * @author Igor Gorchakov
  */
 @ProxyGen
 public interface ValidationEngineService {
