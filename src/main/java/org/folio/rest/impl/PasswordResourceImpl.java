@@ -49,7 +49,7 @@ public class PasswordResourceImpl implements PasswordResource {
           ));
       } else {
         asyncResultHandler.handle(Future.succeededFuture(GetPasswordValidatorsResponse
-          .withPlainNotFound("Validators not found")));
+          .withPlainInternalServerError("Validators not found")));
       }
     });
   }
