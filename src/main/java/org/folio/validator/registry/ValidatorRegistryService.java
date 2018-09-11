@@ -5,10 +5,7 @@ import io.vertx.codegen.annotations.ProxyGen;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-
-import java.util.List;
 
 @ProxyGen
 public interface ValidatorRegistryService {
@@ -16,7 +13,8 @@ public interface ValidatorRegistryService {
   static final String VALIDATOR_REGISTRY_ADDRESS = "validator-registry.queue";
 
   static ValidatorRegistryService create(Vertx vertx) {
-    return new ValidatorRegistryServiceImpl(vertx);
+    //TODO add implementation
+    return null;
   }
 
   static ValidatorRegistryService createProxy(Vertx vertx, String address) {
