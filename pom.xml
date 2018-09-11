@@ -118,7 +118,7 @@
           <annotationProcessors>
             <annotationProcessor>io.vertx.codegen.CodeGenProcessor</annotationProcessor>
           </annotationProcessors>
-          <generatedSourcesDirectory>${project.build.directory}/generated-sources</generatedSourcesDirectory>
+          <generatedSourcesDirectory>${project.build.directory}/generated-sources/services</generatedSourcesDirectory>
         </configuration>
         <executions>
           <execution>
