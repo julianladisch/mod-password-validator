@@ -1,4 +1,4 @@
-package org.folio.validator.registry;
+package org.folio.services.validator.registry;
 
 import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.ProxyGen;
