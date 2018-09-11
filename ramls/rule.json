@@ -10,6 +10,36 @@
       "type": "string"
     },
     "type": {
+      "type": "string",
+      "enum": ["RegExp", "Programmatic"]
+    },
+    "validationType": {
+      "type": "string",
+      "enum": ["Soft", "Strong"]
+    },
+    "state": {
+      "type": "string",
+      "enum": ["Enabled", "Disabled"]
+    },
+    "moduleName": {
+      "type": "string"
+    },
+    "implementationReference": {
+      "description": " ImplementationReference reflects the approach to call particular validation implementation whether it REST endpoint or local service",
+      "type": "string"
+    },
+    "expression": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "orderNo": {
+      "description": "Defines the order of rule processing",
+      "type": "integer"
+    },
+    "errMessageId": {
+      "description": "message identifier which should be returned to UI in case the rule validation fails",
       "type": "string"
     }
   }
