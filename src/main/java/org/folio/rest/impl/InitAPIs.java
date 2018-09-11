@@ -8,7 +8,7 @@ import io.vertx.core.Vertx;
 import org.folio.rest.resource.interfaces.InitAPI;
 
 /**
- * Perform preprocessing operation before the verticle is deployed,
+ * Performs preprocessing operations before the verticle is deployed,
  * e.g. components registration, initializing, binding.
  *
  * @author Igor-Gorchakov
