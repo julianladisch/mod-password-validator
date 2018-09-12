@@ -46,7 +46,7 @@ public class ValidatorRegistryImpl implements TenantRulesResource {
               Future.succeededFuture(GetTenantRulesResponse.withJsonOK(rules)));
           } else {
             asyncResultHandler.handle(
-              Future.succeededFuture(GetTenantRulesResponse.withPlainInternalServerError(reply.result().toString())));
+              Future.succeededFuture(GetTenantRulesResponse.withPlainInternalServerError(reply.cause().getMessage())));
           }
         });
       });
@@ -69,7 +69,7 @@ public class ValidatorRegistryImpl implements TenantRulesResource {
           asyncResultHandler.handle(
             Future.succeededFuture(PostTenantRulesResponse.withPlainBadRequest("Order number cannot be negative")));
         }
-        if(entity.getType() == Rule.Type.REG_EXP && entity.getValidationType() != Rule.ValidationType.STRONG) {
+        if(Rule.Type.REG_EXP.equals(entity.getType()) && !Rule.ValidationType.STRONG.equals(entity.getValidationType())) {
           asyncResultHandler.handle(
             Future.succeededFuture(PostTenantRulesResponse.withPlainBadRequest("In case of RegExp rule Validation Type can only be Strong")));
         }
@@ -82,7 +82,7 @@ public class ValidatorRegistryImpl implements TenantRulesResource {
               Future.succeededFuture(PostTenantRulesResponse.withJsonCreated(reply.result().mapTo(Rule.class))));
           } else {
             asyncResultHandler.handle(
-              Future.succeededFuture(PostTenantRulesResponse.withPlainInternalServerError(reply.result().toString())));
+              Future.succeededFuture(PostTenantRulesResponse.withPlainInternalServerError(reply.cause().getMessage())));
           }
         });
       });
@@ -104,11 +104,11 @@ public class ValidatorRegistryImpl implements TenantRulesResource {
 
         if(entity.getOrderNo() < 0){
           asyncResultHandler.handle(
-            Future.succeededFuture(PostTenantRulesResponse.withPlainBadRequest("Order number cannot be negative")));
+            Future.succeededFuture(PutTenantRulesResponse.withPlainBadRequest("Order number cannot be negative")));
         }
-        if(entity.getType() == Rule.Type.REG_EXP && entity.getValidationType() != Rule.ValidationType.STRONG) {
+        if(Rule.Type.REG_EXP.equals(entity.getType()) && !Rule.ValidationType.STRONG.equals(entity.getValidationType())) {
           asyncResultHandler.handle(
-            Future.succeededFuture(PostTenantRulesResponse.withPlainBadRequest("In case of RegExp rule Validation Type can only be Strong")));
+            Future.succeededFuture(PutTenantRulesResponse.withPlainBadRequest("In case of RegExp rule Validation Type can only be Strong")));
         }
 
         String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(OKAPI_HEADER_TENANT));
@@ -126,7 +126,7 @@ public class ValidatorRegistryImpl implements TenantRulesResource {
             }
           } else {
             asyncResultHandler.handle(
-              Future.succeededFuture(PutTenantRulesResponse.withPlainInternalServerError(reply.result().toString())));
+              Future.succeededFuture(PutTenantRulesResponse.withPlainInternalServerError(reply.cause().getMessage())));
           }
         });
       });
@@ -160,7 +160,7 @@ public class ValidatorRegistryImpl implements TenantRulesResource {
             }
           } else {
             asyncResultHandler.handle(
-              Future.succeededFuture(GetTenantRulesByRuleIdResponse.withPlainInternalServerError(reply.result().toString())));
+              Future.succeededFuture(GetTenantRulesByRuleIdResponse.withPlainInternalServerError(reply.cause().getMessage())));
           }
         });
       });
