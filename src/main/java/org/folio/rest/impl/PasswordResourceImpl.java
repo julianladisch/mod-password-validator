@@ -10,7 +10,6 @@ import io.vertx.core.logging.LoggerFactory;
 import org.folio.rest.jaxrs.model.PasswordJson;
 import org.folio.rest.jaxrs.model.ValidationTemplateJson;
 import org.folio.rest.jaxrs.resource.PasswordResource;
-import org.folio.rest.tools.utils.TenantTool;
 import org.folio.services.validator.engine.ValidationEngineService;
 
 import javax.ws.rs.core.Response;
@@ -39,8 +38,7 @@ public class PasswordResourceImpl implements PasswordResource {
                                    final Map<String, String> okapiHeaders,
                                    final Handler<AsyncResult<Response>> asyncResultHandler,
                                    final Context vertxContext) {
-    String tenantId = TenantTool.tenantId(okapiHeaders);
-    validationEngineProxy.validatePassword(entity.getPassword(), tenantId, result -> {
+    validationEngineProxy.validatePassword(entity.getPassword(), okapiHeaders, result -> {
       Response response;
       if (result.succeeded()) {
         response = PostPasswordValidateResponse.withJsonOK(result.result().mapTo(ValidationTemplateJson.class));

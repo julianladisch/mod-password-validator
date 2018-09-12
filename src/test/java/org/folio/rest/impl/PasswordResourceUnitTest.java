@@ -43,17 +43,17 @@ public class PasswordResourceUnitTest {
   @Test
   public void shouldReturnServiceResponseWhenSucceeded() throws Exception {
     String givenPassword = "password";
+    PasswordJson requestEntity = new PasswordJson().withPassword(givenPassword);
+    Map<String, String> okapiHeaders = new HashMap<>();
+    okapiHeaders.put(TENANT_HEADER, TENANT_ID);
+
     JsonObject mockResponse =
       new JsonObject()
         .put("result", "Valid")
         .put("messages", new JsonArray());
     Mockito.doAnswer(new AsyncResultAnswer<>(Future.succeededFuture(mockResponse), 2))
       .when(validationEngineService)
-      .validatePassword(ArgumentMatchers.eq(givenPassword), ArgumentMatchers.eq(TENANT_ID), ArgumentMatchers.any());
-
-    PasswordJson requestEntity = new PasswordJson().withPassword(givenPassword);
-    Map<String, String> okapiHeaders = new HashMap<>();
-    okapiHeaders.put(TENANT_HEADER, TENANT_ID);
+      .validatePassword(ArgumentMatchers.eq(givenPassword), ArgumentMatchers.eq(okapiHeaders), ArgumentMatchers.any());
 
     Handler<AsyncResult<Response>> checkingHandler = result -> {
       Response response = result.result();
@@ -65,20 +65,19 @@ public class PasswordResourceUnitTest {
     };
     passwordResource.postPasswordValidate(requestEntity, okapiHeaders, checkingHandler, vertxContext);
     Mockito.verify(validationEngineService)
-      .validatePassword(ArgumentMatchers.eq(givenPassword), ArgumentMatchers.eq(TENANT_ID), ArgumentMatchers.any());
+      .validatePassword(ArgumentMatchers.eq(givenPassword), ArgumentMatchers.eq(okapiHeaders), ArgumentMatchers.any());
   }
 
   @Test
   public void shouldReturnInternalServerError() throws Exception {
     String givenPassword = "password";
-    String exceptionMessage = "This is an exception";
-    Mockito.doAnswer(new AsyncResultAnswer<>(Future.failedFuture(new Exception(exceptionMessage)), 2))
-      .when(validationEngineService)
-      .validatePassword(ArgumentMatchers.eq(givenPassword), ArgumentMatchers.eq(TENANT_ID), ArgumentMatchers.any());
-
     PasswordJson requestEntity = new PasswordJson().withPassword(givenPassword);
     Map<String, String> okapiHeaders = new HashMap<>();
     okapiHeaders.put(TENANT_HEADER, TENANT_ID);
+    String exceptionMessage = "This is an exception";
+    Mockito.doAnswer(new AsyncResultAnswer<>(Future.failedFuture(new Exception(exceptionMessage)), 2))
+      .when(validationEngineService)
+      .validatePassword(ArgumentMatchers.eq(givenPassword), ArgumentMatchers.eq(okapiHeaders), ArgumentMatchers.any());
 
     Handler<AsyncResult<Response>> checkingHandler = result -> {
       Response response = result.result();
@@ -87,6 +86,6 @@ public class PasswordResourceUnitTest {
     };
     passwordResource.postPasswordValidate(requestEntity, okapiHeaders, checkingHandler, vertxContext);
     Mockito.verify(validationEngineService)
-      .validatePassword(ArgumentMatchers.eq(givenPassword), ArgumentMatchers.eq(TENANT_ID), ArgumentMatchers.any());
+      .validatePassword(ArgumentMatchers.eq(givenPassword), ArgumentMatchers.eq(okapiHeaders), ArgumentMatchers.any());
   }
 }
