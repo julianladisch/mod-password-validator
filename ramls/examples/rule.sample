@@ -1,0 +1,7 @@
+{
+  "ruleId": "111111111111111",
+  "name": "rule",
+  "type": "RegExp",
+  "validationType": "Strong",
+  "state": "Enabled"
+}

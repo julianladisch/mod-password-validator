@@ -16,6 +16,7 @@ import org.folio.rest.RestVerticle;
 import org.folio.rest.tools.utils.NetworkUtils;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -49,6 +50,7 @@ public class PasswordResourceTest {
     vertx.close(context.asyncAssertSuccess());
   }
 
+  @Ignore
   @Test
   public void shouldReturnValidatorsWithStrongRuleType(final TestContext context) {
     //TODO Replace testing stub

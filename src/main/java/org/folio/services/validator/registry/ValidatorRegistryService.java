@@ -10,11 +10,10 @@ import io.vertx.core.json.JsonObject;
 @ProxyGen
 public interface ValidatorRegistryService {
 
-  static final String VALIDATOR_REGISTRY_ADDRESS = "validator-registry.queue";
+  static final String ADDRESS = "validator-registry.queue";
 
   static ValidatorRegistryService create(Vertx vertx) {
-    //TODO add implementation
-    return null;
+    return new ValidatorRegistryServiceImpl(vertx);
   }
 
   static ValidatorRegistryService createProxy(Vertx vertx, String address) {
