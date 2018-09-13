@@ -28,7 +28,6 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
   private static final String STATE_JSONB_FIELD = "'state'";
   private static final String TYPE_JSONB_FIELD = "'type'";
 
-
   private final Vertx vertx;
 
   public ValidatorRegistryServiceImpl(Vertx vertx) {
@@ -57,7 +56,7 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
       });
     } catch (Exception e) {
       logger.debug(e.getMessage(), e.getCause());
-      asyncResultHandler.handle(Future.failedFuture(e.getCause().getMessage()));
+      asyncResultHandler.handle(Future.failedFuture(e.getCause()));
     }
 
     return this;
@@ -82,7 +81,7 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
       });
     } catch (Exception e) {
       logger.debug(e.getMessage(), e.getCause());
-      asyncResultHandler.handle(Future.failedFuture(e.getCause().getMessage()));
+      asyncResultHandler.handle(Future.failedFuture(e.getCause()));
     }
 
     return this;
@@ -112,7 +111,7 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
       });
     } catch (Exception e) {
       logger.debug(e.getMessage(), e.getCause());
-      asyncResultHandler.handle(Future.failedFuture(e.getCause().getMessage()));
+      asyncResultHandler.handle(Future.failedFuture(e.getCause()));
     }
 
     return this;
@@ -138,7 +137,7 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
       });
     } catch (Exception e) {
       logger.debug(e.getMessage(), e.getCause());
-      asyncResultHandler.handle(Future.failedFuture(e.getCause().getMessage()));
+      asyncResultHandler.handle(Future.failedFuture(e.getCause()));
     }
 
     return this;
@@ -149,10 +148,8 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
     try {
       Criteria stateCrit = constructCriteria(STATE_JSONB_FIELD, Rule.State.ENABLED.toString());
       Criteria typeCrit = constructCriteria(TYPE_JSONB_FIELD, type);
-
       Criterion criterion = new Criterion();
       criterion.addCriterion(stateCrit, "AND", typeCrit);
-
       PostgresClient.getInstance(vertx, tenantId).get(VALIDATION_RULES_TABLE_NAME, Rule.class, criterion, true, false, getReply -> {
         if(getReply.failed()) {
           logger.debug(getReply.cause().getMessage());
@@ -167,7 +164,7 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
       });
     } catch (Exception e) {
       logger.debug(e.getMessage(), e.getCause());
-      asyncResultHandler.handle(Future.failedFuture(e.getCause().getMessage()));
+      asyncResultHandler.handle(Future.failedFuture(e.getCause()));
     }
 
     return this;

@@ -63,22 +63,21 @@ public class PasswordResourceImpl implements PasswordResource {
                                     final Context vertxContext) throws Exception {
     try {
       vertxContext.runOnContext(v -> {
-
         String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(OKAPI_HEADER_TENANT));
-
         validatorRegistryService.getActiveRulesByType(tenantId, type, reply -> {
-          if(reply.succeeded()){
+          if(reply.succeeded()) {
             RuleCollection rules = reply.result().mapTo(RuleCollection.class);
             asyncResultHandler.handle(
               Future.succeededFuture(GetPasswordValidatorsResponse.withJsonOK(rules)));
           } else {
+            logger.error(reply.cause().getMessage(), reply.cause());
             asyncResultHandler.handle(
               Future.succeededFuture(GetPasswordValidatorsResponse.withPlainInternalServerError(reply.cause().getMessage())));
           }
         });
       });
     } catch (Exception e) {
-      logger.debug("Error running on verticle for getTenantRulesByRuleId: " + e.getMessage());
+      logger.error("Error running on verticle for getPasswordValidators: " + e.getMessage(), e.getCause());
       asyncResultHandler.handle(Future.succeededFuture(GetPasswordValidatorsResponse.withPlainInternalServerError(INTERNAL_ERROR)));
     }
   }

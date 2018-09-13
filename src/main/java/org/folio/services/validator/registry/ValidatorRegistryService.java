@@ -7,6 +7,9 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 
+/**
+ * Validator Registry service interface, performs CRUD operations on Rule entity
+ */
 @ProxyGen
 public interface ValidatorRegistryService {
 
