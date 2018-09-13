@@ -13,12 +13,17 @@ import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.apache.http.HttpStatus;
 import org.folio.rest.RestVerticle;
+import org.folio.rest.client.TenantClient;
+import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.NetworkUtils;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
+
+import java.io.IOException;
 
 @RunWith(VertxUnitRunner.class)
 public class PasswordResourceTest {
@@ -37,12 +42,27 @@ public class PasswordResourceTest {
   private Vertx vertx;
   private int port;
 
+  @Rule
+  public Timeout rule = Timeout.seconds(180);  // 3 minutes for loading embedded postgres
+
   @Before
-  public void setUp(final TestContext context) {
+  public void setUp(final TestContext context) throws IOException {
+    Async async = context.async();
     vertx = Vertx.vertx();
     port = NetworkUtils.nextFreePort();
+    PostgresClient.setIsEmbedded(true);
+    PostgresClient.getInstance(vertx).startEmbeddedPostgres();
+    TenantClient tenantClient = new TenantClient("localhost", port, "diku", "diku");
     final DeploymentOptions options = new DeploymentOptions().setConfig(new JsonObject().put(HTTP_PORT, port));
-    vertx.deployVerticle(RestVerticle.class.getName(), options, context.asyncAssertSuccess());
+    vertx.deployVerticle(RestVerticle.class.getName(), options, res -> {
+      try {
+        tenantClient.post(null, res2 -> {
+          async.complete();
+        });
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    });
   }
 
   @After
@@ -50,7 +70,7 @@ public class PasswordResourceTest {
     vertx.close(context.asyncAssertSuccess());
   }
 
-  @Ignore
+
   @Test
   public void shouldReturnValidatorsWithStrongRuleType(final TestContext context) {
     //TODO Replace testing stub
@@ -62,6 +82,8 @@ public class PasswordResourceTest {
       context.assertEquals(response.statusCode(), HttpStatus.SC_OK);
       context.assertEquals(response.headers().get(HEADER_CONTENT_TYPE), APPLICATION_JSON);
       response.bodyHandler(body -> {
+        System.out.println(body.toJsonObject());
+        System.out.println(getRuleCollectionStub());
         context.assertTrue(body.toJsonObject().equals(getRuleCollectionStub()));
         async.complete();
       });
@@ -85,12 +107,8 @@ public class PasswordResourceTest {
 
   private JsonObject getRuleCollectionStub() {
     return new JsonObject()
-      .put("rules", new JsonArray()
-        .add(new JsonObject()
-          .put("ruleId", "111111111111111")
-          .put("name", "first rule")
-          .put("type", "strong")))
-      .put("totalRecords", "1");
+      .put("rules", new JsonArray())
+      .put("totalRecords", 0);
   }
 
   private JsonObject getPasswordValidationStub() {
