@@ -21,8 +21,7 @@ public interface ValidationEngineService {
   static final String ADDRESS = "validation-engine.queue";
 
   static ValidationEngineService create(Vertx vertx) {
-    //TODO add implementation
-    return null;
+    return new ValidationEngineServiceImpl(vertx);
   }
 
   /**

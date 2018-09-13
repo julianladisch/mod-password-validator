@@ -41,7 +41,7 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
   private HttpClient httpClient;
 
   public ValidationEngineServiceImpl(Vertx vertx) {
-    this.validatorRegistryProxy = ValidatorRegistryService.createProxy(vertx, ValidatorRegistryService.VALIDATOR_REGISTRY_ADDRESS);
+    this.validatorRegistryProxy = ValidatorRegistryService.createProxy(vertx, ValidatorRegistryService.ADDRESS);
     initHttpClient(vertx);
   }
 
