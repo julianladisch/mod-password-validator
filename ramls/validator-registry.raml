@@ -10,14 +10,6 @@ schemas:
   - ruleCollection: !include ruleCollection.json
   - rule.json: !include rule.json
 
-traits:
-  - queryable:
-      queryParameters:
-        type:
-          description: "A type of the validator."
-          required: true
-          type: string
-
 /tenant/rules:
   get:
     description: Get a list of existing validation rules for a tenant
