@@ -3,7 +3,9 @@ package org.folio.services.validator.engine;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
+import io.vertx.core.http.CaseInsensitiveHeaders;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpClientRequest;
@@ -58,29 +60,30 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
    * runs rules to validate password,
    * pushes validation result into result handler to return.
    *
-   * @param password      received password for validation
-   * @param headers       request headers needed for access backend FOLIO services to perform programmatic rules validation
-   * @param resultHandler handler with validation results in format <Status, Message>
+   * @param password       received password for validation
+   * @param requestHeaders request headers needed for access backend FOLIO services to perform programmatic rules validation
+   * @param resultHandler  handler with validation results in format <Status, Message>
    */
 
   @Override
-  public void validatePassword(String password, Map<String, String> headers, Handler<AsyncResult<JsonObject>> resultHandler) {
-    String tenantId = headers.get(OKAPI_TENANT_HEADER);
+  public void validatePassword(String password, Map<String, String> requestHeaders, Handler<AsyncResult<JsonObject>> resultHandler) {
+    MultiMap caseInsensitiveHeaders = new CaseInsensitiveHeaders().addAll(requestHeaders);
+    String tenantId = caseInsensitiveHeaders.get(OKAPI_TENANT_HEADER);
 
     validatorRegistryProxy.getAllTenantRules(tenantId, response -> {
       if (response.succeeded()) {
 
         List<Rule> rules = response.result().mapTo(RuleCollection.class).getRules();
 
-        List<String> errorMessages = validatePasswordByRules(rules, password, headers);
+        List<String> errorMessages = validatePasswordByRules(rules, password, caseInsensitiveHeaders);
 
         formResponse(errorMessages, resultHandler);
       }
     });
   }
 
-  private List<String> validatePasswordByRules(List<Rule> rules, String password, Map<String, String> headers) {
-    List<String> errorMessages = new ArrayList(rules);
+  private List<String> validatePasswordByRules(List<Rule> rules, String password, MultiMap headers) {
+    List<String> errorMessages = new ArrayList(rules.size());
     rules.sort(Comparator.comparing(Rule::getOrderNo));
 
     for (Rule rule : rules) {
@@ -101,7 +104,7 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
     }
   }
 
-  private void validatePasswordByProgrammaticRule(String password, Rule rule, List<String> errorMessages, Map<String, String> headers) {
+  private void validatePasswordByProgrammaticRule(String password, Rule rule, List<String> errorMessages, MultiMap headers) {
     String okapiURL = headers.get(OKAPI_URL_HEADER);
     String remoteModuleUrl = okapiURL + rule.getImplementationReference();
 
