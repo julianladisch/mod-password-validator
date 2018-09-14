@@ -17,12 +17,12 @@ import org.folio.services.validator.registry.ValidatorRegistryService;
 import javax.ws.rs.core.Response;
 import java.util.Map;
 
+import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
+
 public class ValidatorRegistryImpl implements TenantRulesResource {
 
   private final Logger logger = LoggerFactory.getLogger(ValidatorRegistryImpl.class);
 
-  private static final String OKAPI_HEADER_TENANT = "x-okapi-tenant";
-  private static final String INTERNAL_ERROR = "Internal Server error";
   private static final String ORDER_NUMBER_ERROR = "Order number cannot be negative";
   private static final String VALIDATION_TYPE_ERROR = "In case of RegExp rule Validation Type can only be Strong";
 
@@ -40,7 +40,7 @@ public class ValidatorRegistryImpl implements TenantRulesResource {
       vertxContext.runOnContext(v -> {
         String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(OKAPI_HEADER_TENANT));
         validatorRegistryService.getAllTenantRules(tenantId, reply -> {
-          if(reply.succeeded()) {
+          if (reply.succeeded()) {
             RuleCollection rules = reply.result().mapTo(RuleCollection.class);
             asyncResultHandler.handle(
               Future.succeededFuture(GetTenantRulesResponse.withJsonOK(rules)));
@@ -53,7 +53,8 @@ public class ValidatorRegistryImpl implements TenantRulesResource {
       });
     } catch (Exception e) {
       logger.error("Error running on verticle for getTenantRules: " + e.getMessage(), e.getCause());
-      asyncResultHandler.handle(Future.succeededFuture(GetTenantRulesResponse.withPlainInternalServerError(INTERNAL_ERROR)));
+      asyncResultHandler.handle(Future.succeededFuture(
+        GetTenantRulesResponse.withPlainInternalServerError(Response.Status.INTERNAL_SERVER_ERROR.getReasonPhrase())));
     }
   }
 
@@ -64,18 +65,18 @@ public class ValidatorRegistryImpl implements TenantRulesResource {
                               final Context vertxContext) throws Exception {
     try {
       vertxContext.runOnContext(v -> {
-        if(entity.getOrderNo() < 0) {
+        if (entity.getOrderNo() < 0) {
           logger.debug("Invalid orderNo parameter");
           asyncResultHandler.handle(
             Future.succeededFuture(PostTenantRulesResponse.withPlainBadRequest(ORDER_NUMBER_ERROR)));
-        } else if(Rule.Type.REG_EXP.equals(entity.getType()) && !Rule.ValidationType.STRONG.equals(entity.getValidationType())) {
+        } else if (Rule.Type.REG_EXP.equals(entity.getType()) && !Rule.ValidationType.STRONG.equals(entity.getValidationType())) {
           logger.debug("Invalid validationType parameter");
           asyncResultHandler.handle(
             Future.succeededFuture(PostTenantRulesResponse.withPlainBadRequest(VALIDATION_TYPE_ERROR)));
         } else {
           String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(OKAPI_HEADER_TENANT));
           validatorRegistryService.createTenantRule(tenantId, JsonObject.mapFrom(entity), reply -> {
-            if(reply.succeeded()) {
+            if (reply.succeeded()) {
               asyncResultHandler.handle(
                 Future.succeededFuture(PostTenantRulesResponse.withJsonCreated(reply.result().mapTo(Rule.class))));
             } else {
@@ -88,7 +89,8 @@ public class ValidatorRegistryImpl implements TenantRulesResource {
       });
     } catch (Exception e) {
       logger.error("Error running on verticle for postTenantRules: " + e.getMessage(), e.getCause());
-      asyncResultHandler.handle(Future.succeededFuture(PostTenantRulesResponse.withPlainInternalServerError(INTERNAL_ERROR)));
+      asyncResultHandler.handle(Future.succeededFuture(
+        PostTenantRulesResponse.withPlainInternalServerError(Response.Status.INTERNAL_SERVER_ERROR.getReasonPhrase())));
     }
   }
 
@@ -99,20 +101,20 @@ public class ValidatorRegistryImpl implements TenantRulesResource {
                              final Context vertxContext) throws Exception {
     try {
       vertxContext.runOnContext(v -> {
-        if(entity.getOrderNo() < 0) {
+        if (entity.getOrderNo() < 0) {
           logger.debug("Invalid orderNo parameter");
           asyncResultHandler.handle(
             Future.succeededFuture(PutTenantRulesResponse.withPlainBadRequest(ORDER_NUMBER_ERROR)));
-        } else if(Rule.Type.REG_EXP.equals(entity.getType()) && !Rule.ValidationType.STRONG.equals(entity.getValidationType())) {
+        } else if (Rule.Type.REG_EXP.equals(entity.getType()) && !Rule.ValidationType.STRONG.equals(entity.getValidationType())) {
           logger.debug("Invalid validationType parameter");
           asyncResultHandler.handle(
             Future.succeededFuture(PutTenantRulesResponse.withPlainBadRequest(VALIDATION_TYPE_ERROR)));
         } else {
           String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(OKAPI_HEADER_TENANT));
           validatorRegistryService.updateTenantRule(tenantId, JsonObject.mapFrom(entity), reply -> {
-            if(reply.succeeded()) {
+            if (reply.succeeded()) {
               JsonObject result = reply.result();
-              if(result == null) {
+              if (result == null) {
                 String message = "Rule " + entity.getRuleId() + " does not exist";
                 logger.debug(message);
                 asyncResultHandler.handle(
@@ -131,7 +133,8 @@ public class ValidatorRegistryImpl implements TenantRulesResource {
       });
     } catch (Exception e) {
       logger.error("Error running on verticle for putTenantRules: " + e.getMessage());
-      asyncResultHandler.handle(Future.succeededFuture(PutTenantRulesResponse.withPlainInternalServerError(INTERNAL_ERROR)));
+      asyncResultHandler.handle(Future.succeededFuture(
+        PutTenantRulesResponse.withPlainInternalServerError(Response.Status.INTERNAL_SERVER_ERROR.getReasonPhrase())));
     }
 
   }
@@ -145,7 +148,7 @@ public class ValidatorRegistryImpl implements TenantRulesResource {
       vertxContext.runOnContext(v -> {
         String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(OKAPI_HEADER_TENANT));
         validatorRegistryService.getTenantRuleByRuleId(tenantId, ruleId, reply -> {
-          if(reply.succeeded()) {
+          if (reply.succeeded()) {
             JsonObject result = reply.result();
             if (result == null) {
               String message = "Rule " + ruleId + " does not exist";
@@ -165,7 +168,8 @@ public class ValidatorRegistryImpl implements TenantRulesResource {
       });
     } catch (Exception e) {
       logger.error("Error running on verticle for getTenantRulesByRuleId: " + e.getMessage());
-      asyncResultHandler.handle(Future.succeededFuture(GetTenantRulesByRuleIdResponse.withPlainInternalServerError(INTERNAL_ERROR)));
+      asyncResultHandler.handle(Future.succeededFuture(
+        GetTenantRulesByRuleIdResponse.withPlainInternalServerError(Response.Status.INTERNAL_SERVER_ERROR.getReasonPhrase())));
     }
   }
 

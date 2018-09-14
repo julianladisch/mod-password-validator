@@ -6,7 +6,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import org.folio.HttpStatus;
+import org.apache.http.HttpStatus;
 import org.folio.rest.jaxrs.model.PasswordJson;
 import org.folio.rest.jaxrs.model.ValidationTemplateJson;
 import org.folio.rest.jaxrs.resource.PasswordResource;
@@ -25,10 +25,12 @@ import javax.ws.rs.core.Response;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
+
 @RunWith(MockitoJUnitRunner.class)
 public class PasswordResourceUnitTest {
 
-  private static final String TENANT_HEADER = "x-okapi-tenant";
+
   private static final String TENANT_ID = "diku";
 
   @Mock
@@ -45,7 +47,7 @@ public class PasswordResourceUnitTest {
     String givenPassword = "password";
     PasswordJson requestEntity = new PasswordJson().withPassword(givenPassword);
     Map<String, String> okapiHeaders = new HashMap<>();
-    okapiHeaders.put(TENANT_HEADER, TENANT_ID);
+    okapiHeaders.put(OKAPI_HEADER_TENANT, TENANT_ID);
 
     JsonObject mockResponse =
       new JsonObject()
@@ -57,7 +59,7 @@ public class PasswordResourceUnitTest {
 
     Handler<AsyncResult<Response>> checkingHandler = result -> {
       Response response = result.result();
-      Assert.assertEquals(HttpStatus.HTTP_ACCEPTED.toInt(), response.getStatus());
+      Assert.assertEquals(org.apache.http.HttpStatus.SC_OK, response.getStatus());
       ValidationTemplateJson responseEntity = (ValidationTemplateJson) response.getEntity();
       ValidationTemplateJson expectedEntity = mockResponse.mapTo(ValidationTemplateJson.class);
       Assert.assertEquals(expectedEntity.getResult(), responseEntity.getResult());
@@ -73,7 +75,7 @@ public class PasswordResourceUnitTest {
     String givenPassword = "password";
     PasswordJson requestEntity = new PasswordJson().withPassword(givenPassword);
     Map<String, String> okapiHeaders = new HashMap<>();
-    okapiHeaders.put(TENANT_HEADER, TENANT_ID);
+    okapiHeaders.put(OKAPI_HEADER_TENANT, TENANT_ID);
     String exceptionMessage = "This is an exception";
     Mockito.doAnswer(new AsyncResultAnswer<>(Future.failedFuture(new Exception(exceptionMessage)), 2))
       .when(validationEngineService)
@@ -81,7 +83,7 @@ public class PasswordResourceUnitTest {
 
     Handler<AsyncResult<Response>> checkingHandler = result -> {
       Response response = result.result();
-      Assert.assertEquals(HttpStatus.HTTP_INTERNAL_SERVER_ERROR.toInt(), response.getStatus());
+      Assert.assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, response.getStatus());
       Assert.assertThat((String) response.getEntity(), Matchers.containsString(exceptionMessage));
     };
     passwordResource.postPasswordValidate(requestEntity, okapiHeaders, checkingHandler, vertxContext);

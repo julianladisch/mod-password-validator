@@ -11,6 +11,7 @@ import io.vertx.core.http.CaseInsensitiveHeaders;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpClientRequest;
+import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -18,6 +19,7 @@ import org.folio.rest.jaxrs.model.Rule;
 import org.folio.rest.jaxrs.model.RuleCollection;
 import org.folio.services.validator.registry.ValidatorRegistryService;
 
+import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -25,6 +27,8 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import static org.folio.rest.RestVerticle.MODULE_SPECIFIC_ARGS;
+import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
+import static org.folio.rest.RestVerticle.OKAPI_HEADER_TOKEN;
 
 /**
  * Implementation of validation engine;
@@ -36,12 +40,10 @@ import static org.folio.rest.RestVerticle.MODULE_SPECIFIC_ARGS;
  */
 public class ValidationEngineServiceImpl implements ValidationEngineService {
 
-  // OKAPI url header with OKAPI getaway address
-  private static String OKAPI_URL_HEADER = "X-Okapi-URL";
-  // OKAPI tenant header with tenant id
-  private static String OKAPI_TENANT_HEADER = "X-Okapi-Tenant";
-  // OKAPI token header contains token to call OKAPI internal modules
-  private static String OKAPI_TOKEN_HEADER = "X-Okapi-Token";
+  public static final String VALID = "Valid";
+  public static final String INVALID = "Invalid";
+  private static final String OKAPI_URL_HEADER = "x-okapi-url";
+
   // Logger
   private final Logger logger = LoggerFactory
     .getLogger(ValidationEngineServiceImpl.class);
@@ -82,7 +84,7 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
                                final Map<String, String> requestHeaders,
                                final Handler<AsyncResult<JsonObject>> resultHandler) {
     MultiMap caseInsensitiveHeaders = new CaseInsensitiveHeaders().addAll(requestHeaders);
-    String tenantId = caseInsensitiveHeaders.get(OKAPI_TENANT_HEADER);
+    String tenantId = caseInsensitiveHeaders.get(OKAPI_HEADER_TENANT);
 
     validatorRegistryProxy.getAllTenantRules(tenantId, response -> {
       if (response.succeeded()) {
@@ -151,7 +153,7 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
       if (responseStatus.equals(responseStatus.OK)) {
         validationResponse.bodyHandler(body -> {
           String validationResult = new JsonObject(body.toString()).getString("Result");
-          if ("Invalid".equals(validationResult)) {
+          if (INVALID.equals(validationResult)) {
             errorMessages.add(rule.getErrMessageId());
           }
           future.complete();
@@ -185,10 +187,10 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
       }
     });
     passwordValidationRequest
-      .putHeader(OKAPI_TOKEN_HEADER, headers.get(OKAPI_TOKEN_HEADER))
-      .putHeader(OKAPI_TENANT_HEADER, headers.get(OKAPI_TENANT_HEADER))
-      .putHeader("Content-Type", "application/json")
-      .putHeader("Accept", "application/json")
+      .putHeader(OKAPI_HEADER_TOKEN, headers.get(OKAPI_HEADER_TOKEN))
+      .putHeader(OKAPI_HEADER_TENANT, headers.get(OKAPI_HEADER_TENANT))
+      .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+      .putHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
       .write(new JsonObject().put("password", password).toString())
       .end();
     return future;
@@ -198,9 +200,9 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
                                final Handler<AsyncResult<JsonObject>> resultHandler) {
     JsonObject validationResult = new JsonObject();
     if (errorMessages.isEmpty()) {
-      validationResult.put("result", "Valid");
+      validationResult.put("result", VALID);
     } else {
-      validationResult.put("result", "Invalid");
+      validationResult.put("result", INVALID);
       validationResult.put("messages", errorMessages);
     }
     resultHandler.handle(Future.succeededFuture(validationResult));
