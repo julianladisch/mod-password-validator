@@ -161,7 +161,7 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
         });
       } else {
         // TODO Inform administrator that remote module is down
-        logger.error("Error: FOLIO module by the address " + remoteModuleUrl + " is not available.");
+        logger.error("FOLIO module by the address " + remoteModuleUrl + " is not available.");
         switch (rule.getValidationType()) {
           case STRONG: {
             String errorMessage = new StringBuilder()
