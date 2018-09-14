@@ -14,7 +14,6 @@ import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
-import javafx.util.Pair;
 import org.folio.rest.jaxrs.model.Rule;
 import org.folio.rest.jaxrs.model.RuleCollection;
 import org.folio.services.validator.registry.ValidatorRegistryService;
@@ -140,9 +139,9 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
   }
 
   private Future<String> getValidatePasswordByProgrammaticRuleFuture(final String password,
-                                                                                 final Rule rule,
-                                                                                 final List<String> errorMessages,
-                                                                                 final MultiMap headers) {
+                                                                     final Rule rule,
+                                                                     final List<String> errorMessages,
+                                                                     final MultiMap headers) {
     String okapiURL = headers.get(OKAPI_URL_HEADER);
     String remoteModuleUrl = okapiURL + rule.getImplementationReference();
 
