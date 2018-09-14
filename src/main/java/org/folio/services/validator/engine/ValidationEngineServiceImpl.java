@@ -1,5 +1,6 @@
 package org.folio.services.validator.engine;
 
+import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
@@ -101,9 +102,9 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
     });
   }
 
-  private Future<List<String>> validatePasswordByRules(List<Rule> rules,
-                                                       String password,
-                                                       MultiMap headers) {
+  private Future<List<String>> validatePasswordByRules(final List<Rule> rules,
+                                                       final String password,
+                                                       final MultiMap headers) {
     List<String> errorMessages = new ArrayList(rules.size());
     rules.sort(Comparator.comparing(Rule::getOrderNo));
 
@@ -129,61 +130,61 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
     return future;
   }
 
-  private void validatePasswordByRexExpRule(String password,
-                                            Rule rule,
-                                            List<String> errorMessages) {
+  private void validatePasswordByRexExpRule(final String password,
+                                            final Rule rule,
+                                            final List<String> errorMessages) {
     String expression = rule.getExpression();
     if (!Pattern.compile(expression).matcher(password).matches()) {
       errorMessages.add(rule.getErrMessageId());
     }
   }
 
-  private Future<Pair<Rule, String>> getValidatePasswordByProgrammaticRuleFuture(String password,
-                                                                                 Rule rule,
-                                                                                 List<String> errorMessages,
-                                                                                 MultiMap headers) {
+  private Future<Pair<Rule, String>> getValidatePasswordByProgrammaticRuleFuture(final String password,
+                                                                                 final Rule rule,
+                                                                                 final List<String> errorMessages,
+                                                                                 final MultiMap headers) {
     String okapiURL = headers.get(OKAPI_URL_HEADER);
     String remoteModuleUrl = okapiURL + rule.getImplementationReference();
 
     Future<Pair<Rule, String>> future = Future.future();
     HttpClientRequest passwordValidationRequest = httpClient.post(remoteModuleUrl, validationResponse -> {
-        if (validationResponse.statusCode() == 200) {
-          validationResponse.bodyHandler(body -> {
-            String validationResult = new JsonObject(body.toString()).getString("Result");
-            if ("Invalid".equals(validationResult)) {
-              errorMessages.add(rule.getErrMessageId());
-            }
+      HttpResponseStatus responseStatus = HttpResponseStatus.valueOf(validationResponse.statusCode());
+      if (responseStatus.equals(responseStatus.OK)) {
+        validationResponse.bodyHandler(body -> {
+          String validationResult = new JsonObject(body.toString()).getString("Result");
+          if ("Invalid".equals(validationResult)) {
+            errorMessages.add(rule.getErrMessageId());
+          }
+          future.complete();
+        });
+      } else {
+        // TODO Inform administrator that remote module is down
+        logger.error("Error: FOLIO module by the address " + remoteModuleUrl + " is not available.");
+        switch (rule.getValidationType()) {
+          case STRONG: {
+            String errorMessage = new StringBuilder()
+              .append("Programmatic rule ")
+              .append(rule.getName())
+              .append(" returns status code ")
+              .append(validationResponse.statusCode())
+              .toString();
+            logger.error(errorMessage);
+            future.fail(errorMessage);
+            break;
+          }
+          case SOFT: {
             future.complete();
-          });
-        } else {
-          // TODO Inform administrator that remote module is down
-          logger.error("Error: FOLIO module by the address " + remoteModuleUrl + " is not available.");
-          switch (rule.getValidationType()) {
-            case STRONG: {
-              String errorMessage = new StringBuilder()
-                .append("Programmatic rule ")
-                .append(rule.getName())
-                .append(" returns status code ")
-                .append(validationResponse.statusCode())
-                .toString();
-              logger.error(errorMessage);
-              future.fail(errorMessage);
-              break;
-            }
-            case SOFT: {
-              future.complete();
-              break;
-            }
-            default: {
-              String errorMessage = "Please add an action for the new added " +
-                "rule type when internal FOLIO module is not available";
-              logger.error(errorMessage);
-              future.fail(errorMessage);
-            }
+            break;
+          }
+          default: {
+            String errorMessage = "Please add an action for the new added " +
+              "rule type when internal FOLIO module is not available";
+            logger.error(errorMessage);
+            future.fail(errorMessage);
           }
         }
       }
-    );
+    });
     passwordValidationRequest
       .putHeader(OKAPI_TOKEN_HEADER, headers.get(OKAPI_TOKEN_HEADER))
       .putHeader(OKAPI_TENANT_HEADER, headers.get(OKAPI_TENANT_HEADER))
