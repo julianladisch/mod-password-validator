@@ -139,14 +139,14 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
     }
   }
 
-  private Future<Pair<Rule, String>> getValidatePasswordByProgrammaticRuleFuture(final String password,
+  private Future<String> getValidatePasswordByProgrammaticRuleFuture(final String password,
                                                                                  final Rule rule,
                                                                                  final List<String> errorMessages,
                                                                                  final MultiMap headers) {
     String okapiURL = headers.get(OKAPI_URL_HEADER);
     String remoteModuleUrl = okapiURL + rule.getImplementationReference();
 
-    Future<Pair<Rule, String>> future = Future.future();
+    Future<String> future = Future.future();
     HttpClientRequest passwordValidationRequest = httpClient.post(remoteModuleUrl, validationResponse -> {
       HttpResponseStatus responseStatus = HttpResponseStatus.valueOf(validationResponse.statusCode());
       if (responseStatus.equals(responseStatus.OK)) {
