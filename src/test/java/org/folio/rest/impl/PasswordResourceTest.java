@@ -1,7 +1,9 @@
 package org.folio.rest.impl;
 
+import io.vertx.core.AsyncResult;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
+import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonArray;
@@ -16,7 +18,6 @@ import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.NetworkUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
@@ -98,69 +99,57 @@ public class PasswordResourceTest {
     }));
   }
 
-  @Ignore
+
   @Test
   public void shouldReturnBadRequestStatusWhenPasswordIsAbsentInBody(TestContext context) {
     Async async = context.async();
     JsonObject emptyBody = new JsonObject();
-    validatePassword(emptyBody, 422)
-      .setHandler(response -> {
-        if (response.failed()) {
-          context.fail(response.cause());
+    validatePassword(emptyBody, 422, (result -> async.complete()))
+      .setHandler(chainedRes -> {
+        if (chainedRes.failed()) {
+          context.fail(chainedRes.cause());
         } else {
           async.complete();
         }
       });
   }
 
-  @Ignore
+
   @Test
   public void shouldReturnSuccessfulValidationWhenNoActiveRulesForTargetTenantExists(final TestContext context) {
     Async async = context.async();
     JsonObject passwordBody = new JsonObject().put("password", "test");
     JsonObject expectedResponse = new JsonObject().put(RESULT, VALID).put(MESSAGES, new JsonArray());
 
-    postRule(REGEXP_RULE_ONE_LETTER_ONE_NUMBER.put(ORDER_NO, 0).put(STATE, "Disabled"))
-      .compose(w -> validatePassword(passwordBody, 200)
-        .setHandler(result -> {
-          context.assertEquals(result.result().getCode(), HttpStatus.SC_OK);
-          context.assertEquals(new JsonObject(result.result().getBody()), expectedResponse);
-        })
-      )
-      .setHandler(chainedRes -> {
-        if (chainedRes.failed()) {
-          context.fail(chainedRes.cause());
-        } else {
-          async.complete();
-        }
-      });
+    postRule(REGEXP_RULE_ONE_LETTER_ONE_NUMBER.put(ORDER_NO, 0).put(STATE, "Disabled"), TestUtil.NO_ASSERTS)
+      .compose(r -> validatePassword(passwordBody, 200, result -> {
+        context.assertEquals(result.result().getCode(), HttpStatus.SC_OK);
+        context.assertEquals(new JsonObject(result.result().getBody()), expectedResponse);
+        async.complete();
+      }));
   }
 
-  @Ignore
   @Test
   public void shouldReturnSuccessfulValidationWhenPasswordPassesAllRules(final TestContext context) {
     Async async = context.async();
     JsonObject passwordBody = new JsonObject().put("password", "password123");
     JsonObject expectedResponse = new JsonObject().put(RESULT, VALID).put(MESSAGES, new JsonArray());
 
-    postRule(REGEXP_RULE_ONE_LETTER_ONE_NUMBER.put(ORDER_NO, 0).put(STATE, "Enabled"))
-      .compose(w -> postRule(REGEXP_RULE_MIN_LENGTH_8.put(ORDER_NO, 1).put(STATE, "Enabled")))
-      .compose(w -> validatePassword(passwordBody, 200)
-        .setHandler(result -> {
-          context.assertEquals(result.result().getCode(), HttpStatus.SC_OK);
-          context.assertEquals(new JsonObject(result.result().getBody()), expectedResponse);
-        })
-      )
-      .setHandler(chainedRes -> {
-        if (chainedRes.failed()) {
-          context.fail(chainedRes.cause());
-        } else {
-          async.complete();
-        }
-      });
+    postRule(REGEXP_RULE_ONE_LETTER_ONE_NUMBER.put(ORDER_NO, 0).put(STATE, "Enabled"), TestUtil.NO_ASSERTS)
+      .compose(r -> postRule(REGEXP_RULE_MIN_LENGTH_8.put(ORDER_NO, 1).put(STATE, "Enabled"), TestUtil.NO_ASSERTS))
+      .compose(r -> validatePassword(passwordBody, 200, result -> {
+        context.assertEquals(result.result().getCode(), HttpStatus.SC_OK);
+        context.assertEquals(new JsonObject(result.result().getBody()), expectedResponse);
+        async.complete();
+      })).setHandler(chainedRes -> {
+      if (chainedRes.failed()) {
+        context.fail(chainedRes.cause());
+      } else {
+        async.complete();
+      }
+    });
   }
 
-  @Ignore
   @Test
   public void shouldReturnFailedValidationResultWithMessageWhenPasswordDidNotPassRule(final TestContext context) {
     Async async = context.async();
@@ -173,30 +162,30 @@ public class PasswordResourceTest {
           .add(expectedErrorMessageId)
       );
 
-    postRule(REGEXP_RULE_ONE_LETTER_ONE_NUMBER.put(ORDER_NO, 0).put(STATE, "Enabled"))
-      .compose(w -> postRule(REGEXP_RULE_MIN_LENGTH_8.put(ORDER_NO, 1).put(STATE, "Enabled")))
-      .compose(w -> validatePassword(passwordBody, 200)
-        .setHandler(result -> {
-          context.assertEquals(result.result().getCode(), HttpStatus.SC_OK);
-          context.assertEquals(new JsonObject(result.result().getBody()), expectedResponse);
-        })
-      )
-      .setHandler(chainedRes -> {
-        if (chainedRes.failed()) {
-          context.fail(chainedRes.cause());
-        } else {
-          async.complete();
-        }
-      });
+    postRule(REGEXP_RULE_ONE_LETTER_ONE_NUMBER.put(ORDER_NO, 0).put(STATE, "Enabled"), TestUtil.NO_ASSERTS)
+      .compose(r -> postRule(REGEXP_RULE_MIN_LENGTH_8.put(ORDER_NO, 1).put(STATE, "Enabled"), TestUtil.NO_ASSERTS))
+      .compose(r -> validatePassword(passwordBody, 200, result -> {
+        context.assertEquals(result.result().getCode(), HttpStatus.SC_OK);
+        context.assertEquals(new JsonObject(result.result().getBody()), expectedResponse);
+        async.complete();
+      })).setHandler(chainedRes -> {
+      if (chainedRes.failed()) {
+        context.fail(chainedRes.cause());
+      } else {
+        async.complete();
+      }
+    });
   }
 
-  private Future<TestUtil.WrappedResponse> postRule(JsonObject rule) {
+  private Future<TestUtil.WrappedResponse> postRule(JsonObject rule,
+                                                    Handler<AsyncResult<TestUtil.WrappedResponse>> handler) {
     return TestUtil.doRequest(vertx, HOST + port + "/tenant/rules", HttpMethod.POST, null, rule.toString(),
-      201, "Adding new rule");
+      201, "Adding new rule", handler);
   }
 
-  private Future<TestUtil.WrappedResponse> validatePassword(JsonObject password, int expectedCode) {
+  private Future<TestUtil.WrappedResponse> validatePassword(JsonObject password, int expectedCode,
+                                                            Handler<AsyncResult<TestUtil.WrappedResponse>> handler) {
     return TestUtil.doRequest(vertx, HOST + port + "/password/validate", HttpMethod.POST, null,
-      password.toString(), expectedCode, "Validating password");
+      password.toString(), expectedCode, "Validating password", handler);
   }
 }

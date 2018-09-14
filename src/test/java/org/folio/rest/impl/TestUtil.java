@@ -1,6 +1,8 @@
 package org.folio.rest.impl;
 
+import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
+import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.CaseInsensitiveHeaders;
 import io.vertx.core.http.HttpClient;
@@ -13,6 +15,11 @@ import java.util.Map;
 
 
 public class TestUtil {
+
+  public static final Handler<AsyncResult<WrappedResponse>> NO_ASSERTS = x -> {
+  };
+
+
   static class WrappedResponse {
     private String explanation;
     private int code;
@@ -21,14 +28,14 @@ public class TestUtil {
     private HttpClientResponse response;
 
     public WrappedResponse(String explanation, int code, String body,
-        HttpClientResponse response) {
+                           HttpClientResponse response) {
       this.explanation = explanation;
       this.code = code;
       this.body = body;
       this.response = response;
       try {
         json = new JsonObject(body);
-      } catch(Exception e) {
+      } catch (Exception e) {
         json = null;
       }
     }
@@ -57,41 +64,53 @@ public class TestUtil {
   public static Future<WrappedResponse> doRequest(Vertx vertx, String url,
                                                   HttpMethod method, CaseInsensitiveHeaders headers, String payload,
                                                   Integer expectedCode, String explanation) {
+    return doRequest(vertx, url, method, headers, payload, expectedCode, explanation, NO_ASSERTS);
+  }
+
+  public static Future<WrappedResponse> doRequest(Vertx vertx, String url,
+                                                  HttpMethod method, CaseInsensitiveHeaders headers, String payload,
+                                                  Integer expectedCode, String explanation,
+                                                  Handler<AsyncResult<WrappedResponse>> handler) {
     Future<WrappedResponse> future = Future.future();
     boolean addPayLoad = false;
     HttpClient client = vertx.createHttpClient();
     HttpClientRequest request = client.requestAbs(method, url);
     //Add standard headers
     request.putHeader("X-Okapi-Tenant", "diku")
-            .putHeader("content-type", "application/json")
-            .putHeader("accept", "application/json");
-    if(headers != null) {
-      for(Map.Entry entry : headers.entries()) {
-        request.putHeader((String)entry.getKey(), (String)entry.getValue());
+      .putHeader("content-type", "application/json")
+      .putHeader("accept", "application/json");
+    if (headers != null) {
+      for (Map.Entry entry : headers.entries()) {
+        request.putHeader((String) entry.getKey(), (String) entry.getValue());
         System.out.println(String.format("Adding header '%s' with value '%s'",
-            (String)entry.getKey(), (String)entry.getValue()));
+          (String) entry.getKey(), (String) entry.getValue()));
       }
     }
     //standard exception handler
-    request.exceptionHandler(e -> { future.fail(e); });
-    request.handler( req -> {
+    request.exceptionHandler(e -> {
+      future.fail(e);
+    });
+    request.handler(req -> {
       req.bodyHandler(buf -> {
         String explainString = "(no explanation)";
-        if(explanation != null) { explainString = explanation; }
-        if(expectedCode != null && expectedCode != req.statusCode()) {
+        if (explanation != null) {
+          explainString = explanation;
+        }
+        if (expectedCode != null && expectedCode != req.statusCode()) {
           future.fail(method.toString() + " to " + url + " failed. Expected status code "
-                  + expectedCode + ", got status code " + req.statusCode() + ": "
-                  + buf.toString() + " | " + explainString);
+            + expectedCode + ", got status code " + req.statusCode() + ": "
+            + buf.toString() + " | " + explainString);
         } else {
           System.out.println("Got status code " + req.statusCode() + " with payload of: " + buf.toString() + " | " + explainString);
           WrappedResponse wr = new WrappedResponse(explanation, req.statusCode(), buf.toString(), req);
+          handler.handle(Future.succeededFuture(wr));
           future.complete(wr);
         }
       });
     });
-    System.out.println("Sending " + method.toString() + " request to url '"+
-              url + " with payload: " + payload + "'\n");
-    if(method == HttpMethod.PUT || method == HttpMethod.POST) {
+    System.out.println("Sending " + method.toString() + " request to url '" +
+      url + " with payload: " + payload + "'\n");
+    if (method == HttpMethod.PUT || method == HttpMethod.POST) {
       request.end(payload);
     } else {
       request.end();
