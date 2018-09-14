@@ -78,9 +78,9 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
    */
 
   @Override
-  public void validatePassword(String password,
-                               Map<String, String> requestHeaders,
-                               Handler<AsyncResult<JsonObject>> resultHandler) {
+  public void validatePassword(final String password,
+                               final Map<String, String> requestHeaders,
+                               final Handler<AsyncResult<JsonObject>> resultHandler) {
     MultiMap caseInsensitiveHeaders = new CaseInsensitiveHeaders().addAll(requestHeaders);
     String tenantId = caseInsensitiveHeaders.get(OKAPI_TENANT_HEADER);
 
