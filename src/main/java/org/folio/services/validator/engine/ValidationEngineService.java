@@ -40,7 +40,7 @@ public interface ValidationEngineService {
    *
    * @param password      received password
    * @param headers       request headers needed for access backend FOLIO services to perform programmatic rules validation
-   * @param resultHandler handler with validation results in format <Status, Message>
+   * @param resultHandler handler with validation results in format <Result, Messages>
    */
   void validatePassword(String password, Map<String, String> headers, Handler<AsyncResult<JsonObject>> resultHandler);
 

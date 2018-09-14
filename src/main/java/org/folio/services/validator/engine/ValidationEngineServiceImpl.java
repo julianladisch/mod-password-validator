@@ -40,9 +40,10 @@ import static org.folio.rest.RestVerticle.OKAPI_HEADER_TOKEN;
  */
 public class ValidationEngineServiceImpl implements ValidationEngineService {
 
-  public static final String VALID = "Valid";
-  public static final String INVALID = "Invalid";
   private static final String OKAPI_URL_HEADER = "x-okapi-url";
+
+  private static final String RESPONSE_VALIDATION_RESULT = "Result";
+  private static final String RESPONSE_ERROR_MESSAGES = "Messages";
 
   // Logger
   private final Logger logger = LoggerFactory
@@ -153,7 +154,7 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
       if (responseStatus.equals(responseStatus.OK)) {
         validationResponse.bodyHandler(body -> {
           String validationResult = new JsonObject(body.toString()).getString("Result");
-          if (INVALID.equals(validationResult)) {
+          if (ValidationResult.INVALID.getCaption().equals(validationResult)) {
             errorMessages.add(rule.getErrMessageId());
           }
           future.complete();
@@ -200,11 +201,26 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
                                final Handler<AsyncResult<JsonObject>> resultHandler) {
     JsonObject validationResult = new JsonObject();
     if (errorMessages.isEmpty()) {
-      validationResult.put("result", VALID);
+      validationResult.put(RESPONSE_VALIDATION_RESULT, ValidationResult.VALID.getCaption());
     } else {
-      validationResult.put("result", INVALID);
-      validationResult.put("messages", errorMessages);
+      validationResult.put(RESPONSE_VALIDATION_RESULT, ValidationResult.INVALID.getCaption());
+      validationResult.put(RESPONSE_ERROR_MESSAGES, errorMessages);
     }
     resultHandler.handle(Future.succeededFuture(validationResult));
+  }
+
+  public enum ValidationResult {
+    VALID("Valid"),
+    INVALID("Invalid");
+
+    private String caption;
+
+    private ValidationResult(String caption) {
+      this.caption = caption;
+    }
+
+    public String getCaption() {
+      return caption;
+    }
   }
 }
