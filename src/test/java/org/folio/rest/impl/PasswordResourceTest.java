@@ -137,7 +137,13 @@ public class PasswordResourceTest {
         context.assertEquals(result.result().getCode(), HttpStatus.SC_OK);
         context.assertEquals(new JsonObject(result.result().getBody()), expectedResponse);
         async.complete();
-      }));
+      })).setHandler(chainedRes -> {
+      if (chainedRes.failed()) {
+        context.fail(chainedRes.cause());
+      } else {
+        async.complete();
+      }
+    });
   }
 
   @Test
