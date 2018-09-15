@@ -42,8 +42,8 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
 
   private static final String OKAPI_URL_HEADER = "x-okapi-url";
 
-  private static final String RESPONSE_VALIDATION_RESULT = "Result";
-  private static final String RESPONSE_ERROR_MESSAGES = "Messages";
+  private static final String RESPONSE_VALIDATION_RESULT_KEY = "Result";
+  private static final String RESPONSE_ERROR_MESSAGES_KEY = "Messages";
 
   // Logger
   private final Logger logger = LoggerFactory
@@ -201,10 +201,10 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
                                final Handler<AsyncResult<JsonObject>> resultHandler) {
     JsonObject validationResult = new JsonObject();
     if (errorMessages.isEmpty()) {
-      validationResult.put(RESPONSE_VALIDATION_RESULT, ValidationResult.VALID.getCaption());
+      validationResult.put(RESPONSE_VALIDATION_RESULT_KEY, ValidationResult.VALID.getCaption());
     } else {
-      validationResult.put(RESPONSE_VALIDATION_RESULT, ValidationResult.INVALID.getCaption());
-      validationResult.put(RESPONSE_ERROR_MESSAGES, errorMessages);
+      validationResult.put(RESPONSE_VALIDATION_RESULT_KEY, ValidationResult.INVALID.getCaption());
+      validationResult.put(RESPONSE_ERROR_MESSAGES_KEY, errorMessages);
     }
     resultHandler.handle(Future.succeededFuture(validationResult));
   }
