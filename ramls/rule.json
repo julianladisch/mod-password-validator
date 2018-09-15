@@ -41,6 +41,18 @@
     "errMessageId": {
       "description": "message identifier which should be returned to UI in case the rule validation fails",
       "type": "string"
+    },
+    "metadata": {
+      "type" : "object",
+      "$ref" : "raml-util/schemas/metadata.schema"
     }
-  }
+  },
+  "required": [
+    "name",
+    "type",
+    "validationType",
+    "state",
+    "moduleName",
+    "orderNo"
+  ]
 }
