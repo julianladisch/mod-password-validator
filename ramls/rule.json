@@ -42,5 +42,13 @@
       "description": "message identifier which should be returned to UI in case the rule validation fails",
       "type": "string"
     }
-  }
+  },
+  "required": [
+    "name",
+    "type",
+    "validationType",
+    "state",
+    "moduleName",
+    "orderNo"
+  ]
 }

@@ -25,6 +25,7 @@ public class ValidatorRegistryImpl implements TenantRulesResource {
 
   private static final String ORDER_NUMBER_ERROR = "Order number cannot be negative";
   private static final String VALIDATION_TYPE_ERROR = "In case of RegExp rule Validation Type can only be Strong";
+  private static final String IMPLEMENTATION_REFERENCE_REQUIRED_ERROR = "In case of Programmatic rule Implementation reference should be provided";
 
   private final ValidatorRegistryService validatorRegistryService;
 
@@ -65,14 +66,10 @@ public class ValidatorRegistryImpl implements TenantRulesResource {
                               final Context vertxContext) throws Exception {
     try {
       vertxContext.runOnContext(v -> {
-        if (entity.getOrderNo() < 0) {
-          logger.debug("Invalid orderNo parameter");
+        String errorMessage = validateRule(entity);
+        if (errorMessage != null) {
           asyncResultHandler.handle(
-            Future.succeededFuture(PostTenantRulesResponse.withPlainBadRequest(ORDER_NUMBER_ERROR)));
-        } else if (Rule.Type.REG_EXP.equals(entity.getType()) && !Rule.ValidationType.STRONG.equals(entity.getValidationType())) {
-          logger.debug("Invalid validationType parameter");
-          asyncResultHandler.handle(
-            Future.succeededFuture(PostTenantRulesResponse.withPlainBadRequest(VALIDATION_TYPE_ERROR)));
+            Future.succeededFuture(PostTenantRulesResponse.withPlainBadRequest(errorMessage)));
         } else {
           String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(OKAPI_HEADER_TENANT));
           validatorRegistryService.createTenantRule(tenantId, JsonObject.mapFrom(entity), reply -> {
@@ -101,14 +98,10 @@ public class ValidatorRegistryImpl implements TenantRulesResource {
                              final Context vertxContext) throws Exception {
     try {
       vertxContext.runOnContext(v -> {
-        if (entity.getOrderNo() < 0) {
-          logger.debug("Invalid orderNo parameter");
+        String errorMessage = validateRule(entity);
+        if (errorMessage != null) {
           asyncResultHandler.handle(
-            Future.succeededFuture(PutTenantRulesResponse.withPlainBadRequest(ORDER_NUMBER_ERROR)));
-        } else if (Rule.Type.REG_EXP.equals(entity.getType()) && !Rule.ValidationType.STRONG.equals(entity.getValidationType())) {
-          logger.debug("Invalid validationType parameter");
-          asyncResultHandler.handle(
-            Future.succeededFuture(PutTenantRulesResponse.withPlainBadRequest(VALIDATION_TYPE_ERROR)));
+            Future.succeededFuture(PutTenantRulesResponse.withPlainBadRequest(errorMessage)));
         } else {
           String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(OKAPI_HEADER_TENANT));
           validatorRegistryService.updateTenantRule(tenantId, JsonObject.mapFrom(entity), reply -> {
@@ -171,6 +164,22 @@ public class ValidatorRegistryImpl implements TenantRulesResource {
       asyncResultHandler.handle(Future.succeededFuture(
         GetTenantRulesByRuleIdResponse.withPlainInternalServerError(Response.Status.INTERNAL_SERVER_ERROR.getReasonPhrase())));
     }
+  }
+
+  private String validateRule(Rule entity) {
+    String errorMessage = null;
+    if (entity.getOrderNo() < 0) {
+      logger.debug("Invalid orderNo parameter");
+      errorMessage = ORDER_NUMBER_ERROR;
+    } else if (Rule.Type.REG_EXP.equals(entity.getType()) && !Rule.ValidationType.STRONG.equals(entity.getValidationType())) {
+      logger.debug("Invalid validationType parameter");
+      errorMessage = VALIDATION_TYPE_ERROR;
+    } else if (Rule.Type.PROGRAMMATIC.equals(entity.getType())
+      && (entity.getImplementationReference() == null || entity.getImplementationReference().isEmpty())) {
+      logger.debug("Implementation reference is not specified for type Programmatic");
+      errorMessage = IMPLEMENTATION_REFERENCE_REQUIRED_ERROR;
+    }
+    return errorMessage;
   }
 
 }

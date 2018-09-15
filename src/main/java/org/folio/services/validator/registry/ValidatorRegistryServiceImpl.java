@@ -146,10 +146,15 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
   @Override
   public ValidatorRegistryService getActiveRulesByType(String tenantId, String type, Handler<AsyncResult<JsonObject>> asyncResultHandler) {
     try {
+      Criterion criterion;
       Criteria stateCrit = constructCriteria(STATE_JSONB_FIELD, Rule.State.ENABLED.toString());
-      Criteria typeCrit = constructCriteria(TYPE_JSONB_FIELD, type);
-      Criterion criterion = new Criterion();
-      criterion.addCriterion(stateCrit, "AND", typeCrit);
+      if(type != null && !type.isEmpty()) {
+        Criteria typeCrit = constructCriteria(TYPE_JSONB_FIELD, type);
+        criterion = new Criterion();
+        criterion.addCriterion(stateCrit, "AND", typeCrit);
+      } else {
+        criterion = new Criterion(stateCrit);
+      }
       PostgresClient.getInstance(vertx, tenantId).get(VALIDATION_RULES_TABLE_NAME, Rule.class, criterion, true, false, getReply -> {
         if(getReply.failed()) {
           logger.debug(getReply.cause().getMessage());
