@@ -18,7 +18,10 @@ import java.util.Map;
 @ProxyGen
 public interface ValidationEngineService {
 
-  static final String ADDRESS = "validation-engine.queue";
+  public static final String ADDRESS = "validation-engine.queue";
+  public static final String RESPONSE_VALIDATION_RESULT_KEY = "Result";
+  public static final String RESPONSE_ERROR_MESSAGES_KEY = "Messages";
+  public static final String REQUEST_PASSWORD_PARAM_KEY = "Password";
 
   static ValidationEngineService create(Vertx vertx) {
     return new ValidationEngineServiceImpl(vertx);

@@ -42,9 +42,6 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
 
   private static final String OKAPI_URL_HEADER = "x-okapi-url";
 
-  private static final String RESPONSE_VALIDATION_RESULT_KEY = "Result";
-  private static final String RESPONSE_ERROR_MESSAGES_KEY = "Messages";
-
   // Logger
   private final Logger logger = LoggerFactory
     .getLogger(ValidationEngineServiceImpl.class);
@@ -55,6 +52,9 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
   private ValidatorRegistryService validatorRegistryProxy;
   // Http client to call programmatic rules as internal OKAPI endpoints
   private HttpClient httpClient;
+
+  public ValidationEngineServiceImpl() {
+  }
 
   public ValidationEngineServiceImpl(final Vertx vertx) {
     this.validatorRegistryProxy = ValidatorRegistryService
@@ -87,7 +87,7 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
     MultiMap caseInsensitiveHeaders = new CaseInsensitiveHeaders().addAll(requestHeaders);
     String tenantId = caseInsensitiveHeaders.get(OKAPI_HEADER_TENANT);
 
-    validatorRegistryProxy.getAllTenantRules(tenantId, response -> {
+    validatorRegistryProxy.getActiveRulesByType(tenantId, null, response -> {
       if (response.succeeded()) {
 
         List<Rule> rules = response.result().mapTo(RuleCollection.class).getRules();
@@ -192,7 +192,7 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
       .putHeader(OKAPI_HEADER_TENANT, headers.get(OKAPI_HEADER_TENANT))
       .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
       .putHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
-      .write(new JsonObject().put("password", password).toString())
+      .write(new JsonObject().put(REQUEST_PASSWORD_PARAM_KEY, password).toString())
       .end();
     return future;
   }
@@ -207,6 +207,10 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
       validationResult.put(RESPONSE_ERROR_MESSAGES_KEY, errorMessages);
     }
     resultHandler.handle(Future.succeededFuture(validationResult));
+  }
+
+  public void setValidatorRegistryProxy(ValidatorRegistryService validatorRegistryProxy) {
+    this.validatorRegistryProxy = validatorRegistryProxy;
   }
 
   public enum ValidationResult {
