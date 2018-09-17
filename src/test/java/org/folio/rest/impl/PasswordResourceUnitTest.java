@@ -11,6 +11,7 @@ import org.folio.rest.jaxrs.model.PasswordJson;
 import org.folio.rest.jaxrs.model.ValidationTemplateJson;
 import org.folio.rest.jaxrs.resource.PasswordResource;
 import org.folio.services.validator.engine.ValidationEngineService;
+import org.folio.services.validator.util.ValidatorHelper;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
@@ -52,8 +53,8 @@ public class PasswordResourceUnitTest {
 
     JsonObject mockResponse =
       new JsonObject()
-        .put(ValidationEngineService.RESPONSE_VALIDATION_RESULT_KEY, "Valid")
-        .put(ValidationEngineService.RESPONSE_ERROR_MESSAGES_KEY, new JsonArray());
+        .put(ValidatorHelper.RESPONSE_VALIDATION_RESULT_KEY, "Valid")
+        .put(ValidatorHelper.RESPONSE_ERROR_MESSAGES_KEY, new JsonArray());
     Mockito.doAnswer(new AsyncResultAnswer<>(Future.succeededFuture(mockResponse), 2))
       .when(validationEngineService)
       .validatePassword(ArgumentMatchers.eq(givenPassword), ArgumentMatchers.eq(okapiHeaders), ArgumentMatchers.any());

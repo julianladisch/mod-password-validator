@@ -43,7 +43,7 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
       cql.setField(cql2pgJson);
       String[] fieldList = {"*"};
       PostgresClient.getInstance(vertx, tenantId).get(VALIDATION_RULES_TABLE_NAME, Rule.class, fieldList, cql, true, false, getReply -> {
-        if(getReply.failed()) {
+        if (getReply.failed()) {
           logger.error("Error while querying the db to get all tenant rules", getReply.cause());
           asyncResultHandler.handle(Future.failedFuture(getReply.cause()));
         } else {
@@ -66,10 +66,10 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
   public ValidatorRegistryService createTenantRule(String tenantId, JsonObject validationRule, Handler<AsyncResult<JsonObject>> asyncResultHandler) {
 
     try {
-      String id =  UUID.randomUUID().toString();
+      String id = UUID.randomUUID().toString();
       validationRule.put(RULE_ID_FIELD, id);
       PostgresClient.getInstance(vertx, tenantId).save(VALIDATION_RULES_TABLE_NAME, id, validationRule, postReply -> {
-        if(postReply.failed()) {
+        if (postReply.failed()) {
           logger.error("Error while saving the rule to the db", postReply.cause());
           asyncResultHandler.handle(Future.failedFuture(postReply.cause()));
         } else {
@@ -91,15 +91,15 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
       String id = validationRule.getString(RULE_ID_FIELD);
       Criteria idCrit = constructCriteria(RULE_ID_JSONB_FIELD, id);
       PostgresClient.getInstance(vertx, tenantId).get(VALIDATION_RULES_TABLE_NAME, Rule.class, new Criterion(idCrit), true, false, getReply -> {
-        if(getReply.failed()) {
+        if (getReply.failed()) {
           logger.error("Error while querying the db to get the rule by id", getReply.cause());
           asyncResultHandler.handle(Future.failedFuture(getReply.cause()));
-        } else if(getReply.result().getResults().isEmpty()) {
+        } else if (getReply.result().getResults().isEmpty()) {
           logger.debug("Rule " + id + " was not found in the db");
           asyncResultHandler.handle(Future.succeededFuture(null));
         } else {
           PostgresClient.getInstance(vertx, tenantId).update(VALIDATION_RULES_TABLE_NAME, validationRule.mapTo(Rule.class), new Criterion(idCrit), true, putReply -> {
-            if(putReply.failed()) {
+            if (putReply.failed()) {
               logger.error("Error while updating the rule " + id + " in the db", putReply.cause());
               asyncResultHandler.handle(Future.failedFuture(putReply.cause()));
             } else {
@@ -122,12 +122,12 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
     try {
       Criteria idCrit = constructCriteria(RULE_ID_JSONB_FIELD, ruleId);
       PostgresClient.getInstance(vertx, tenantId).get(VALIDATION_RULES_TABLE_NAME, Rule.class, new Criterion(idCrit), true, false, getReply -> {
-        if(getReply.failed()) {
+        if (getReply.failed()) {
           logger.error("Error while querying the db to get the rule by id", getReply.cause());
           asyncResultHandler.handle(Future.failedFuture(getReply.cause()));
         } else {
           List<Rule> ruleList = (List<Rule>) getReply.result().getResults();
-          if(ruleList.isEmpty()) {
+          if (ruleList.isEmpty()) {
             logger.debug("Rule " + ruleId + "was not found in the db");
             asyncResultHandler.handle(Future.succeededFuture(null));
           } else {
@@ -148,7 +148,7 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
     try {
       Criterion criterion;
       Criteria stateCrit = constructCriteria(STATE_JSONB_FIELD, Rule.State.ENABLED.toString());
-      if(type != null && !type.isEmpty()) {
+      if (type != null && !type.isEmpty()) {
         Criteria typeCrit = constructCriteria(TYPE_JSONB_FIELD, type);
         criterion = new Criterion();
         criterion.addCriterion(stateCrit, "AND", typeCrit);
@@ -156,7 +156,7 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
         criterion = new Criterion(stateCrit);
       }
       PostgresClient.getInstance(vertx, tenantId).get(VALIDATION_RULES_TABLE_NAME, Rule.class, criterion, true, false, getReply -> {
-        if(getReply.failed()) {
+        if (getReply.failed()) {
           logger.error("Error while querying the db to get all enabled tenant rules by type", getReply.cause());
           asyncResultHandler.handle(Future.failedFuture(getReply.cause()));
         } else {

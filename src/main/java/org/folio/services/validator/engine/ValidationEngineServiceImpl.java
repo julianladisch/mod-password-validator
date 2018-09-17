@@ -18,6 +18,7 @@ import io.vertx.core.logging.LoggerFactory;
 import org.folio.rest.jaxrs.model.Rule;
 import org.folio.rest.jaxrs.model.RuleCollection;
 import org.folio.services.validator.registry.ValidatorRegistryService;
+import org.folio.services.validator.util.ValidatorHelper;
 
 import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
@@ -58,7 +59,7 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
 
   public ValidationEngineServiceImpl(final Vertx vertx) {
     this.validatorRegistryProxy = ValidatorRegistryService
-      .createProxy(vertx, ValidatorRegistryService.ADDRESS);
+      .createProxy(vertx, ValidatorHelper.REGISTRY_SERVICE_ADDRESS);
     initHttpClient(vertx);
   }
 
@@ -153,8 +154,8 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
       HttpResponseStatus responseStatus = HttpResponseStatus.valueOf(validationResponse.statusCode());
       if (responseStatus.equals(HttpResponseStatus.OK)) {
         validationResponse.bodyHandler(body -> {
-          String validationResult = new JsonObject(body.toString()).getString(RESPONSE_PASSWORD_RESULT_PARAM_KEY);
-          if (PASSWORD_VALIDATION_INVALID_RESULT.equals(validationResult)) {
+          String validationResult = new JsonObject(body.toString()).getString(ValidatorHelper.RESPONSE_VALIDATION_RESULT_KEY);
+          if (ValidatorHelper.VALIDATION_INVALID_RESULT.equals(validationResult)) {
             errorMessages.add(rule.getErrMessageId());
           }
           future.complete();
@@ -162,9 +163,10 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
       } else {
         // TODO Inform administrator that remote module is down
         logger.error("FOLIO module by the address " + remoteModuleUrl + " is not available.");
+        String errorMessage;
         switch (rule.getValidationType()) {
-          case STRONG: {
-            String errorMessage = new StringBuilder()
+          case STRONG:
+            errorMessage = new StringBuilder()
               .append("Programmatic rule ")
               .append(rule.getName())
               .append(" returns status code ")
@@ -173,17 +175,14 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
             logger.error(errorMessage);
             future.fail(errorMessage);
             break;
-          }
-          case SOFT: {
+          case SOFT:
             future.complete();
             break;
-          }
-          default: {
-            String errorMessage = "Please add an action for the new added " +
+          default:
+            errorMessage = "Please add an action for the new added " +
               "rule type when internal FOLIO module is not available";
             logger.error(errorMessage);
             future.fail(errorMessage);
-          }
         }
       }
     });
@@ -192,7 +191,7 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
       .putHeader(OKAPI_HEADER_TENANT, headers.get(OKAPI_HEADER_TENANT))
       .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
       .putHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
-      .write(new JsonObject().put(REQUEST_PASSWORD_PARAM_KEY, password).toString())
+      .write(new JsonObject().put(ValidatorHelper.REQUEST_PARAM_KEY, password).toString())
       .end();
     return future;
   }
@@ -201,10 +200,10 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
                                final Handler<AsyncResult<JsonObject>> resultHandler) {
     JsonObject validationResult = new JsonObject();
     if (errorMessages.isEmpty()) {
-      validationResult.put(RESPONSE_VALIDATION_RESULT_KEY, PASSWORD_VALIDATION_VALID_RESULT);
+      validationResult.put(ValidatorHelper.RESPONSE_VALIDATION_RESULT_KEY, ValidatorHelper.VALIDATION_VALID_RESULT);
     } else {
-      validationResult.put(RESPONSE_VALIDATION_RESULT_KEY, PASSWORD_VALIDATION_INVALID_RESULT);
-      validationResult.put(RESPONSE_ERROR_MESSAGES_KEY, errorMessages);
+      validationResult.put(ValidatorHelper.RESPONSE_VALIDATION_RESULT_KEY, ValidatorHelper.VALIDATION_INVALID_RESULT);
+      validationResult.put(ValidatorHelper.RESPONSE_ERROR_MESSAGES_KEY, errorMessages);
     }
     resultHandler.handle(Future.succeededFuture(validationResult));
   }

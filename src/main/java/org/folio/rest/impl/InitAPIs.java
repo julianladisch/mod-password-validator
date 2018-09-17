@@ -9,6 +9,7 @@ import io.vertx.serviceproxy.ServiceBinder;
 import org.folio.rest.resource.interfaces.InitAPI;
 import org.folio.services.validator.engine.ValidationEngineService;
 import org.folio.services.validator.registry.ValidatorRegistryService;
+import org.folio.services.validator.util.ValidatorHelper;
 
 /**
  * Performs preprocessing operations before the verticle is deployed,
@@ -20,10 +21,10 @@ public class InitAPIs implements InitAPI {
   @Override
   public void init(Vertx vertx, Context context, Handler<AsyncResult<Boolean>> handler) {
     new ServiceBinder(vertx)
-      .setAddress(ValidatorRegistryService.ADDRESS)
+      .setAddress(ValidatorHelper.REGISTRY_SERVICE_ADDRESS)
       .register(ValidatorRegistryService.class, ValidatorRegistryService.create(vertx));
     new ServiceBinder(vertx)
-      .setAddress(ValidationEngineService.ADDRESS)
+      .setAddress(ValidatorHelper.VALIDATOR_ENGINE_ADDRESS)
       .register(ValidationEngineService.class, ValidationEngineService.create(vertx));
 
     handler.handle(Future.succeededFuture(true));

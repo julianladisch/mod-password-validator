@@ -11,13 +11,11 @@ import io.vertx.core.logging.LoggerFactory;
 import org.folio.rest.jaxrs.model.Rule;
 import org.folio.rest.jaxrs.model.RuleCollection;
 import org.folio.rest.jaxrs.resource.TenantRulesResource;
-import org.folio.rest.tools.utils.TenantTool;
 import org.folio.services.validator.registry.ValidatorRegistryService;
+import org.folio.services.validator.util.ValidatorHelper;
 
 import javax.ws.rs.core.Response;
 import java.util.Map;
-
-import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
 
 public class ValidatorRegistryImpl implements TenantRulesResource {
 
@@ -28,9 +26,11 @@ public class ValidatorRegistryImpl implements TenantRulesResource {
   private static final String IMPLEMENTATION_REFERENCE_REQUIRED_ERROR = "In case of Programmatic rule Implementation reference should be provided";
 
   private final ValidatorRegistryService validatorRegistryService;
+  private String tenantId;
 
   public ValidatorRegistryImpl(Vertx vertx, String tenantId) {
-    this.validatorRegistryService = ValidatorRegistryService.createProxy(vertx, ValidatorRegistryService.ADDRESS);
+    this.tenantId = tenantId;
+    this.validatorRegistryService = ValidatorRegistryService.createProxy(vertx, ValidatorHelper.REGISTRY_SERVICE_ADDRESS);
   }
 
   @Override
@@ -38,20 +38,17 @@ public class ValidatorRegistryImpl implements TenantRulesResource {
                              final Handler<AsyncResult<Response>> asyncResultHandler,
                              final Context vertxContext) throws Exception {
     try {
-      vertxContext.runOnContext(v -> {
-        String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(OKAPI_HEADER_TENANT));
-        validatorRegistryService.getAllTenantRules(tenantId, reply -> {
-          if (reply.succeeded()) {
-            RuleCollection rules = reply.result().mapTo(RuleCollection.class);
-            asyncResultHandler.handle(
-              Future.succeededFuture(GetTenantRulesResponse.withJsonOK(rules)));
-          } else {
-            logger.error("Failed to get all tenant rules", reply.cause());
-            asyncResultHandler.handle(
-              Future.succeededFuture(GetTenantRulesResponse.withPlainInternalServerError("Failed to get all tenant rules")));
-          }
-        });
-      });
+      vertxContext.runOnContext(v -> validatorRegistryService.getAllTenantRules(tenantId, reply -> {
+        if (reply.succeeded()) {
+          RuleCollection rules = reply.result().mapTo(RuleCollection.class);
+          asyncResultHandler.handle(
+            Future.succeededFuture(GetTenantRulesResponse.withJsonOK(rules)));
+        } else {
+          logger.error("Failed to get all tenant rules", reply.cause());
+          asyncResultHandler.handle(
+            Future.succeededFuture(GetTenantRulesResponse.withPlainInternalServerError("Failed to get all tenant rules")));
+        }
+      }));
     } catch (Exception e) {
       logger.error("Error running on verticle for getTenantRules: " + e.getMessage(), e.getCause());
       asyncResultHandler.handle(Future.succeededFuture(
@@ -71,7 +68,6 @@ public class ValidatorRegistryImpl implements TenantRulesResource {
           asyncResultHandler.handle(
             Future.succeededFuture(PostTenantRulesResponse.withPlainBadRequest(errorMessage)));
         } else {
-          String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(OKAPI_HEADER_TENANT));
           validatorRegistryService.createTenantRule(tenantId, JsonObject.mapFrom(entity), reply -> {
             if (reply.succeeded()) {
               asyncResultHandler.handle(
@@ -103,7 +99,6 @@ public class ValidatorRegistryImpl implements TenantRulesResource {
           asyncResultHandler.handle(
             Future.succeededFuture(PutTenantRulesResponse.withPlainBadRequest(errorMessage)));
         } else {
-          String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(OKAPI_HEADER_TENANT));
           validatorRegistryService.updateTenantRule(tenantId, JsonObject.mapFrom(entity), reply -> {
             if (reply.succeeded()) {
               JsonObject result = reply.result();
@@ -138,27 +133,24 @@ public class ValidatorRegistryImpl implements TenantRulesResource {
                                      final Handler<AsyncResult<Response>> asyncResultHandler,
                                      final Context vertxContext) throws Exception {
     try {
-      vertxContext.runOnContext(v -> {
-        String tenantId = TenantTool.calculateTenantId(okapiHeaders.get(OKAPI_HEADER_TENANT));
-        validatorRegistryService.getTenantRuleByRuleId(tenantId, ruleId, reply -> {
-          if (reply.succeeded()) {
-            JsonObject result = reply.result();
-            if (result == null) {
-              String message = "Rule " + ruleId + " does not exist";
-              logger.debug(message);
-              asyncResultHandler.handle(
-                Future.succeededFuture(GetTenantRulesByRuleIdResponse.withPlainNotFound(message)));
-            } else {
-              asyncResultHandler.handle(
-                Future.succeededFuture(GetTenantRulesByRuleIdResponse.withJsonOK(result.mapTo(Rule.class))));
-            }
-          } else {
-            logger.error("Failed to get rule by id " + ruleId, reply.cause());
+      vertxContext.runOnContext(v -> validatorRegistryService.getTenantRuleByRuleId(tenantId, ruleId, reply -> {
+        if (reply.succeeded()) {
+          JsonObject result = reply.result();
+          if (result == null) {
+            String message = "Rule " + ruleId + " does not exist";
+            logger.debug(message);
             asyncResultHandler.handle(
-              Future.succeededFuture(GetTenantRulesByRuleIdResponse.withPlainInternalServerError("Failed to get rule by id " + ruleId)));
+              Future.succeededFuture(GetTenantRulesByRuleIdResponse.withPlainNotFound(message)));
+          } else {
+            asyncResultHandler.handle(
+              Future.succeededFuture(GetTenantRulesByRuleIdResponse.withJsonOK(result.mapTo(Rule.class))));
           }
-        });
-      });
+        } else {
+          logger.error("Failed to get rule by id " + ruleId, reply.cause());
+          asyncResultHandler.handle(
+            Future.succeededFuture(GetTenantRulesByRuleIdResponse.withPlainInternalServerError("Failed to get rule by id " + ruleId)));
+        }
+      }));
     } catch (Exception e) {
       logger.error("Error running on verticle for getTenantRulesByRuleId: " + e.getMessage(), e.getCause());
       asyncResultHandler.handle(Future.succeededFuture(

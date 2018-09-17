@@ -4,13 +4,13 @@
     {
       "tableName": "validation_rules",
       "generateId": false,
-      "fromModuleVersion" : "1.0",
-      "withMetadata" : true,
+      "fromModuleVersion": "1.0",
+      "withMetadata": true,
       "pkColumnName": "_id",
       "index": [
         {
-          "fieldName" : "id",
-          "tOps" : "ADD"
+          "fieldName": "id",
+          "tOps": "ADD"
         }
       ]
     }

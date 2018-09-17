@@ -30,11 +30,11 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.folio.services.validator.engine.ValidationEngineService.PASSWORD_VALIDATION_INVALID_RESULT;
-import static org.folio.services.validator.engine.ValidationEngineService.PASSWORD_VALIDATION_VALID_RESULT;
-import static org.folio.services.validator.engine.ValidationEngineService.REQUEST_PASSWORD_PARAM_KEY;
-import static org.folio.services.validator.engine.ValidationEngineService.RESPONSE_ERROR_MESSAGES_KEY;
-import static org.folio.services.validator.engine.ValidationEngineService.RESPONSE_VALIDATION_RESULT_KEY;
+import static org.folio.services.validator.util.ValidatorHelper.VALIDATION_INVALID_RESULT;
+import static org.folio.services.validator.util.ValidatorHelper.VALIDATION_VALID_RESULT;
+import static org.folio.services.validator.util.ValidatorHelper.REQUEST_PARAM_KEY;
+import static org.folio.services.validator.util.ValidatorHelper.RESPONSE_ERROR_MESSAGES_KEY;
+import static org.folio.services.validator.util.ValidatorHelper.RESPONSE_VALIDATION_RESULT_KEY;
 
 @RunWith(VertxUnitRunner.class)
 public class PasswordResourceTest {
@@ -171,8 +171,8 @@ public class PasswordResourceTest {
   @Test
   public void shouldReturnSuccessfulValidationWhenNoActiveRulesForTargetTenantExists(final TestContext context) {
     Async async = context.async();
-    JsonObject passwordBody = new JsonObject().put(REQUEST_PASSWORD_PARAM_KEY, "test");
-    JsonObject expectedResponse = new JsonObject().put(RESPONSE_VALIDATION_RESULT_KEY, PASSWORD_VALIDATION_VALID_RESULT)
+    JsonObject passwordBody = new JsonObject().put(REQUEST_PARAM_KEY, "test");
+    JsonObject expectedResponse = new JsonObject().put(RESPONSE_VALIDATION_RESULT_KEY, VALIDATION_VALID_RESULT)
       .put(RESPONSE_ERROR_MESSAGES_KEY, new JsonArray());
 
     postRule(REGEXP_RULE_ONE_LETTER_ONE_NUMBER.put(ORDER_NO, 0).put(STATE, "Disabled"), TestUtil.NO_ASSERTS)
@@ -192,8 +192,8 @@ public class PasswordResourceTest {
   @Test
   public void shouldReturnSuccessfulValidationWhenPasswordPassesAllRules(final TestContext context) {
     Async async = context.async();
-    JsonObject passwordBody = new JsonObject().put(REQUEST_PASSWORD_PARAM_KEY, "password123");
-    JsonObject expectedResponse = new JsonObject().put(RESPONSE_VALIDATION_RESULT_KEY, PASSWORD_VALIDATION_VALID_RESULT)
+    JsonObject passwordBody = new JsonObject().put(REQUEST_PARAM_KEY, "password123");
+    JsonObject expectedResponse = new JsonObject().put(RESPONSE_VALIDATION_RESULT_KEY, VALIDATION_VALID_RESULT)
       .put(RESPONSE_ERROR_MESSAGES_KEY, new JsonArray());
 
     postRule(REGEXP_RULE_ONE_LETTER_ONE_NUMBER.put(ORDER_NO, 0).put(STATE, "Enabled"), TestUtil.NO_ASSERTS)
@@ -214,10 +214,10 @@ public class PasswordResourceTest {
   @Test
   public void shouldReturnFailedValidationResultWithMessageWhenPasswordDidNotPassRule(final TestContext context) {
     Async async = context.async();
-    JsonObject passwordBody = new JsonObject().put(REQUEST_PASSWORD_PARAM_KEY, "badPassword");
+    JsonObject passwordBody = new JsonObject().put(REQUEST_PARAM_KEY, "badPassword");
     String expectedErrorMessageId = REGEXP_RULE_ONE_LETTER_ONE_NUMBER.getString(ERR_MESSAGE_ID);
     JsonObject expectedResponse = new JsonObject()
-      .put(RESPONSE_VALIDATION_RESULT_KEY, PASSWORD_VALIDATION_INVALID_RESULT)
+      .put(RESPONSE_VALIDATION_RESULT_KEY, VALIDATION_INVALID_RESULT)
       .put(RESPONSE_ERROR_MESSAGES_KEY,
         new JsonArray()
           .add(expectedErrorMessageId)

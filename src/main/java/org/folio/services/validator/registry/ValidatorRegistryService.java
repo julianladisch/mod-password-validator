@@ -13,8 +13,6 @@ import io.vertx.core.json.JsonObject;
 @ProxyGen
 public interface ValidatorRegistryService {
 
-  static final String ADDRESS = "validator-registry.queue";
-
   static ValidatorRegistryService create(Vertx vertx) {
     return new ValidatorRegistryServiceImpl(vertx);
   }
