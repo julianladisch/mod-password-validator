@@ -55,7 +55,7 @@ public class PasswordResourceUnitTest {
       new JsonObject()
         .put(ValidatorHelper.RESPONSE_VALIDATION_RESULT_KEY, "Valid")
         .put(ValidatorHelper.RESPONSE_ERROR_MESSAGES_KEY, new JsonArray());
-    Mockito.doAnswer(new AsyncResultAnswer<>(Future.succeededFuture(mockResponse), 2))
+    Mockito.doAnswer(new GenericHandlerAnswer<>(Future.succeededFuture(mockResponse), 2))
       .when(validationEngineService)
       .validatePassword(ArgumentMatchers.eq(givenPassword), ArgumentMatchers.eq(okapiHeaders), ArgumentMatchers.any());
 
@@ -84,7 +84,7 @@ public class PasswordResourceUnitTest {
     Map<String, String> okapiHeaders = new HashMap<>();
     okapiHeaders.put(OKAPI_HEADER_TENANT, TENANT_ID);
     String exceptionMessage = "This is an exception";
-    Mockito.doAnswer(new AsyncResultAnswer<>(Future.failedFuture(new Exception(exceptionMessage)), 2))
+    Mockito.doAnswer(new GenericHandlerAnswer<>(Future.failedFuture(new Exception(exceptionMessage)), 2))
       .when(validationEngineService)
       .validatePassword(ArgumentMatchers.eq(givenPassword), ArgumentMatchers.eq(okapiHeaders), ArgumentMatchers.any());
 
