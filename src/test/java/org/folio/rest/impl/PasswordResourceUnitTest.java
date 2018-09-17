@@ -44,6 +44,7 @@ public class PasswordResourceUnitTest {
 
   @Test
   public void shouldReturnServiceResponseWhenSucceeded() throws Exception {
+    //given
     String givenPassword = "password";
     PasswordJson requestEntity = new PasswordJson().withPassword(givenPassword);
     Map<String, String> okapiHeaders = new HashMap<>();
@@ -65,13 +66,18 @@ public class PasswordResourceUnitTest {
       Assert.assertEquals(expectedEntity.getResult(), responseEntity.getResult());
       Assert.assertEquals(expectedEntity.getMessages(), responseEntity.getMessages());
     };
+
+    //when
     passwordResource.postPasswordValidate(requestEntity, okapiHeaders, checkingHandler, vertxContext);
+
+    //then
     Mockito.verify(validationEngineService)
       .validatePassword(ArgumentMatchers.eq(givenPassword), ArgumentMatchers.eq(okapiHeaders), ArgumentMatchers.any());
   }
 
   @Test
   public void shouldReturnInternalServerError() throws Exception {
+    //given
     String givenPassword = "password";
     PasswordJson requestEntity = new PasswordJson().withPassword(givenPassword);
     Map<String, String> okapiHeaders = new HashMap<>();
@@ -86,7 +92,11 @@ public class PasswordResourceUnitTest {
       Assert.assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, response.getStatus());
       Assert.assertThat((String) response.getEntity(), Matchers.containsString(exceptionMessage));
     };
+
+    //when
     passwordResource.postPasswordValidate(requestEntity, okapiHeaders, checkingHandler, vertxContext);
+
+    //then
     Mockito.verify(validationEngineService)
       .validatePassword(ArgumentMatchers.eq(givenPassword), ArgumentMatchers.eq(okapiHeaders), ArgumentMatchers.any());
   }
