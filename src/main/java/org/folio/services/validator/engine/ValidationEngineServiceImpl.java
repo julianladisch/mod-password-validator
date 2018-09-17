@@ -151,7 +151,7 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
     Future<String> future = Future.future();
     HttpClientRequest passwordValidationRequest = httpClient.post(remoteModuleUrl, validationResponse -> {
       HttpResponseStatus responseStatus = HttpResponseStatus.valueOf(validationResponse.statusCode());
-      if (responseStatus.equals(responseStatus.OK)) {
+      if (responseStatus.equals(HttpResponseStatus.OK)) {
         validationResponse.bodyHandler(body -> {
           String validationResult = new JsonObject(body.toString()).getString(RESPONSE_PASSWORD_RESULT_PARAM_KEY);
           if (PASSWORD_VALIDATION_INVALID_RESULT.equals(validationResult)) {

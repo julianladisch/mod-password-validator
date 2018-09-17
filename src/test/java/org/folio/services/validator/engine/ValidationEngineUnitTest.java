@@ -94,7 +94,7 @@ public class ValidationEngineUnitTest {
     Handler<AsyncResult<JsonObject>> checkingHandler = result -> {
       JsonObject response = result.result();
       String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
-      Assert.assertEquals(validationResult, ValidationEngineService.PASSWORD_VALIDATION_VALID_RESULT);
+      Assert.assertEquals(ValidationEngineService.PASSWORD_VALIDATION_VALID_RESULT, validationResult);
       Assert.assertNull(response.getValue(RESPONSE_ERROR_MESSAGES_KEY));
     };
     validationEngineService.validatePassword(password, requestHeaders, checkingHandler);
@@ -117,8 +117,8 @@ public class ValidationEngineUnitTest {
       JsonObject response = result.result();
       String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
       JsonArray errorMessages = (JsonArray) response.getValue(RESPONSE_ERROR_MESSAGES_KEY);
-      Assert.assertEquals(validationResult, ValidationEngineService.PASSWORD_VALIDATION_INVALID_RESULT);
-      Assert.assertEquals(errorMessages.getList().size(), 1);
+      Assert.assertEquals(ValidationEngineService.PASSWORD_VALIDATION_INVALID_RESULT, validationResult);
+      Assert.assertEquals(1, errorMessages.getList().size());
       Assert.assertEquals(errorMessages.getList().get(0), regExpRuleCollection.getRules().get(0).getErrMessageId());
     };
     validationEngineService.validatePassword(password, requestHeaders, checkingHandler);
@@ -141,8 +141,8 @@ public class ValidationEngineUnitTest {
       JsonObject response = result.result();
       String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
       JsonArray errorMessages = (JsonArray) response.getValue(RESPONSE_ERROR_MESSAGES_KEY);
-      Assert.assertEquals(validationResult, ValidationEngineService.PASSWORD_VALIDATION_INVALID_RESULT);
-      Assert.assertEquals(errorMessages.getList().size(), 1);
+      Assert.assertEquals(ValidationEngineService.PASSWORD_VALIDATION_INVALID_RESULT, validationResult);
+      Assert.assertEquals(1, errorMessages.getList().size());
       Assert.assertEquals(errorMessages.getList().get(0), regExpRuleCollection.getRules().get(1).getErrMessageId());
     };
     validationEngineService.validatePassword(password, requestHeaders, checkingHandler);
@@ -164,7 +164,7 @@ public class ValidationEngineUnitTest {
       JsonObject response = result.result();
       String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
       JsonArray errorMessages = (JsonArray) response.getValue(RESPONSE_ERROR_MESSAGES_KEY);
-      Assert.assertEquals(validationResult, ValidationEngineService.PASSWORD_VALIDATION_INVALID_RESULT);
+      Assert.assertEquals(ValidationEngineService.PASSWORD_VALIDATION_INVALID_RESULT, validationResult);
       Assert.assertEquals(errorMessages.getList().size(), regExpRuleCollection.getRules().size());
       for (Rule rule : regExpRuleCollection.getRules()) {
         Assert.assertTrue(errorMessages.getList().contains(rule.getErrMessageId()));
