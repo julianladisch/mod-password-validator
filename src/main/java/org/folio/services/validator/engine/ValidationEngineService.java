@@ -19,9 +19,9 @@ import java.util.Map;
 public interface ValidationEngineService {
 
   public static final String ADDRESS = "validation-engine.queue";
-  public static final String RESPONSE_VALIDATION_RESULT_KEY = "Result";
-  public static final String RESPONSE_ERROR_MESSAGES_KEY = "Messages";
-  public static final String REQUEST_PASSWORD_PARAM_KEY = "Password";
+  public static final String RESPONSE_VALIDATION_RESULT_KEY = "result";
+  public static final String RESPONSE_ERROR_MESSAGES_KEY = "messages";
+  public static final String REQUEST_PASSWORD_PARAM_KEY = "password";
 
   static ValidationEngineService create(Vertx vertx) {
     return new ValidationEngineServiceImpl(vertx);
@@ -49,8 +49,8 @@ public interface ValidationEngineService {
 
 
   public enum ValidationResult {
-    VALID("Valid"),
-    INVALID("Invalid");
+    VALID("valid"),
+    INVALID("invalid");
 
     private String caption;
 
