@@ -153,7 +153,7 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
       HttpResponseStatus responseStatus = HttpResponseStatus.valueOf(validationResponse.statusCode());
       if (responseStatus.equals(responseStatus.OK)) {
         validationResponse.bodyHandler(body -> {
-          String validationResult = new JsonObject(body.toString()).getString("Result");
+          String validationResult = new JsonObject(body.toString()).getString(RESPONSE_PASSWORD_RESULT_PARAM_KEY);
           if (PASSWORD_VALIDATION_INVALID_RESULT.equals(validationResult)) {
             errorMessages.add(rule.getErrMessageId());
           }
