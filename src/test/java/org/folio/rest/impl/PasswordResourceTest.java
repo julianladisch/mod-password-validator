@@ -309,9 +309,9 @@ public class PasswordResourceTest {
         List<org.folio.rest.jaxrs.model.Rule> rules = collection.getRules();
         context.assertTrue(rules.size() == 2);
         context.assertTrue(rules.stream().filter(rule1 ->
-          rule1.getRuleId().equals(PROGRAMMATIC_RULE.getString(RULE_ID))).collect(Collectors.toList()).size() == 1);
+          rule1.getName().equals(PROGRAMMATIC_RULE.getString("name"))).collect(Collectors.toList()).size() == 1);
         context.assertTrue(rules.stream().filter(rule1 ->
-          rule1.getRuleId().equals(REGEXP_RULE_ENABLED.getString(RULE_ID))).collect(Collectors.toList()).size() == 1);
+          rule1.getName().equals(REGEXP_RULE_ENABLED.getString("name"))).collect(Collectors.toList()).size() == 1);
       }))
       .setHandler(chainedRes -> {
         if (chainedRes.failed()) {

@@ -35,8 +35,7 @@ import java.util.stream.Collectors;
 public class ValidatorRegistryTest {
 
   private static final JsonObject PROGRAMMATIC_RULE_DISABLED = new JsonObject()
-    .put("ruleId", "1ed60281-bfb0-44c4-adb3-3d4e04fba550")
-    .put("name", "programmatic rule")
+    .put("name", "programmatic rule disabled")
     .put("type", "Programmatic")
     .put("validationType", "Soft")
     .put("state", "Disabled")
@@ -48,8 +47,7 @@ public class ValidatorRegistryTest {
     .put("errMessageId", "");
 
   private static final JsonObject PROGRAMMATIC_RULE_ENABLED = new JsonObject()
-    .put("ruleId", "17626509-d60e-45c7-8818-32ae25e4501a")
-    .put("name", "programmatic rule")
+    .put("name", "programmatic rule enabled")
     .put("type", "Programmatic")
     .put("validationType", "Soft")
     .put("state", "Disabled")
@@ -61,8 +59,7 @@ public class ValidatorRegistryTest {
     .put("errMessageId", "");
 
   private static final JsonObject REGEXP_RULE_ENABLED = new JsonObject()
-    .put("ruleId", "7ab1c2cd-37ad-4b8f-a514-e78424798e27")
-    .put("name", "regexp rule")
+    .put("name", "regexp rule enabled")
     .put("type", "RegExp")
     .put("validationType", "Strong")
     .put("state", "Enabled")
@@ -73,8 +70,7 @@ public class ValidatorRegistryTest {
     .put("errMessageId", "");
 
   private static final JsonObject REGEXP_RULE_DISABLED = new JsonObject()
-    .put("ruleId", "00d2c43c-06fe-450c-af3f-8700cdc28fc5")
-    .put("name", "regexp rule")
+    .put("name", "regexp rule disabled")
     .put("type", "RegExp")
     .put("validationType", "Strong")
     .put("state", "Disabled")
@@ -108,7 +104,7 @@ public class ValidatorRegistryTest {
     .put("errMessageId", "");
 
   private static final JsonObject VALID_RULE = new JsonObject()
-    .put("name", "regexp rule")
+    .put("name", "valid regexp rule")
     .put("type", "RegExp")
     .put("validationType", "Strong")
     .put("state", "Enabled")
@@ -204,13 +200,13 @@ public class ValidatorRegistryTest {
         List<org.folio.rest.jaxrs.model.Rule> rules = collection.getRules();
         context.assertTrue(rules.size() == 4);
         context.assertTrue(rules.stream().filter(rule1 ->
-          rule1.getRuleId().equals(PROGRAMMATIC_RULE_DISABLED.getString(RULE_ID))).collect(Collectors.toList()).size() == 1);
+          rule1.getName().equals(PROGRAMMATIC_RULE_DISABLED.getString("name"))).collect(Collectors.toList()).size() == 1);
         context.assertTrue(rules.stream().filter(rule1 ->
-          rule1.getRuleId().equals(REGEXP_RULE_DISABLED.getString(RULE_ID))).collect(Collectors.toList()).size() == 1);
+          rule1.getName().equals(REGEXP_RULE_DISABLED.getString("name"))).collect(Collectors.toList()).size() == 1);
         context.assertTrue(rules.stream().filter(rule1 ->
-          rule1.getRuleId().equals(REGEXP_RULE_ENABLED.getString(RULE_ID))).collect(Collectors.toList()).size() == 1);
+          rule1.getName().equals(REGEXP_RULE_ENABLED.getString("name"))).collect(Collectors.toList()).size() == 1);
         context.assertTrue(rules.stream().filter(rule1 ->
-          rule1.getRuleId().equals(PROGRAMMATIC_RULE_ENABLED.getString(RULE_ID))).collect(Collectors.toList()).size() == 1);
+          rule1.getName().equals(PROGRAMMATIC_RULE_ENABLED.getString("name"))).collect(Collectors.toList()).size() == 1);
       }))
       .setHandler(chainedRes -> {
         if(chainedRes.failed()) {
@@ -374,7 +370,11 @@ public class ValidatorRegistryTest {
   @Test
   public void shouldUpdateExistingRule(final TestContext context) {
     final Async async = context.async();
-    postRule(PROGRAMMATIC_RULE_DISABLED, HttpStatus.SC_CREATED, result -> context.assertEquals(result.result().getCode(), HttpStatus.SC_CREATED))
+    postRule(PROGRAMMATIC_RULE_DISABLED, HttpStatus.SC_CREATED, result -> {
+      context.assertEquals(result.result().getCode(), HttpStatus.SC_CREATED);
+      org.folio.rest.jaxrs.model.Rule rule = new JsonObject(result.result().getBody()).mapTo(org.folio.rest.jaxrs.model.Rule.class);
+      PROGRAMMATIC_RULE_DISABLED.put(RULE_ID, rule.getRuleId());
+    })
       .compose(r -> updateRule(PROGRAMMATIC_RULE_DISABLED.put("state", org.folio.rest.jaxrs.model.Rule.State.ENABLED.toString()), HttpStatus.SC_OK, result -> {
         context.assertEquals(result.result().getCode(), HttpStatus.SC_OK);
         org.folio.rest.jaxrs.model.Rule rule = new JsonObject(result.result().getBody()).mapTo(org.folio.rest.jaxrs.model.Rule.class);
@@ -406,7 +406,11 @@ public class ValidatorRegistryTest {
   @Test
   public void shouldReturnRuleById(final TestContext context) {
     final Async async = context.async();
-    postRule(PROGRAMMATIC_RULE_DISABLED, HttpStatus.SC_CREATED, result -> context.assertEquals(result.result().getCode(), HttpStatus.SC_CREATED))
+    postRule(PROGRAMMATIC_RULE_DISABLED, HttpStatus.SC_CREATED, result -> {
+      context.assertEquals(result.result().getCode(), HttpStatus.SC_CREATED);
+      org.folio.rest.jaxrs.model.Rule rule = new JsonObject(result.result().getBody()).mapTo(org.folio.rest.jaxrs.model.Rule.class);
+      PROGRAMMATIC_RULE_DISABLED.put(RULE_ID, rule.getRuleId());
+    })
       .compose(r -> getRuleById(PROGRAMMATIC_RULE_DISABLED.getString(RULE_ID), HttpStatus.SC_OK, result -> {
         context.assertEquals(result.result().getCode(), HttpStatus.SC_OK);
         org.folio.rest.jaxrs.model.Rule rule = new JsonObject(result.result().getBody()).mapTo(org.folio.rest.jaxrs.model.Rule.class);
