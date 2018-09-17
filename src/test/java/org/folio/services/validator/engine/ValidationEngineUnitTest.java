@@ -40,8 +40,13 @@ public class ValidationEngineUnitTest {
   private ValidationEngineService validationEngineService = new ValidationEngineServiceImpl();
   private Map<String, String> requestHeaders = new HashMap<>();
 
+
   @BeforeClass
   public static void setUp() {
+    initRegExpRules();
+  }
+
+  private static void initRegExpRules() {
     regExpRuleCollection = new RuleCollection();
 
     List<Rule> rulesList = new ArrayList<>();
@@ -55,7 +60,7 @@ public class ValidationEngineUnitTest {
       .put("expression", "^.{6,12}$")
       .put("description", "Password must be between 6 and 12 digits")
       .put("orderNo", 0)
-      .put("errMessageId", "Please type password between 6 and 12 digits long")
+      .put("errMessageId", "password.length.invalid")
       .mapTo(Rule.class);
 
     Rule regExpOnlyAlphabetical_Rule = new JsonObject()
@@ -68,7 +73,7 @@ public class ValidationEngineUnitTest {
       .put("expression", "^[A-Za-z]+$")
       .put("description", "Password must contain upper and lower alphabetical characters only")
       .put("orderNo", 1)
-      .put("errMessageId", "password.alphabetical")
+      .put("errMessageId", "password.alphabetical.invalid")
       .mapTo(Rule.class);
 
     rulesList.add(regExpLimitedLength_Rule);
@@ -89,10 +94,9 @@ public class ValidationEngineUnitTest {
     Handler<AsyncResult<JsonObject>> checkingHandler = result -> {
       JsonObject response = result.result();
       String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
-      Assert.assertEquals(validationResult, "Valid");
+      Assert.assertEquals(validationResult, ValidationEngineService.PASSWORD_VALIDATON_VALID_RESULT);
       Assert.assertNull(response.getValue(RESPONSE_ERROR_MESSAGES_KEY));
     };
-
     validationEngineService.validatePassword(password, requestHeaders, checkingHandler);
 
     // then
@@ -113,11 +117,10 @@ public class ValidationEngineUnitTest {
       JsonObject response = result.result();
       String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
       JsonArray errorMessages = (JsonArray) response.getValue(RESPONSE_ERROR_MESSAGES_KEY);
-      Assert.assertEquals(validationResult, "Invalid");
+      Assert.assertEquals(validationResult, ValidationEngineService.PASSWORD_VALIDATON_INVALID_RESULT);
       Assert.assertEquals(errorMessages.getList().size(), 1);
       Assert.assertEquals(errorMessages.getList().get(0), regExpRuleCollection.getRules().get(0).getErrMessageId());
     };
-
     validationEngineService.validatePassword(password, requestHeaders, checkingHandler);
 
     // then
@@ -138,11 +141,10 @@ public class ValidationEngineUnitTest {
       JsonObject response = result.result();
       String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
       JsonArray errorMessages = (JsonArray) response.getValue(RESPONSE_ERROR_MESSAGES_KEY);
-      Assert.assertEquals(validationResult, "Invalid");
+      Assert.assertEquals(validationResult, ValidationEngineService.PASSWORD_VALIDATON_INVALID_RESULT);
       Assert.assertEquals(errorMessages.getList().size(), 1);
       Assert.assertEquals(errorMessages.getList().get(0), regExpRuleCollection.getRules().get(1).getErrMessageId());
     };
-
     validationEngineService.validatePassword(password, requestHeaders, checkingHandler);
 
     // then
@@ -162,12 +164,11 @@ public class ValidationEngineUnitTest {
       JsonObject response = result.result();
       String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
       JsonArray errorMessages = (JsonArray) response.getValue(RESPONSE_ERROR_MESSAGES_KEY);
-      Assert.assertEquals(validationResult, "Invalid");
+      Assert.assertEquals(validationResult, ValidationEngineService.PASSWORD_VALIDATON_INVALID_RESULT);
       Assert.assertEquals(errorMessages.getList().size(), regExpRuleCollection.getRules().size());
       for (Rule rule : regExpRuleCollection.getRules()) {
         Assert.assertTrue(errorMessages.getList().contains(rule.getErrMessageId()));
       }
-
     };
 
     validationEngineService.validatePassword(password, requestHeaders, checkingHandler);

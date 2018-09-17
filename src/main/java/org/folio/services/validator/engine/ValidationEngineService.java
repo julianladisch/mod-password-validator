@@ -22,6 +22,9 @@ public interface ValidationEngineService {
   public static final String RESPONSE_VALIDATION_RESULT_KEY = "result";
   public static final String RESPONSE_ERROR_MESSAGES_KEY = "messages";
   public static final String REQUEST_PASSWORD_PARAM_KEY = "password";
+  public static final String PASSWORD_VALIDATON_VALID_RESULT = "valid";
+  public static final String PASSWORD_VALIDATON_INVALID_RESULT = "invalid";
+
 
   static ValidationEngineService create(Vertx vertx) {
     return new ValidationEngineServiceImpl(vertx);
@@ -46,20 +49,4 @@ public interface ValidationEngineService {
    * @param resultHandler handler with validation results in format <Result, Messages>
    */
   void validatePassword(String password, Map<String, String> headers, Handler<AsyncResult<JsonObject>> resultHandler);
-
-
-  public enum ValidationResult {
-    VALID("valid"),
-    INVALID("invalid");
-
-    private String caption;
-
-    private ValidationResult(String caption) {
-      this.caption = caption;
-    }
-
-    public String getCaption() {
-      return caption;
-    }
-  }
 }
