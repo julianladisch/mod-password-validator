@@ -47,4 +47,19 @@ public interface ValidationEngineService {
    */
   void validatePassword(String password, Map<String, String> headers, Handler<AsyncResult<JsonObject>> resultHandler);
 
+
+  public enum ValidationResult {
+    VALID("Valid"),
+    INVALID("Invalid");
+
+    private String caption;
+
+    private ValidationResult(String caption) {
+      this.caption = caption;
+    }
+
+    public String getCaption() {
+      return caption;
+    }
+  }
 }

@@ -212,19 +212,4 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
   public void setValidatorRegistryProxy(ValidatorRegistryService validatorRegistryProxy) {
     this.validatorRegistryProxy = validatorRegistryProxy;
   }
-
-  public enum ValidationResult {
-    VALID("Valid"),
-    INVALID("Invalid");
-
-    private String caption;
-
-    private ValidationResult(String caption) {
-      this.caption = caption;
-    }
-
-    public String getCaption() {
-      return caption;
-    }
-  }
 }
