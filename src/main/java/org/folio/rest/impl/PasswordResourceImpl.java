@@ -68,9 +68,9 @@ public class PasswordResourceImpl implements PasswordResource {
             asyncResultHandler.handle(
               Future.succeededFuture(GetPasswordValidatorsResponse.withJsonOK(rules)));
           } else {
-            logger.error(reply.cause().getMessage(), reply.cause());
+            logger.error("Failed to get password validators", reply.cause());
             asyncResultHandler.handle(
-              Future.succeededFuture(GetPasswordValidatorsResponse.withPlainInternalServerError(reply.cause().getMessage())));
+              Future.succeededFuture(GetPasswordValidatorsResponse.withPlainInternalServerError("Failed to get password validators")));
           }
         });
       });
