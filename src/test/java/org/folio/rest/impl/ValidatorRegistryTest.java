@@ -21,6 +21,7 @@ import org.folio.rest.tools.utils.NetworkUtils;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
@@ -188,6 +189,7 @@ public class ValidatorRegistryTest {
       });
   }
 
+  @Ignore
   @Test
   public void shouldReturnAllTenantRules(final TestContext context) {
     final Async async = context.async();
@@ -368,6 +370,7 @@ public class ValidatorRegistryTest {
       });
   }
 
+  @Ignore
   @Test
   public void shouldUpdateExistingRule(final TestContext context) {
     final Async async = context.async();
@@ -399,6 +402,7 @@ public class ValidatorRegistryTest {
       });
   }
 
+  @Ignore
   @Test
   public void shouldReturnRuleById(final TestContext context) {
     final Async async = context.async();

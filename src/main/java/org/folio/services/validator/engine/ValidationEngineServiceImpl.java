@@ -154,7 +154,7 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
       if (responseStatus.equals(responseStatus.OK)) {
         validationResponse.bodyHandler(body -> {
           String validationResult = new JsonObject(body.toString()).getString("Result");
-          if (PASSWORD_VALIDATON_INVALID_RESULT.equals(validationResult)) {
+          if (PASSWORD_VALIDATION_INVALID_RESULT.equals(validationResult)) {
             errorMessages.add(rule.getErrMessageId());
           }
           future.complete();
@@ -201,9 +201,9 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
                                final Handler<AsyncResult<JsonObject>> resultHandler) {
     JsonObject validationResult = new JsonObject();
     if (errorMessages.isEmpty()) {
-      validationResult.put(RESPONSE_VALIDATION_RESULT_KEY, PASSWORD_VALIDATON_VALID_RESULT);
+      validationResult.put(RESPONSE_VALIDATION_RESULT_KEY, PASSWORD_VALIDATION_VALID_RESULT);
     } else {
-      validationResult.put(RESPONSE_VALIDATION_RESULT_KEY, PASSWORD_VALIDATON_INVALID_RESULT);
+      validationResult.put(RESPONSE_VALIDATION_RESULT_KEY, PASSWORD_VALIDATION_INVALID_RESULT);
       validationResult.put(RESPONSE_ERROR_MESSAGES_KEY, errorMessages);
     }
     resultHandler.handle(Future.succeededFuture(validationResult));

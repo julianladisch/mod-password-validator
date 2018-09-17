@@ -51,8 +51,8 @@ public class PasswordResourceUnitTest {
 
     JsonObject mockResponse =
       new JsonObject()
-        .put("result", "Valid")
-        .put("messages", new JsonArray());
+        .put(ValidationEngineService.RESPONSE_VALIDATION_RESULT_KEY, "Valid")
+        .put(ValidationEngineService.RESPONSE_ERROR_MESSAGES_KEY, new JsonArray());
     Mockito.doAnswer(new AsyncResultAnswer<>(Future.succeededFuture(mockResponse), 2))
       .when(validationEngineService)
       .validatePassword(ArgumentMatchers.eq(givenPassword), ArgumentMatchers.eq(okapiHeaders), ArgumentMatchers.any());
