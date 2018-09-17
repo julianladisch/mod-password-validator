@@ -97,15 +97,6 @@ public class PasswordResourceTest {
     .put("orderNo", 1)
     .put("errMessageId", "");
 
-  private static final JsonObject PROGRAMMATIC_RULE_STUB = new JsonObject()
-    .put("name", "Regexp rule")
-    .put("type", "RegExp")
-    .put("validationType", "Strong")
-    .put("moduleName", "mod-password-validator")
-    .put("expression", "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]+$")
-    .put("description", "At least one letter and one number")
-    .put(ERR_MESSAGE_ID, "password.validation.error.one-letter-one-number");
-
 
   private static final String HOST = "http://localhost:";
   private static final String HTTP_PORT = "http.port";
@@ -247,11 +238,6 @@ public class PasswordResourceTest {
         async.complete();
       }
     });
-  }
-
-  @Test
-  public void shouldReturnSuccessfulValidationWhenPasswordPassesAllProgrammaticRules() {
-
   }
 
   @Test
