@@ -22,6 +22,7 @@ public interface ValidationEngineService {
   public static final String RESPONSE_VALIDATION_RESULT_KEY = "result";
   public static final String RESPONSE_ERROR_MESSAGES_KEY = "messages";
   public static final String REQUEST_PASSWORD_PARAM_KEY = "password";
+  public static final String RESPONSE_PASSWORD_RESULT_PARAM_KEY = "result";
   public static final String PASSWORD_VALIDATON_VALID_RESULT = "valid";
   public static final String PASSWORD_VALIDATON_INVALID_RESULT = "invalid";
 
