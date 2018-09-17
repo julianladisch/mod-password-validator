@@ -46,9 +46,9 @@ public class ValidatorRegistryImpl implements TenantRulesResource {
             asyncResultHandler.handle(
               Future.succeededFuture(GetTenantRulesResponse.withJsonOK(rules)));
           } else {
-            logger.error(reply.cause().getMessage(), reply.cause());
+            logger.error("Failed to get all tenant rules", reply.cause());
             asyncResultHandler.handle(
-              Future.succeededFuture(GetTenantRulesResponse.withPlainInternalServerError(reply.cause().getMessage())));
+              Future.succeededFuture(GetTenantRulesResponse.withPlainInternalServerError("Failed to get all tenant rules")));
           }
         });
       });
@@ -77,9 +77,9 @@ public class ValidatorRegistryImpl implements TenantRulesResource {
               asyncResultHandler.handle(
                 Future.succeededFuture(PostTenantRulesResponse.withJsonCreated(reply.result().mapTo(Rule.class))));
             } else {
-              logger.error(reply.cause().getMessage(), reply.cause());
+              logger.error("Failed to create new rule", reply.cause());
               asyncResultHandler.handle(
-                Future.succeededFuture(PostTenantRulesResponse.withPlainInternalServerError(reply.cause().getMessage())));
+                Future.succeededFuture(PostTenantRulesResponse.withPlainInternalServerError("Failed to create new rule")));
             }
           });
         }
@@ -117,15 +117,15 @@ public class ValidatorRegistryImpl implements TenantRulesResource {
                   Future.succeededFuture(PutTenantRulesResponse.withJsonOK(result.mapTo(Rule.class))));
               }
             } else {
-              logger.error(reply.cause().getMessage(), reply.cause());
+              logger.error("Failed to update rule", reply.cause());
               asyncResultHandler.handle(
-                Future.succeededFuture(PutTenantRulesResponse.withPlainInternalServerError(reply.cause().getMessage())));
+                Future.succeededFuture(PutTenantRulesResponse.withPlainInternalServerError("Failed to update rule")));
             }
           });
         }
       });
     } catch (Exception e) {
-      logger.error("Error running on verticle for putTenantRules: " + e.getMessage());
+      logger.error("Error running on verticle for putTenantRules: " + e.getMessage(), e.getCause());
       asyncResultHandler.handle(Future.succeededFuture(
         PutTenantRulesResponse.withPlainInternalServerError(Response.Status.INTERNAL_SERVER_ERROR.getReasonPhrase())));
     }
@@ -153,14 +153,14 @@ public class ValidatorRegistryImpl implements TenantRulesResource {
                 Future.succeededFuture(GetTenantRulesByRuleIdResponse.withJsonOK(result.mapTo(Rule.class))));
             }
           } else {
-            logger.error(reply.cause().getMessage(), reply.cause());
+            logger.error("Failed to get rule by id " + ruleId, reply.cause());
             asyncResultHandler.handle(
-              Future.succeededFuture(GetTenantRulesByRuleIdResponse.withPlainInternalServerError(reply.cause().getMessage())));
+              Future.succeededFuture(GetTenantRulesByRuleIdResponse.withPlainInternalServerError("Failed to get rule by id " + ruleId)));
           }
         });
       });
     } catch (Exception e) {
-      logger.error("Error running on verticle for getTenantRulesByRuleId: " + e.getMessage());
+      logger.error("Error running on verticle for getTenantRulesByRuleId: " + e.getMessage(), e.getCause());
       asyncResultHandler.handle(Future.succeededFuture(
         GetTenantRulesByRuleIdResponse.withPlainInternalServerError(Response.Status.INTERNAL_SERVER_ERROR.getReasonPhrase())));
     }

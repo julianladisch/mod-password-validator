@@ -44,7 +44,7 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
       String[] fieldList = {"*"};
       PostgresClient.getInstance(vertx, tenantId).get(VALIDATION_RULES_TABLE_NAME, Rule.class, fieldList, cql, true, false, getReply -> {
         if(getReply.failed()) {
-          logger.debug(getReply.cause().getMessage());
+          logger.error("Error while querying the db to get all tenant rules", getReply.cause());
           asyncResultHandler.handle(Future.failedFuture(getReply.cause()));
         } else {
           RuleCollection rules = new RuleCollection();
@@ -55,7 +55,7 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
         }
       });
     } catch (Exception e) {
-      logger.debug(e.getMessage(), e.getCause());
+      logger.error("Error while getting all tenant rules", e.getCause());
       asyncResultHandler.handle(Future.failedFuture(e.getCause()));
     }
 
@@ -66,21 +66,18 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
   public ValidatorRegistryService createTenantRule(String tenantId, JsonObject validationRule, Handler<AsyncResult<JsonObject>> asyncResultHandler) {
 
     try {
-      String id = validationRule.getString(RULE_ID_FIELD);
-      if (id == null || id.isEmpty()){
-        id = UUID.randomUUID().toString();
-      }
+      String id =  UUID.randomUUID().toString();
       validationRule.put(RULE_ID_FIELD, id);
       PostgresClient.getInstance(vertx, tenantId).save(VALIDATION_RULES_TABLE_NAME, id, validationRule, postReply -> {
         if(postReply.failed()) {
-          logger.debug(postReply.cause().getMessage());
+          logger.error("Error while saving the rule to the db", postReply.cause());
           asyncResultHandler.handle(Future.failedFuture(postReply.cause()));
         } else {
           asyncResultHandler.handle(Future.succeededFuture(validationRule));
         }
       });
     } catch (Exception e) {
-      logger.debug(e.getMessage(), e.getCause());
+      logger.error("Error while creating new tenant rule", e.getCause());
       asyncResultHandler.handle(Future.failedFuture(e.getCause()));
     }
 
@@ -91,17 +88,19 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
   public ValidatorRegistryService updateTenantRule(String tenantId, JsonObject validationRule, Handler<AsyncResult<JsonObject>> asyncResultHandler) {
 
     try {
-      Criteria idCrit = constructCriteria(RULE_ID_JSONB_FIELD, validationRule.getString(RULE_ID_FIELD));
+      String id = validationRule.getString(RULE_ID_FIELD);
+      Criteria idCrit = constructCriteria(RULE_ID_JSONB_FIELD, id);
       PostgresClient.getInstance(vertx, tenantId).get(VALIDATION_RULES_TABLE_NAME, Rule.class, new Criterion(idCrit), true, false, getReply -> {
         if(getReply.failed()) {
-          logger.debug(getReply.cause().getMessage());
+          logger.error("Error while querying the db to get the rule by id", getReply.cause());
           asyncResultHandler.handle(Future.failedFuture(getReply.cause()));
         } else if(getReply.result().getResults().isEmpty()) {
+          logger.debug("Rule " + id + " was not found in the db");
           asyncResultHandler.handle(Future.succeededFuture(null));
         } else {
           PostgresClient.getInstance(vertx, tenantId).update(VALIDATION_RULES_TABLE_NAME, validationRule.mapTo(Rule.class), new Criterion(idCrit), true, putReply -> {
             if(putReply.failed()) {
-              logger.debug(putReply.cause().getMessage());
+              logger.error("Error while updating the rule " + id + " in the db", putReply.cause());
               asyncResultHandler.handle(Future.failedFuture(putReply.cause()));
             } else {
               asyncResultHandler.handle(Future.succeededFuture(validationRule));
@@ -110,7 +109,7 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
         }
       });
     } catch (Exception e) {
-      logger.debug(e.getMessage(), e.getCause());
+      logger.error("Error while updating the rule in the db", e.getCause());
       asyncResultHandler.handle(Future.failedFuture(e.getCause()));
     }
 
@@ -124,11 +123,12 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
       Criteria idCrit = constructCriteria(RULE_ID_JSONB_FIELD, ruleId);
       PostgresClient.getInstance(vertx, tenantId).get(VALIDATION_RULES_TABLE_NAME, Rule.class, new Criterion(idCrit), true, false, getReply -> {
         if(getReply.failed()) {
-          logger.debug(getReply.cause().getMessage());
+          logger.error("Error while querying the db to get the rule by id", getReply.cause());
           asyncResultHandler.handle(Future.failedFuture(getReply.cause()));
         } else {
           List<Rule> ruleList = (List<Rule>) getReply.result().getResults();
-          if(ruleList.size() != 1) {
+          if(ruleList.size() < 1) {
+            logger.debug("Rule " + ruleId + "was not found in the db");
             asyncResultHandler.handle(Future.succeededFuture(null));
           } else {
             asyncResultHandler.handle(Future.succeededFuture(JsonObject.mapFrom(ruleList.get(0))));
@@ -136,7 +136,7 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
         }
       });
     } catch (Exception e) {
-      logger.debug(e.getMessage(), e.getCause());
+      logger.error("Error while getting rule by id", e.getCause());
       asyncResultHandler.handle(Future.failedFuture(e.getCause()));
     }
 
@@ -157,7 +157,7 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
       }
       PostgresClient.getInstance(vertx, tenantId).get(VALIDATION_RULES_TABLE_NAME, Rule.class, criterion, true, false, getReply -> {
         if(getReply.failed()) {
-          logger.debug(getReply.cause().getMessage());
+          logger.error("Error while querying the db to get all enabled tenant rules by type", getReply.cause());
           asyncResultHandler.handle(Future.failedFuture(getReply.cause()));
         } else {
           RuleCollection rules = new RuleCollection();
@@ -168,7 +168,7 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
         }
       });
     } catch (Exception e) {
-      logger.debug(e.getMessage(), e.getCause());
+      logger.error("Error while getting all enabled rules by type", e.getCause());
       asyncResultHandler.handle(Future.failedFuture(e.getCause()));
     }
 
