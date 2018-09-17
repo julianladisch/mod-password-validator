@@ -14,8 +14,6 @@ import org.folio.services.validator.util.ValidatorHelper;
 /**
  * Performs preprocessing operations before the verticle is deployed,
  * e.g. components registration, initializing, binding.
- *
- * @author Igor Gorchakov
  */
 public class InitAPIs implements InitAPI {
   @Override

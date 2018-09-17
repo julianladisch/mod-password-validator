@@ -36,8 +36,6 @@ import static org.folio.rest.RestVerticle.OKAPI_HEADER_TOKEN;
  * calls ValidationRegistry service to obtain rules,
  * runs rules to validate password,
  * pushes validation result in result handler to return.
- *
- * @author Igor Gorchakov
  */
 public class ValidationEngineServiceImpl implements ValidationEngineService {
 
