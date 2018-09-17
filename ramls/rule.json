@@ -11,15 +11,24 @@
     },
     "type": {
       "type": "string",
-      "enum": ["RegExp", "Programmatic"]
+      "enum": [
+        "RegExp",
+        "Programmatic"
+      ]
     },
     "validationType": {
       "type": "string",
-      "enum": ["Soft", "Strong"]
+      "enum": [
+        "Soft",
+        "Strong"
+      ]
     },
     "state": {
       "type": "string",
-      "enum": ["Enabled", "Disabled"]
+      "enum": [
+        "Enabled",
+        "Disabled"
+      ]
     },
     "moduleName": {
       "type": "string"
@@ -41,6 +50,10 @@
     "errMessageId": {
       "description": "message identifier which should be returned to UI in case the rule validation fails",
       "type": "string"
+    },
+    "metadata": {
+      "type": "object",
+      "$ref" : "raml-util/schemas/metadata.schema"
     }
   },
   "required": [
