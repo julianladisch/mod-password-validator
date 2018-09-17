@@ -21,7 +21,6 @@ import org.folio.rest.tools.utils.NetworkUtils;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
@@ -107,7 +106,6 @@ public class PasswordResourceTest {
 
   private static final String TENANT = "diku";
   private static final String VALIDATION_RULES_TABLE_NAME = "validation_rules";
-  private static final String RULE_ID = "ruleId";
 
   private static Vertx vertx;
   private static int port;
@@ -295,7 +293,6 @@ public class PasswordResourceTest {
       });
   }
 
-  @Ignore
   @Test
   public void shouldReturnAllActiveTenantRulesWhenTypeNotSpecified(final TestContext context) {
     final Async async = context.async();
