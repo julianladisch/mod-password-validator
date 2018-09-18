@@ -7,9 +7,9 @@ import org.mockito.stubbing.Answer;
 /**
  * Answer for mocking handler results
  */
-public class GenericHandlerAnswer<A, R> implements Answer<R> {
+public class GenericHandlerAnswer<H, R> implements Answer<R> {
 
-  private A handlerResult;
+  private H handlerResult;
   private int argumentIndex;
   private R returnResult;
 
@@ -19,7 +19,7 @@ public class GenericHandlerAnswer<A, R> implements Answer<R> {
    * @param handlerResult        result to pass to handler
    * @param handlerArgumentIndex index of handler in mocked method
    */
-  public GenericHandlerAnswer(A handlerResult, int handlerArgumentIndex) {
+  public GenericHandlerAnswer(H handlerResult, int handlerArgumentIndex) {
     this.handlerResult = handlerResult;
     this.argumentIndex = handlerArgumentIndex;
   }
@@ -31,7 +31,7 @@ public class GenericHandlerAnswer<A, R> implements Answer<R> {
    * @param handlerArgumentIndex index of handler in mocked method
    * @param returnResult         result to return
    */
-  public GenericHandlerAnswer(A handlerResult, int handlerArgumentIndex, R returnResult) {
+  public GenericHandlerAnswer(H handlerResult, int handlerArgumentIndex, R returnResult) {
     this(handlerResult, handlerArgumentIndex);
     this.returnResult = returnResult;
   }
@@ -39,7 +39,7 @@ public class GenericHandlerAnswer<A, R> implements Answer<R> {
 
   @Override
   public R answer(InvocationOnMock invocation) {
-    Handler<A> handler = invocation.getArgument(argumentIndex);
+    Handler<H> handler = invocation.getArgument(argumentIndex);
     handler.handle(handlerResult);
     return returnResult;
   }

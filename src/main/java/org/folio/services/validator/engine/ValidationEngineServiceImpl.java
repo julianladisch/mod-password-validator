@@ -1,6 +1,5 @@
 package org.folio.services.validator.engine;
 
-import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
@@ -15,6 +14,7 @@ import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import org.apache.http.HttpStatus;
 import org.folio.rest.jaxrs.model.Rule;
 import org.folio.rest.jaxrs.model.RuleCollection;
 import org.folio.services.validator.registry.ValidatorRegistryService;
@@ -149,10 +149,9 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
 
     Future<String> future = Future.future();
     HttpClientRequest passwordValidationRequest = httpClient.post(remoteModuleUrl, validationResponse -> {
-      HttpResponseStatus responseStatus = HttpResponseStatus.valueOf(validationResponse.statusCode());
-      if (responseStatus.equals(HttpResponseStatus.OK)) {
+      if (validationResponse.statusCode() == HttpStatus.SC_OK) {
         validationResponse.bodyHandler(body -> {
-          String validationResult = new JsonObject(body.toString()).getString(ValidatorHelper.RESPONSE_VALIDATION_RESULT_KEY);
+          String validationResult = body.toJsonObject().getString(ValidatorHelper.RESPONSE_VALIDATION_RESULT_KEY);
           if (ValidatorHelper.VALIDATION_INVALID_RESULT.equals(validationResult)) {
             errorMessages.add(rule.getErrMessageId());
           }
@@ -187,8 +186,8 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
     passwordValidationRequest
       .putHeader(OKAPI_HEADER_TOKEN, headers.get(OKAPI_HEADER_TOKEN))
       .putHeader(OKAPI_HEADER_TENANT, headers.get(OKAPI_HEADER_TENANT))
-      .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-      .putHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
+      .putHeader(HttpHeaders.CONTENT_TYPE.toString(), MediaType.APPLICATION_JSON)
+      .putHeader(HttpHeaders.ACCEPT.toString(), MediaType.APPLICATION_JSON)
       .write(new JsonObject().put(ValidatorHelper.REQUEST_PARAM_KEY, password).toString())
       .end();
     return future;

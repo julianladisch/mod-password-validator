@@ -4,13 +4,15 @@ package org.folio.services.validator.engine;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpClientRequest;
+import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.folio.rest.impl.GenericHandlerAnswer;
 import org.folio.rest.jaxrs.model.Rule;
 import org.folio.rest.jaxrs.model.RuleCollection;
 import org.folio.services.validator.registry.ValidatorRegistryService;
-import org.folio.services.validator.util.ValidatorHelper;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -22,29 +24,75 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.folio.services.validator.util.ValidatorHelper.RESPONSE_ERROR_MESSAGES_KEY;
+import static org.folio.services.validator.util.ValidatorHelper.RESPONSE_VALIDATION_RESULT_KEY;
+import static org.folio.services.validator.util.ValidatorHelper.VALIDATION_INVALID_RESULT;
+import static org.folio.services.validator.util.ValidatorHelper.VALIDATION_VALID_RESULT;
+
 @RunWith(MockitoJUnitRunner.class)
-public class ValidationEngineUnitTest {
+public class RegExpRulesProcessingTest {
+
+  private static final String OKAPI_HEADER_TENANT_VALUE = "tenant";
+  private static final String OKAPI_HEADER_TOKEN_VALUE = "token";
+
+  private static final Rule PROGRAMMATIC_IS_IN_BAD_PASSWORD_LIST_RULE = new JsonObject()
+    .put("ruleId", "0199fjcmld-009o-8fhx-v9dr-zzxdol43")
+    .put("name", "is_in_bad_password_list")
+    .put("type", "Programmatic")
+    .put("validationType", "Strong")
+    .put("state", "Enabled")
+    .put("moduleName", "mod-login")
+    .put("implementationReference", "/auth/credentials/isInBadPasswordList")
+    .put("description", "Password must not be in bad password list")
+    .put("orderNo", 0)
+    .put("errMessageId", "password.in.bad.password.list")
+    .mapTo(Rule.class);
+
+
+  private static final Rule SOFT_PROGRAMMATIC_RULE = new JsonObject()
+    .put("ruleId", "0199fjcmld-009o-8fhx-v9dr-zzxdol43")
+    .put("name", "is_in_bad_password_list")
+    .put("type", "Programmatic")
+    .put("validationType", "Soft")
+    .put("state", "Enabled")
+    .put("moduleName", "mod-login")
+    .put("implementationReference", "/auth/credentials/isInBadPasswordList")
+    .put("description", "Password must not be in bad password list")
+    .put("orderNo", 0)
+    .put("errMessageId", "password.in.bad.password.list")
+    .mapTo(Rule.class);
 
   private static RuleCollection regExpRuleCollection;
-
-  private final String RESPONSE_VALIDATION_RESULT_KEY = ValidatorHelper.RESPONSE_VALIDATION_RESULT_KEY;
-  private final String RESPONSE_ERROR_MESSAGES_KEY = ValidatorHelper.RESPONSE_ERROR_MESSAGES_KEY;
-
-  @Mock
-  private ValidatorRegistryService validatorRegistryService;
+  private static RuleCollection programmaticRuleCollection;
+  private static Map<String, String> requestHeaders;
 
   @InjectMocks
   private ValidationEngineService validationEngineService = new ValidationEngineServiceImpl();
-  private Map<String, String> requestHeaders = new HashMap<>();
-
+  @Mock
+  private ValidatorRegistryService validatorRegistryService;
+  @Mock
+  private HttpClient httpClient;
+  @Mock
+  private HttpClientRequest httpClientRequest;
+  @Mock
+  private HttpClientResponse httpClientResponse;
 
   @BeforeClass
   public static void setUp() {
+    initRequestHeaders();
     initRegExpRules();
+    initProgrammaticRules();
+  }
+
+  private static void initRequestHeaders() {
+    requestHeaders = new HashMap<>();
+    requestHeaders.put(org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT, OKAPI_HEADER_TENANT_VALUE);
+    requestHeaders.put(org.folio.rest.RestVerticle.OKAPI_HEADER_TOKEN, OKAPI_HEADER_TOKEN_VALUE);
   }
 
   private static void initRegExpRules() {
@@ -82,6 +130,11 @@ public class ValidationEngineUnitTest {
     regExpRuleCollection.setRules(rulesList);
   }
 
+  private static void initProgrammaticRules() {
+    programmaticRuleCollection = new RuleCollection();
+    programmaticRuleCollection.setRules(Collections.singletonList(PROGRAMMATIC_IS_IN_BAD_PASSWORD_LIST_RULE));
+  }
+
   @Test
   public void shouldReturnValidResultCheckedByRegExpRules() {
     // given
@@ -95,7 +148,7 @@ public class ValidationEngineUnitTest {
     Handler<AsyncResult<JsonObject>> checkingHandler = result -> {
       JsonObject response = result.result();
       String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
-      Assert.assertEquals(ValidatorHelper.VALIDATION_VALID_RESULT, validationResult);
+      Assert.assertEquals(VALIDATION_VALID_RESULT, validationResult);
       Assert.assertNull(response.getValue(RESPONSE_ERROR_MESSAGES_KEY));
     };
     validationEngineService.validatePassword(password, requestHeaders, checkingHandler);
@@ -118,7 +171,7 @@ public class ValidationEngineUnitTest {
       JsonObject response = result.result();
       String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
       JsonArray errorMessages = (JsonArray) response.getValue(RESPONSE_ERROR_MESSAGES_KEY);
-      Assert.assertEquals(ValidatorHelper.VALIDATION_INVALID_RESULT, validationResult);
+      Assert.assertEquals(VALIDATION_INVALID_RESULT, validationResult);
       Assert.assertEquals(1, errorMessages.getList().size());
       Assert.assertEquals(errorMessages.getList().get(0), regExpRuleCollection.getRules().get(0).getErrMessageId());
     };
@@ -142,7 +195,7 @@ public class ValidationEngineUnitTest {
       JsonObject response = result.result();
       String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
       JsonArray errorMessages = (JsonArray) response.getValue(RESPONSE_ERROR_MESSAGES_KEY);
-      Assert.assertEquals(ValidatorHelper.VALIDATION_INVALID_RESULT, validationResult);
+      Assert.assertEquals(VALIDATION_INVALID_RESULT, validationResult);
       Assert.assertEquals(1, errorMessages.getList().size());
       Assert.assertEquals(errorMessages.getList().get(0), regExpRuleCollection.getRules().get(1).getErrMessageId());
     };
@@ -165,7 +218,7 @@ public class ValidationEngineUnitTest {
       JsonObject response = result.result();
       String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
       JsonArray errorMessages = (JsonArray) response.getValue(RESPONSE_ERROR_MESSAGES_KEY);
-      Assert.assertEquals(ValidatorHelper.VALIDATION_INVALID_RESULT, validationResult);
+      Assert.assertEquals(VALIDATION_INVALID_RESULT, validationResult);
       Assert.assertEquals(errorMessages.getList().size(), regExpRuleCollection.getRules().size());
       for (Rule rule : regExpRuleCollection.getRules()) {
         Assert.assertTrue(errorMessages.getList().contains(rule.getErrMessageId()));
