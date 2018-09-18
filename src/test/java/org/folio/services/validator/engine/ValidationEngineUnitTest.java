@@ -6,7 +6,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import org.folio.rest.impl.AsyncResultAnswer;
+import org.folio.rest.impl.GenericHandlerAnswer;
 import org.folio.rest.jaxrs.model.Rule;
 import org.folio.rest.jaxrs.model.RuleCollection;
 import org.folio.services.validator.registry.ValidatorRegistryService;
@@ -87,7 +87,7 @@ public class ValidationEngineUnitTest {
     // given
     String password = "Password";
 
-    Mockito.doAnswer(new AsyncResultAnswer<>(Future.succeededFuture(JsonObject.mapFrom(regExpRuleCollection)), 2))
+    Mockito.doAnswer(new GenericHandlerAnswer<>(Future.succeededFuture(JsonObject.mapFrom(regExpRuleCollection)), 2))
       .when(validatorRegistryService)
       .getActiveRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
 
@@ -109,7 +109,7 @@ public class ValidationEngineUnitTest {
     // given
     String password = "passw";
 
-    Mockito.doAnswer(new AsyncResultAnswer<>(Future.succeededFuture(JsonObject.mapFrom(regExpRuleCollection)), 2))
+    Mockito.doAnswer(new GenericHandlerAnswer<>(Future.succeededFuture(JsonObject.mapFrom(regExpRuleCollection)), 2))
       .when(validatorRegistryService)
       .getActiveRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
 
@@ -133,7 +133,7 @@ public class ValidationEngineUnitTest {
     // given
     String password = "9password";
 
-    Mockito.doAnswer(new AsyncResultAnswer<>(Future.succeededFuture(JsonObject.mapFrom(regExpRuleCollection)), 2))
+    Mockito.doAnswer(new GenericHandlerAnswer<>(Future.succeededFuture(JsonObject.mapFrom(regExpRuleCollection)), 2))
       .when(validatorRegistryService)
       .getActiveRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
 
@@ -156,7 +156,7 @@ public class ValidationEngineUnitTest {
   public void shouldReturnInvalidResultForEachRuleCheckedByRegExpRules() {
     // given
     String password = "9pass";
-    Mockito.doAnswer(new AsyncResultAnswer<>(Future.succeededFuture(JsonObject.mapFrom(regExpRuleCollection)), 2))
+    Mockito.doAnswer(new GenericHandlerAnswer<>(Future.succeededFuture(JsonObject.mapFrom(regExpRuleCollection)), 2))
       .when(validatorRegistryService)
       .getActiveRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
 
