@@ -68,7 +68,7 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
     try {
       String id = UUID.randomUUID().toString();
       validationRule.put(RULE_ID_FIELD, id);
-      PostgresClient.getInstance(vertx, tenantId).save(VALIDATION_RULES_TABLE_NAME, id, validationRule, postReply -> {
+      PostgresClient.getInstance(vertx, tenantId).save(VALIDATION_RULES_TABLE_NAME, id, validationRule.mapTo(Rule.class), postReply -> {
         if (postReply.failed()) {
           logger.error("Error while saving the rule to the db", postReply.cause());
           asyncResultHandler.handle(Future.failedFuture(postReply.cause()));
