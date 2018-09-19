@@ -61,8 +61,8 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
         }
       });
     } catch (Exception e) {
-      logger.error("Error while getting all tenant rules", e.getCause());
-      asyncResultHandler.handle(Future.failedFuture(e.getCause()));
+      logger.error("Error while getting all tenant rules", e);
+      asyncResultHandler.handle(Future.failedFuture(e));
     }
     return this;
   }
@@ -89,8 +89,8 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
         }
       });
     } catch (Exception e) {
-      logger.error("Error while creating new tenant rule", e.getCause());
-      asyncResultHandler.handle(Future.failedFuture(e.getCause()));
+      logger.error("Error while creating new tenant rule", e);
+      asyncResultHandler.handle(Future.failedFuture(e));
     }
     return this;
   }
@@ -127,8 +127,8 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
         }
       });
     } catch (Exception e) {
-      logger.error("Error while updating the rule in the db", e.getCause());
-      asyncResultHandler.handle(Future.failedFuture(e.getCause()));
+      logger.error("Error while updating the rule in the db", e);
+      asyncResultHandler.handle(Future.failedFuture(e));
     }
     return this;
   }
@@ -160,8 +160,8 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
         }
       });
     } catch (Exception e) {
-      logger.error("Error while getting rule by id", e.getCause());
-      asyncResultHandler.handle(Future.failedFuture(e.getCause()));
+      logger.error("Error while getting rule by id", e);
+      asyncResultHandler.handle(Future.failedFuture(e));
     }
     return this;
   }
@@ -199,8 +199,8 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
         }
       });
     } catch (Exception e) {
-      logger.error("Error while getting all enabled rules by type", e.getCause());
-      asyncResultHandler.handle(Future.failedFuture(e.getCause()));
+      logger.error("Error while getting all enabled rules by type", e);
+      asyncResultHandler.handle(Future.failedFuture(e));
     }
     return this;
   }

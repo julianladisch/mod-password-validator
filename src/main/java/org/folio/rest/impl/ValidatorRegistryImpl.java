@@ -50,7 +50,7 @@ public class ValidatorRegistryImpl implements TenantRulesResource {
         }
       }));
     } catch (Exception e) {
-      logger.error("Error running on verticle for getTenantRules: " + e.getMessage(), e.getCause());
+      logger.error("Error running on verticle for getTenantRules: " + e.getMessage(), e);
       asyncResultHandler.handle(Future.succeededFuture(
         GetTenantRulesResponse.withPlainInternalServerError(Response.Status.INTERNAL_SERVER_ERROR.getReasonPhrase())));
     }
@@ -81,7 +81,7 @@ public class ValidatorRegistryImpl implements TenantRulesResource {
         }
       });
     } catch (Exception e) {
-      logger.error("Error running on verticle for postTenantRules: " + e.getMessage(), e.getCause());
+      logger.error("Error running on verticle for postTenantRules: " + e.getMessage(), e);
       asyncResultHandler.handle(Future.succeededFuture(
         PostTenantRulesResponse.withPlainInternalServerError(Response.Status.INTERNAL_SERVER_ERROR.getReasonPhrase())));
     }
@@ -120,7 +120,7 @@ public class ValidatorRegistryImpl implements TenantRulesResource {
         }
       });
     } catch (Exception e) {
-      logger.error("Error running on verticle for putTenantRules: " + e.getMessage(), e.getCause());
+      logger.error("Error running on verticle for putTenantRules: " + e.getMessage(), e);
       asyncResultHandler.handle(Future.succeededFuture(
         PutTenantRulesResponse.withPlainInternalServerError(Response.Status.INTERNAL_SERVER_ERROR.getReasonPhrase())));
     }
@@ -152,7 +152,7 @@ public class ValidatorRegistryImpl implements TenantRulesResource {
         }
       }));
     } catch (Exception e) {
-      logger.error("Error running on verticle for getTenantRulesByRuleId: " + e.getMessage(), e.getCause());
+      logger.error("Error running on verticle for getTenantRulesByRuleId: " + e.getMessage(), e);
       asyncResultHandler.handle(Future.succeededFuture(
         GetTenantRulesByRuleIdResponse.withPlainInternalServerError(Response.Status.INTERNAL_SERVER_ERROR.getReasonPhrase())));
     }
