@@ -54,7 +54,7 @@ public class PasswordResourceImpl implements PasswordResource {
         asyncResultHandler.handle(Future.succeededFuture(response));
       });
     } catch (Exception e) {
-      logger.error("Failed to validate password: " + e.getLocalizedMessage(), e.getCause());
+      logger.error("Failed to validate password: " + e.getLocalizedMessage(), e);
       asyncResultHandler.handle(Future.succeededFuture(
         PostPasswordValidateResponse.withPlainInternalServerError(Response.Status.INTERNAL_SERVER_ERROR.getReasonPhrase())));
     }
@@ -79,7 +79,7 @@ public class PasswordResourceImpl implements PasswordResource {
         }
       }));
     } catch (Exception e) {
-      logger.error("Error running on verticle for getPasswordValidators: " + e.getMessage(), e.getCause());
+      logger.error("Error running on verticle for getPasswordValidators: " + e.getMessage(), e);
       asyncResultHandler.handle(Future.succeededFuture(
         GetPasswordValidatorsResponse.withPlainInternalServerError(
           Response.Status.INTERNAL_SERVER_ERROR.getReasonPhrase())));
