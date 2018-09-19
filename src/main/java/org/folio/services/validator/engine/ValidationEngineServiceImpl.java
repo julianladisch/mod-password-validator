@@ -200,8 +200,8 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
       validationResult.put(ValidatorHelper.RESPONSE_VALIDATION_RESULT_KEY, ValidatorHelper.VALIDATION_VALID_RESULT);
     } else {
       validationResult.put(ValidatorHelper.RESPONSE_VALIDATION_RESULT_KEY, ValidatorHelper.VALIDATION_INVALID_RESULT);
-      validationResult.put(ValidatorHelper.RESPONSE_ERROR_MESSAGES_KEY, errorMessages);
     }
+    validationResult.put(ValidatorHelper.RESPONSE_ERROR_MESSAGES_KEY, errorMessages);
     resultHandler.handle(Future.succeededFuture(validationResult));
   }
 

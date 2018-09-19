@@ -37,7 +37,12 @@ import static org.folio.rest.RestVerticle.OKAPI_HEADER_TOKEN;
 import static org.folio.services.validator.util.ValidatorHelper.RESPONSE_VALIDATION_RESULT_KEY;
 import static org.folio.services.validator.util.ValidatorHelper.VALIDATION_INVALID_RESULT;
 import static org.folio.services.validator.util.ValidatorHelper.VALIDATION_VALID_RESULT;
+import static org.folio.services.validator.util.ValidatorHelper.RESPONSE_ERROR_MESSAGES_KEY;
 
+
+/**
+ * Test for Validation Engine component. Testing password processing by Programmatic rules.
+ */
 @RunWith(MockitoJUnitRunner.class)
 public class ProgrammaticRulesProcessingTest {
 
@@ -89,15 +94,134 @@ public class ProgrammaticRulesProcessingTest {
     requestHeaders.put(OKAPI_HEADER_TOKEN, OKAPI_HEADER_TOKEN_VALUE);
   }
 
+  /**
+   * Testing the case when received password satisfies Strong Programmatic rule.
+   * Expected result is to receive the response contains valid validation result
+   * and empty error message list:
+   * {
+   *    "result" : "valid"
+   *    "messages" : []
+   * }
+   */
+  @Test
+  public void shouldReturnValidResultWhenProgrammaticRuleReturnsValid() {
+    //given
+    mockRegistryService(Collections.singletonList(STRONG_PROGRAMMATIC_RULE));
+
+    JsonObject httpClientMockResponse = new JsonObject()
+      .put(RESPONSE_VALIDATION_RESULT_KEY, VALIDATION_VALID_RESULT);
+    mockHttpClient(HttpStatus.SC_OK, httpClientMockResponse);
+
+    //when
+    JsonObject expectedResult = new JsonObject()
+      .put(RESPONSE_VALIDATION_RESULT_KEY, VALIDATION_VALID_RESULT)
+      .put(RESPONSE_ERROR_MESSAGES_KEY, new JsonArray());
+    Handler<AsyncResult<JsonObject>> checkingHandler = result -> {
+      JsonObject response = result.result();
+      Assert.assertEquals(expectedResult, response);
+    };
+    String givenPassword = "password";
+    validationEngineService.validatePassword(givenPassword, requestHeaders, checkingHandler);
+
+    //then
+    Mockito.verify(validatorRegistryService).getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
+  }
+
+  /**
+   * Testing the case when received password doesn't satisfy Strong Programmatic rule.
+   * Expected result is to receive the response contains invalid validation result
+   * and error message code belongs to the rule:
+   * {
+   *    "result" : "invalid",
+   *    "messages" : "[password.in.bad.password.list]"
+   * }
+   */
+  @Test
+  public void shouldReturnInvalidResultWithMessagesWhenProgrammaticRulesReturnsInvalid() {
+    //given
+    mockRegistryService(Collections.singletonList(STRONG_PROGRAMMATIC_RULE));
+
+    JsonObject httpClientMockResponse = new JsonObject()
+      .put(RESPONSE_VALIDATION_RESULT_KEY, VALIDATION_INVALID_RESULT);
+    mockHttpClient(HttpStatus.SC_OK, httpClientMockResponse);
+
+    //when
+    JsonObject expectedResult = new JsonObject()
+      .put(RESPONSE_VALIDATION_RESULT_KEY, VALIDATION_INVALID_RESULT)
+      .put(ValidatorHelper.RESPONSE_ERROR_MESSAGES_KEY, new JsonArray().add(STRONG_PROGRAMMATIC_RULE.getErrMessageId()));
+    Handler<AsyncResult<JsonObject>> checkingHandler = result -> {
+      JsonObject response = result.result();
+      Assert.assertEquals(expectedResult, response);
+    };
+    String givenPassword = "password";
+    validationEngineService.validatePassword(givenPassword, requestHeaders, checkingHandler);
+
+    //then
+    Mockito.verify(validatorRegistryService).getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
+  }
+
+  /**
+   * Testing the case when received password satisfies Soft Programmatic rule.
+   * Expected result is to receive the response contains valid validation result:
+   * {
+   *    "result" : "valid",
+   *    "messages" : "[]"
+   * }
+   */
+  @Test
+  public void shouldReturnValidResultWhenWhenSoftProgrammaticRuleReturnErrorStatus() {
+    //given
+    mockRegistryService(Collections.singletonList(SOFT_PROGRAMMATIC_RULE));
+
+    JsonObject httpClientMockResponse = new JsonObject()
+      .put(RESPONSE_VALIDATION_RESULT_KEY, VALIDATION_VALID_RESULT);
+    mockHttpClient(HttpStatus.SC_INTERNAL_SERVER_ERROR, httpClientMockResponse);
+
+    //when
+    JsonObject expectedResult = new JsonObject()
+      .put(RESPONSE_VALIDATION_RESULT_KEY, VALIDATION_VALID_RESULT)
+      .put(RESPONSE_ERROR_MESSAGES_KEY, new JsonArray());
+    Handler<AsyncResult<JsonObject>> checkingHandler = result -> {
+      JsonObject response = result.result();
+      Assert.assertEquals(expectedResult, response);
+    };
+    String givenPassword = "password";
+    validationEngineService.validatePassword(givenPassword, requestHeaders, checkingHandler);
+
+    //then
+    Mockito.verify(validatorRegistryService).getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
+  }
+
+  /**
+   * Testing the case when external FOLIO module returns internal server error.
+   * Expected result is to receive failed async result.
+   */
+  @Test
+  public void shouldFailWhenStrongProgrammaticRuleReturnErrorStatus() {
+    //given
+    mockRegistryService(Collections.singletonList(STRONG_PROGRAMMATIC_RULE));
+
+    JsonObject httpClientMockResponse = new JsonObject()
+      .put(RESPONSE_VALIDATION_RESULT_KEY, VALIDATION_VALID_RESULT);
+    mockHttpClient(HttpStatus.SC_INTERNAL_SERVER_ERROR, httpClientMockResponse);
+
+    //when
+    Handler<AsyncResult<JsonObject>> checkingHandler = result -> {
+      Assert.assertTrue(result.failed());
+    };
+    String givenPassword = "password";
+    validationEngineService.validatePassword(givenPassword, requestHeaders, checkingHandler);
+
+    //then
+    Mockito.verify(validatorRegistryService).getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
+  }
+
+
   private void mockRegistryService(List<Rule> rules) {
     JsonObject registryResponse = JsonObject.mapFrom(new RuleCollection().withRules(rules));
     Mockito.doAnswer(new GenericHandlerAnswer<>(Future.succeededFuture(JsonObject.mapFrom(registryResponse)), 2))
       .when(validatorRegistryService)
       .getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
-  }
-
-  private void mockHttpClient(int status) {
-    mockHttpClient(status, null);
   }
 
   private void mockHttpClient(int status, JsonObject response) {
@@ -124,96 +248,6 @@ public class ProgrammaticRulesProcessingTest {
     Mockito.doAnswer(InvocationOnMock::getMock)
       .when(httpClientRequest)
       .write(ArgumentMatchers.anyString());
-  }
-
-  @Test
-  public void shouldReturnValidResultWhenProgrammaticRuleReturnsValid() {
-    //given
-    mockRegistryService(Collections.singletonList(STRONG_PROGRAMMATIC_RULE));
-
-    JsonObject httpClientMockResponse = new JsonObject()
-      .put(RESPONSE_VALIDATION_RESULT_KEY, VALIDATION_VALID_RESULT);
-    mockHttpClient(HttpStatus.SC_OK, httpClientMockResponse);
-
-    //when
-    JsonObject expectedResult = new JsonObject()
-      .put(RESPONSE_VALIDATION_RESULT_KEY, VALIDATION_VALID_RESULT);
-    Handler<AsyncResult<JsonObject>> checkingHandler = result -> {
-      JsonObject response = result.result();
-      Assert.assertEquals(expectedResult, response);
-    };
-    String givenPassword = "password";
-    validationEngineService.validatePassword(givenPassword, requestHeaders, checkingHandler);
-
-    //then
-    Mockito.verify(validatorRegistryService).getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
-  }
-
-  @Test
-  public void shouldReturnInvalidResultWithMessagesWhenProgrammaticRulesReturnsInvalid() {
-    //given
-    mockRegistryService(Collections.singletonList(STRONG_PROGRAMMATIC_RULE));
-
-    JsonObject httpClientMockResponse = new JsonObject()
-      .put(RESPONSE_VALIDATION_RESULT_KEY, VALIDATION_INVALID_RESULT);
-    mockHttpClient(HttpStatus.SC_OK, httpClientMockResponse);
-
-    //when
-    JsonObject expectedResult = new JsonObject()
-      .put(RESPONSE_VALIDATION_RESULT_KEY, VALIDATION_INVALID_RESULT)
-      .put(ValidatorHelper.RESPONSE_ERROR_MESSAGES_KEY, new JsonArray().add(STRONG_PROGRAMMATIC_RULE.getErrMessageId()));
-    Handler<AsyncResult<JsonObject>> checkingHandler = result -> {
-      JsonObject response = result.result();
-      Assert.assertEquals(expectedResult, response);
-    };
-    String givenPassword = "password";
-    validationEngineService.validatePassword(givenPassword, requestHeaders, checkingHandler);
-
-    //then
-    Mockito.verify(validatorRegistryService).getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
-  }
-
-  @Test
-  public void shouldReturnValidResultWhenWhenSoftProgrammaticRuleReturnErrorStatus() {
-    //given
-    mockRegistryService(Collections.singletonList(SOFT_PROGRAMMATIC_RULE));
-
-    JsonObject httpClientMockResponse = new JsonObject()
-      .put(RESPONSE_VALIDATION_RESULT_KEY, VALIDATION_VALID_RESULT);
-    mockHttpClient(HttpStatus.SC_INTERNAL_SERVER_ERROR, httpClientMockResponse);
-
-    //when
-    JsonObject expectedResult = new JsonObject()
-      .put(RESPONSE_VALIDATION_RESULT_KEY, VALIDATION_VALID_RESULT);
-    Handler<AsyncResult<JsonObject>> checkingHandler = result -> {
-      JsonObject response = result.result();
-      Assert.assertEquals(expectedResult, response);
-    };
-    String givenPassword = "password";
-    validationEngineService.validatePassword(givenPassword, requestHeaders, checkingHandler);
-
-    //then
-    Mockito.verify(validatorRegistryService).getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
-  }
-
-  @Test
-  public void shouldFailWhenStrongProgrammaticRuleReturnErrorStatus() {
-    //given
-    mockRegistryService(Collections.singletonList(STRONG_PROGRAMMATIC_RULE));
-
-    JsonObject httpClientMockResponse = new JsonObject()
-      .put(RESPONSE_VALIDATION_RESULT_KEY, VALIDATION_VALID_RESULT);
-    mockHttpClient(HttpStatus.SC_INTERNAL_SERVER_ERROR, httpClientMockResponse);
-
-    //when
-    Handler<AsyncResult<JsonObject>> checkingHandler = result -> {
-      Assert.assertTrue(result.failed());
-    };
-    String givenPassword = "password";
-    validationEngineService.validatePassword(givenPassword, requestHeaders, checkingHandler);
-
-    //then
-    Mockito.verify(validatorRegistryService).getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
   }
 
 }

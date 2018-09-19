@@ -4,9 +4,6 @@ package org.folio.services.validator.engine;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.http.HttpClientRequest;
-import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.folio.rest.impl.GenericHandlerAnswer;
@@ -24,7 +21,6 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,59 +30,161 @@ import static org.folio.services.validator.util.ValidatorHelper.RESPONSE_VALIDAT
 import static org.folio.services.validator.util.ValidatorHelper.VALIDATION_INVALID_RESULT;
 import static org.folio.services.validator.util.ValidatorHelper.VALIDATION_VALID_RESULT;
 
+/**
+ * Test for Validation Engine component. Testing password processing by RegExp rules.
+ */
 @RunWith(MockitoJUnitRunner.class)
 public class RegExpRulesProcessingTest {
 
   private static final String OKAPI_HEADER_TENANT_VALUE = "tenant";
   private static final String OKAPI_HEADER_TOKEN_VALUE = "token";
 
-  private static final Rule PROGRAMMATIC_IS_IN_BAD_PASSWORD_LIST_RULE = new JsonObject()
-    .put("ruleId", "0199fjcmld-009o-8fhx-v9dr-zzxdol43")
-    .put("name", "is_in_bad_password_list")
-    .put("type", "Programmatic")
-    .put("validationType", "Strong")
-    .put("state", "Enabled")
-    .put("moduleName", "mod-login")
-    .put("implementationReference", "/auth/credentials/isInBadPasswordList")
-    .put("description", "Password must not be in bad password list")
-    .put("orderNo", 0)
-    .put("errMessageId", "password.in.bad.password.list")
-    .mapTo(Rule.class);
-
-
-  private static final Rule SOFT_PROGRAMMATIC_RULE = new JsonObject()
-    .put("ruleId", "0199fjcmld-009o-8fhx-v9dr-zzxdol43")
-    .put("name", "is_in_bad_password_list")
-    .put("type", "Programmatic")
-    .put("validationType", "Soft")
-    .put("state", "Enabled")
-    .put("moduleName", "mod-login")
-    .put("implementationReference", "/auth/credentials/isInBadPasswordList")
-    .put("description", "Password must not be in bad password list")
-    .put("orderNo", 0)
-    .put("errMessageId", "password.in.bad.password.list")
-    .mapTo(Rule.class);
-
   private static RuleCollection regExpRuleCollection;
-  private static RuleCollection programmaticRuleCollection;
   private static Map<String, String> requestHeaders;
 
   @InjectMocks
   private ValidationEngineService validationEngineService = new ValidationEngineServiceImpl();
   @Mock
   private ValidatorRegistryService validatorRegistryService;
-  @Mock
-  private HttpClient httpClient;
-  @Mock
-  private HttpClientRequest httpClientRequest;
-  @Mock
-  private HttpClientResponse httpClientResponse;
 
   @BeforeClass
   public static void setUp() {
     initRequestHeaders();
     initRegExpRules();
-    initProgrammaticRules();
+  }
+
+  /**
+   * Testing the case when received password satisfies every RegExp rule.
+   * Expected result is to receive the response contains valid validation result
+   * and empty error message list:
+   * {
+   *    "result" : "valid"
+   *    "messages" : []
+   * }
+   */
+  @Test
+  public void shouldReturnValidResultCheckedByRegExpRules() {
+    // given
+    String password = "Password";
+
+    Mockito.doAnswer(new GenericHandlerAnswer<>(Future.succeededFuture(JsonObject.mapFrom(regExpRuleCollection)), 2))
+      .when(validatorRegistryService)
+      .getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
+
+    // when
+    Handler<AsyncResult<JsonObject>> checkingHandler = result -> {
+      JsonObject response = result.result();
+      String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
+      JsonArray errorMessages = (JsonArray) response.getValue(RESPONSE_ERROR_MESSAGES_KEY);
+      Assert.assertEquals(VALIDATION_VALID_RESULT, validationResult);
+      Assert.assertTrue(errorMessages.getList().isEmpty());
+    };
+    validationEngineService.validatePassword(password, requestHeaders, checkingHandler);
+
+    // then
+    Mockito.verify(validatorRegistryService).getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
+  }
+
+  /**
+   * Testing the case when received password doesn't satisfy "length_between" RegExp rule.
+   * Expected result is to receive the response contains invalid validation result
+   * and 1 error message code belongs to "length_between" rule:
+   * {
+   *    "result" : "invalid"
+   *    "messages": ["password.length.invalid"]
+   * }
+   */
+  @Test
+  public void shouldReturnInvalidLengthBetweenResultCheckedByRegExpRules() {
+    // given
+    String password = "passw";
+
+    Mockito.doAnswer(new GenericHandlerAnswer<>(Future.succeededFuture(JsonObject.mapFrom(regExpRuleCollection)), 2))
+      .when(validatorRegistryService)
+      .getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
+
+    // when
+    Handler<AsyncResult<JsonObject>> checkingHandler = result -> {
+      JsonObject response = result.result();
+      String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
+      JsonArray errorMessages = (JsonArray) response.getValue(RESPONSE_ERROR_MESSAGES_KEY);
+      Assert.assertEquals(VALIDATION_INVALID_RESULT, validationResult);
+      Assert.assertEquals(1, errorMessages.getList().size());
+      Assert.assertEquals(errorMessages.getList().get(0), regExpRuleCollection.getRules().get(0).getErrMessageId());
+    };
+    validationEngineService.validatePassword(password, requestHeaders, checkingHandler);
+
+    // then
+    Mockito.verify(validatorRegistryService).getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
+  }
+
+  /**
+   * Testing the case when received password doesn't satisfy "alphabetical_only" RegExp rule.
+   * Expected result is to receive the response contains invalid validation result
+   * and 1 error message code belongs to "alphabetical_only" rule:
+   * {
+   *    "result" : "invalid"
+   *    "messages": ["password.alphabetical.invalid"]
+   * }
+   */
+  @Test
+  public void shouldReturnInvalidAlphabeticalOnlyResultCheckedByRegExpRules() {
+    // given
+    String password = "9password";
+
+    Mockito.doAnswer(new GenericHandlerAnswer<>(Future.succeededFuture(JsonObject.mapFrom(regExpRuleCollection)), 2))
+      .when(validatorRegistryService)
+      .getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
+
+    // when
+    Handler<AsyncResult<JsonObject>> checkingHandler = result -> {
+      JsonObject response = result.result();
+      String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
+      JsonArray errorMessages = (JsonArray) response.getValue(RESPONSE_ERROR_MESSAGES_KEY);
+      Assert.assertEquals(VALIDATION_INVALID_RESULT, validationResult);
+      Assert.assertEquals(1, errorMessages.getList().size());
+      Assert.assertEquals(errorMessages.getList().get(0), regExpRuleCollection.getRules().get(1).getErrMessageId());
+    };
+    validationEngineService.validatePassword(password, requestHeaders, checkingHandler);
+
+    // then
+    Mockito.verify(validatorRegistryService).getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
+  }
+
+  /**
+   * Testing the case when received password doesn't satisfy
+   * both "length_between" and "alphabetical_only" RegExp rules.
+   * Expected result is to receive the response contains invalid validation result
+   * and 2 error message codes rule:
+   * {
+   *    "result" : "invalid"
+   *    "messages": ["password.length.invalid", "password.alphabetical.invalid"]
+   * }
+   */
+  @Test
+  public void shouldReturnInvalidResultForEachRegExpRule() {
+    // given
+    String password = "9pass";
+    Mockito.doAnswer(new GenericHandlerAnswer<>(Future.succeededFuture(JsonObject.mapFrom(regExpRuleCollection)), 2))
+      .when(validatorRegistryService)
+      .getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
+
+    // when
+    Handler<AsyncResult<JsonObject>> checkingHandler = result -> {
+      JsonObject response = result.result();
+      String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
+      JsonArray errorMessages = (JsonArray) response.getValue(RESPONSE_ERROR_MESSAGES_KEY);
+      Assert.assertEquals(VALIDATION_INVALID_RESULT, validationResult);
+      Assert.assertEquals(errorMessages.getList().size(), regExpRuleCollection.getRules().size());
+      for (Rule rule : regExpRuleCollection.getRules()) {
+        Assert.assertTrue(errorMessages.getList().contains(rule.getErrMessageId()));
+      }
+    };
+
+    validationEngineService.validatePassword(password, requestHeaders, checkingHandler);
+
+    // then
+    Mockito.verify(validatorRegistryService).getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
   }
 
   private static void initRequestHeaders() {
@@ -130,104 +228,4 @@ public class RegExpRulesProcessingTest {
     regExpRuleCollection.setRules(rulesList);
   }
 
-  private static void initProgrammaticRules() {
-    programmaticRuleCollection = new RuleCollection();
-    programmaticRuleCollection.setRules(Collections.singletonList(PROGRAMMATIC_IS_IN_BAD_PASSWORD_LIST_RULE));
-  }
-
-  @Test
-  public void shouldReturnValidResultCheckedByRegExpRules() {
-    // given
-    String password = "Password";
-
-    Mockito.doAnswer(new GenericHandlerAnswer<>(Future.succeededFuture(JsonObject.mapFrom(regExpRuleCollection)), 2))
-      .when(validatorRegistryService)
-      .getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
-
-    // when
-    Handler<AsyncResult<JsonObject>> checkingHandler = result -> {
-      JsonObject response = result.result();
-      String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
-      Assert.assertEquals(VALIDATION_VALID_RESULT, validationResult);
-      Assert.assertNull(response.getValue(RESPONSE_ERROR_MESSAGES_KEY));
-    };
-    validationEngineService.validatePassword(password, requestHeaders, checkingHandler);
-
-    // then
-    Mockito.verify(validatorRegistryService).getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
-  }
-
-  @Test
-  public void shouldReturnInvalidLengthBetweenResultCheckedByRegExpRules() {
-    // given
-    String password = "passw";
-
-    Mockito.doAnswer(new GenericHandlerAnswer<>(Future.succeededFuture(JsonObject.mapFrom(regExpRuleCollection)), 2))
-      .when(validatorRegistryService)
-      .getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
-
-    // when
-    Handler<AsyncResult<JsonObject>> checkingHandler = result -> {
-      JsonObject response = result.result();
-      String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
-      JsonArray errorMessages = (JsonArray) response.getValue(RESPONSE_ERROR_MESSAGES_KEY);
-      Assert.assertEquals(VALIDATION_INVALID_RESULT, validationResult);
-      Assert.assertEquals(1, errorMessages.getList().size());
-      Assert.assertEquals(errorMessages.getList().get(0), regExpRuleCollection.getRules().get(0).getErrMessageId());
-    };
-    validationEngineService.validatePassword(password, requestHeaders, checkingHandler);
-
-    // then
-    Mockito.verify(validatorRegistryService).getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
-  }
-
-  @Test
-  public void shouldReturnInvalidAlphabeticalResultCheckedByRegExpRules() {
-    // given
-    String password = "9password";
-
-    Mockito.doAnswer(new GenericHandlerAnswer<>(Future.succeededFuture(JsonObject.mapFrom(regExpRuleCollection)), 2))
-      .when(validatorRegistryService)
-      .getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
-
-    // when
-    Handler<AsyncResult<JsonObject>> checkingHandler = result -> {
-      JsonObject response = result.result();
-      String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
-      JsonArray errorMessages = (JsonArray) response.getValue(RESPONSE_ERROR_MESSAGES_KEY);
-      Assert.assertEquals(VALIDATION_INVALID_RESULT, validationResult);
-      Assert.assertEquals(1, errorMessages.getList().size());
-      Assert.assertEquals(errorMessages.getList().get(0), regExpRuleCollection.getRules().get(1).getErrMessageId());
-    };
-    validationEngineService.validatePassword(password, requestHeaders, checkingHandler);
-
-    // then
-    Mockito.verify(validatorRegistryService).getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
-  }
-
-  @Test
-  public void shouldReturnInvalidResultForEachRuleCheckedByRegExpRules() {
-    // given
-    String password = "9pass";
-    Mockito.doAnswer(new GenericHandlerAnswer<>(Future.succeededFuture(JsonObject.mapFrom(regExpRuleCollection)), 2))
-      .when(validatorRegistryService)
-      .getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
-
-    // when
-    Handler<AsyncResult<JsonObject>> checkingHandler = result -> {
-      JsonObject response = result.result();
-      String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
-      JsonArray errorMessages = (JsonArray) response.getValue(RESPONSE_ERROR_MESSAGES_KEY);
-      Assert.assertEquals(VALIDATION_INVALID_RESULT, validationResult);
-      Assert.assertEquals(errorMessages.getList().size(), regExpRuleCollection.getRules().size());
-      for (Rule rule : regExpRuleCollection.getRules()) {
-        Assert.assertTrue(errorMessages.getList().contains(rule.getErrMessageId()));
-      }
-    };
-
-    validationEngineService.validatePassword(password, requestHeaders, checkingHandler);
-
-    // then
-    Mockito.verify(validatorRegistryService).getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
-  }
 }
