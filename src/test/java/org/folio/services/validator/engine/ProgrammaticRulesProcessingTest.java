@@ -95,7 +95,7 @@ public class ProgrammaticRulesProcessingTest {
     JsonObject registryResponse = JsonObject.mapFrom(new RuleCollection().withRules(rules));
     Mockito.doAnswer(new GenericHandlerAnswer<>(Future.succeededFuture(JsonObject.mapFrom(registryResponse)), 2))
       .when(validatorRegistryService)
-      .getActiveRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
+      .getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
   }
 
   private void mockHttpClient(int status) {
@@ -148,7 +148,7 @@ public class ProgrammaticRulesProcessingTest {
     validationEngineService.validatePassword(givenPassword, requestHeaders, checkingHandler);
 
     //then
-    Mockito.verify(validatorRegistryService).getActiveRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
+    Mockito.verify(validatorRegistryService).getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
   }
 
   @Test
@@ -172,7 +172,7 @@ public class ProgrammaticRulesProcessingTest {
     validationEngineService.validatePassword(givenPassword, requestHeaders, checkingHandler);
 
     //then
-    Mockito.verify(validatorRegistryService).getActiveRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
+    Mockito.verify(validatorRegistryService).getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
   }
 
   @Test
@@ -195,7 +195,7 @@ public class ProgrammaticRulesProcessingTest {
     validationEngineService.validatePassword(givenPassword, requestHeaders, checkingHandler);
 
     //then
-    Mockito.verify(validatorRegistryService).getActiveRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
+    Mockito.verify(validatorRegistryService).getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
   }
 
   @Test
@@ -215,7 +215,7 @@ public class ProgrammaticRulesProcessingTest {
     validationEngineService.validatePassword(givenPassword, requestHeaders, checkingHandler);
 
     //then
-    Mockito.verify(validatorRegistryService).getActiveRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
+    Mockito.verify(validatorRegistryService).getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
   }
 
 }

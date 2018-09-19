@@ -17,7 +17,6 @@ import org.folio.rest.jaxrs.model.RuleCollection;
 import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.NetworkUtils;
-
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -174,9 +173,9 @@ public class ValidatorRegistryTest {
       context.assertTrue(collection.getTotalRecords() == 0);
       List<org.folio.rest.jaxrs.model.Rule> rules = collection.getRules();
       context.assertTrue(rules.size() == 0);
-      })
+    })
       .setHandler(result -> {
-        if(result.failed()) {
+        if (result.failed()) {
           context.fail(result.cause());
         } else {
           async.complete();
@@ -207,7 +206,7 @@ public class ValidatorRegistryTest {
           rule1.getName().equals(PROGRAMMATIC_RULE_ENABLED.getString("name"))).collect(Collectors.toList()).size() == 1);
       }))
       .setHandler(chainedRes -> {
-        if(chainedRes.failed()) {
+        if (chainedRes.failed()) {
           context.fail(chainedRes.cause());
         } else {
           async.complete();
@@ -220,7 +219,7 @@ public class ValidatorRegistryTest {
     final Async async = context.async();
     postRule(new JsonObject(), HttpStatus.SC_UNPROCESSABLE_ENTITY, result -> context.assertEquals(result.result().getCode(), HttpStatus.SC_UNPROCESSABLE_ENTITY))
       .setHandler(result -> {
-        if(result.failed()) {
+        if (result.failed()) {
           context.fail(result.cause());
         } else {
           async.complete();
@@ -233,7 +232,7 @@ public class ValidatorRegistryTest {
     final Async async = context.async();
     postRule(INVALID_RULE_NEGATIVE_ORDER_NUMBER, HttpStatus.SC_BAD_REQUEST, result -> context.assertEquals(result.result().getCode(), HttpStatus.SC_BAD_REQUEST))
       .setHandler(result -> {
-        if(result.failed()) {
+        if (result.failed()) {
           context.fail(result.cause());
         } else {
           async.complete();
@@ -246,7 +245,7 @@ public class ValidatorRegistryTest {
     final Async async = context.async();
     postRule(INVALID_REGEXP_RULE_SOFT, HttpStatus.SC_BAD_REQUEST, result -> context.assertEquals(result.result().getCode(), HttpStatus.SC_BAD_REQUEST))
       .setHandler(result -> {
-        if(result.failed()) {
+        if (result.failed()) {
           context.fail(result.cause());
         } else {
           async.complete();
@@ -263,7 +262,7 @@ public class ValidatorRegistryTest {
       .compose(r -> postRule(PROGRAMMATIC_RULE_ENABLED.put("implementationReference", ref), HttpStatus.SC_BAD_REQUEST,
         result -> context.assertEquals(result.result().getCode(), HttpStatus.SC_BAD_REQUEST)))
       .setHandler(result -> {
-        if(result.failed()) {
+        if (result.failed()) {
           context.fail(result.cause());
         } else {
           async.complete();
@@ -275,19 +274,19 @@ public class ValidatorRegistryTest {
   public void shouldCreateValidRule(final TestContext context) {
     final Async async = context.async();
     postRule(VALID_RULE, HttpStatus.SC_CREATED, result -> {
-        context.assertEquals(result.result().getCode(), HttpStatus.SC_CREATED);
-        org.folio.rest.jaxrs.model.Rule rule = new JsonObject(result.result().getBody()).mapTo(org.folio.rest.jaxrs.model.Rule.class);
-        context.assertEquals(rule.getName(), VALID_RULE.getString("name"));
-        context.assertEquals(rule.getType().toString(), VALID_RULE.getString("type"));
-        context.assertEquals(rule.getValidationType().toString(), VALID_RULE.getString("validationType"));
-        context.assertEquals(rule.getOrderNo(), VALID_RULE.getInteger("orderNo"));
-        context.assertEquals(rule.getState().toString(), VALID_RULE.getString("state"));
-        context.assertEquals(rule.getModuleName(), VALID_RULE.getString("moduleName"));
-        context.assertEquals(rule.getExpression(), VALID_RULE.getString("expression"));
-        context.assertEquals(rule.getDescription(), VALID_RULE.getString("description"));
+      context.assertEquals(result.result().getCode(), HttpStatus.SC_CREATED);
+      org.folio.rest.jaxrs.model.Rule rule = new JsonObject(result.result().getBody()).mapTo(org.folio.rest.jaxrs.model.Rule.class);
+      context.assertEquals(rule.getName(), VALID_RULE.getString("name"));
+      context.assertEquals(rule.getType().toString(), VALID_RULE.getString("type"));
+      context.assertEquals(rule.getValidationType().toString(), VALID_RULE.getString("validationType"));
+      context.assertEquals(rule.getOrderNo(), VALID_RULE.getInteger("orderNo"));
+      context.assertEquals(rule.getState().toString(), VALID_RULE.getString("state"));
+      context.assertEquals(rule.getModuleName(), VALID_RULE.getString("moduleName"));
+      context.assertEquals(rule.getExpression(), VALID_RULE.getString("expression"));
+      context.assertEquals(rule.getDescription(), VALID_RULE.getString("description"));
     })
       .setHandler(chainedRes -> {
-        if(chainedRes.failed()) {
+        if (chainedRes.failed()) {
           context.fail(chainedRes.cause());
         } else {
           async.complete();
@@ -300,7 +299,7 @@ public class ValidatorRegistryTest {
     final Async async = context.async();
     updateRule(new JsonObject(), HttpStatus.SC_UNPROCESSABLE_ENTITY, result -> context.assertEquals(result.result().getCode(), HttpStatus.SC_UNPROCESSABLE_ENTITY))
       .setHandler(result -> {
-        if(result.failed()) {
+        if (result.failed()) {
           context.fail(result.cause());
         } else {
           async.complete();
@@ -313,7 +312,7 @@ public class ValidatorRegistryTest {
     final Async async = context.async();
     updateRule(INVALID_RULE_NEGATIVE_ORDER_NUMBER, HttpStatus.SC_BAD_REQUEST, result -> context.assertEquals(result.result().getCode(), HttpStatus.SC_BAD_REQUEST))
       .setHandler(result -> {
-        if(result.failed()) {
+        if (result.failed()) {
           context.fail(result.cause());
         } else {
           async.complete();
@@ -326,7 +325,7 @@ public class ValidatorRegistryTest {
     final Async async = context.async();
     updateRule(INVALID_REGEXP_RULE_SOFT, HttpStatus.SC_BAD_REQUEST, result -> context.assertEquals(result.result().getCode(), HttpStatus.SC_BAD_REQUEST))
       .setHandler(result -> {
-        if(result.failed()) {
+        if (result.failed()) {
           context.fail(result.cause());
         } else {
           async.complete();
@@ -343,7 +342,7 @@ public class ValidatorRegistryTest {
       .compose(r -> updateRule(PROGRAMMATIC_RULE_ENABLED.put("implementationReference", ref), HttpStatus.SC_BAD_REQUEST,
         result -> context.assertEquals(result.result().getCode(), HttpStatus.SC_BAD_REQUEST)))
       .setHandler(result -> {
-        if(result.failed()) {
+        if (result.failed()) {
           context.fail(result.cause());
         } else {
           async.complete();
@@ -356,7 +355,7 @@ public class ValidatorRegistryTest {
     final Async async = context.async();
     updateRule(REGEXP_RULE_ENABLED, HttpStatus.SC_NOT_FOUND, result -> context.assertEquals(result.result().getCode(), HttpStatus.SC_NOT_FOUND))
       .setHandler(result -> {
-        if(result.failed()) {
+        if (result.failed()) {
           context.fail(result.cause());
         } else {
           async.complete();
@@ -376,9 +375,9 @@ public class ValidatorRegistryTest {
         context.assertEquals(result.result().getCode(), HttpStatus.SC_OK);
         org.folio.rest.jaxrs.model.Rule rule = new JsonObject(result.result().getBody()).mapTo(org.folio.rest.jaxrs.model.Rule.class);
         context.assertEquals(rule.getState(), org.folio.rest.jaxrs.model.Rule.State.ENABLED);
-        }))
+      }))
       .setHandler(chainedRes -> {
-        if(chainedRes.failed()) {
+        if (chainedRes.failed()) {
           context.fail(chainedRes.cause());
         } else {
           async.complete();
@@ -391,7 +390,7 @@ public class ValidatorRegistryTest {
     final Async async = context.async();
     getRuleById("nonexistent_rule_id", HttpStatus.SC_NOT_FOUND, result -> context.assertEquals(result.result().getCode(), HttpStatus.SC_NOT_FOUND))
       .setHandler(result -> {
-        if(result.failed()) {
+        if (result.failed()) {
           context.fail(result.cause());
         } else {
           async.complete();
@@ -413,7 +412,7 @@ public class ValidatorRegistryTest {
         context.assertEquals(rule.getRuleId(), PROGRAMMATIC_RULE_DISABLED.getString(RULE_ID));
       }))
       .setHandler(chainedRes -> {
-        if(chainedRes.failed()) {
+        if (chainedRes.failed()) {
           context.fail(chainedRes.cause());
         } else {
           async.complete();

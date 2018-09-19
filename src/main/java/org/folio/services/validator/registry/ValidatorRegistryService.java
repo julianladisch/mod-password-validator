@@ -34,6 +34,6 @@ public interface ValidatorRegistryService {
   ValidatorRegistryService getTenantRuleByRuleId(String tenantId, String ruleId, Handler<AsyncResult<JsonObject>> asyncResultHandler);
 
   @Fluent
-  ValidatorRegistryService getActiveRulesByType(String tenantId, String type, Handler<AsyncResult<JsonObject>> asyncResultHandler);
+  ValidatorRegistryService getEnabledRulesByType(String tenantId, String type, Handler<AsyncResult<JsonObject>> asyncResultHandler);
 
 }

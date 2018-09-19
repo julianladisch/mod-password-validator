@@ -34,9 +34,15 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
     this.vertx = vertx;
   }
 
+  /**
+   * Returns all rules for tenant
+   *
+   * @param tenantId           tenant id
+   * @param asyncResultHandler result handler
+   * @return a reference to this, so the API can be used fluently
+   */
   @Override
   public ValidatorRegistryService getAllTenantRules(String tenantId, Handler<AsyncResult<JsonObject>> asyncResultHandler) {
-
     try {
       CQL2PgJSON cql2pgJson = new CQL2PgJSON(VALIDATION_RULES_TABLE_NAME + ".jsonb");
       CQLWrapper cql = new CQLWrapper();
@@ -58,13 +64,19 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
       logger.error("Error while getting all tenant rules", e.getCause());
       asyncResultHandler.handle(Future.failedFuture(e.getCause()));
     }
-
     return this;
   }
 
+  /**
+   * Creates rule for tenant with specified id
+   *
+   * @param tenantId           tenant id
+   * @param validationRule     rule to save
+   * @param asyncResultHandler result handler
+   * @return a reference to this, so the API can be used fluently
+   */
   @Override
   public ValidatorRegistryService createTenantRule(String tenantId, JsonObject validationRule, Handler<AsyncResult<JsonObject>> asyncResultHandler) {
-
     try {
       String id = UUID.randomUUID().toString();
       validationRule.put(RULE_ID_FIELD, id);
@@ -80,13 +92,19 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
       logger.error("Error while creating new tenant rule", e.getCause());
       asyncResultHandler.handle(Future.failedFuture(e.getCause()));
     }
-
     return this;
   }
 
+  /**
+   * Updates rule for tenant with specified id by identifier from given <code>validationRule</code>
+   *
+   * @param tenantId           tenant id
+   * @param validationRule     rule to update
+   * @param asyncResultHandler result handler
+   * @return a reference to this, so the API can be used fluently
+   */
   @Override
   public ValidatorRegistryService updateTenantRule(String tenantId, JsonObject validationRule, Handler<AsyncResult<JsonObject>> asyncResultHandler) {
-
     try {
       String id = validationRule.getString(RULE_ID_FIELD);
       Criteria idCrit = constructCriteria(RULE_ID_JSONB_FIELD, id);
@@ -112,13 +130,19 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
       logger.error("Error while updating the rule in the db", e.getCause());
       asyncResultHandler.handle(Future.failedFuture(e.getCause()));
     }
-
     return this;
   }
 
+  /**
+   * Searches for validation rule by given <code>tenantId</code> and <code>ruleId</code>
+   *
+   * @param tenantId           tenant id
+   * @param ruleId             rule id
+   * @param asyncResultHandler result handler
+   * @return a reference to this, so the API can be used fluently
+   */
   @Override
   public ValidatorRegistryService getTenantRuleByRuleId(String tenantId, String ruleId, Handler<AsyncResult<JsonObject>> asyncResultHandler) {
-
     try {
       Criteria idCrit = constructCriteria(RULE_ID_JSONB_FIELD, ruleId);
       PostgresClient.getInstance(vertx, tenantId).get(VALIDATION_RULES_TABLE_NAME, Rule.class, new Criterion(idCrit), true, false, getReply -> {
@@ -139,12 +163,19 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
       logger.error("Error while getting rule by id", e.getCause());
       asyncResultHandler.handle(Future.failedFuture(e.getCause()));
     }
-
     return this;
   }
 
+  /**
+   * Searches for enabled rules with specified tenant id and rule type
+   *
+   * @param tenantId           tenant id
+   * @param type               rule type
+   * @param asyncResultHandler result handler
+   * @return a reference to this, so the API can be used fluently
+   */
   @Override
-  public ValidatorRegistryService getActiveRulesByType(String tenantId, String type, Handler<AsyncResult<JsonObject>> asyncResultHandler) {
+  public ValidatorRegistryService getEnabledRulesByType(String tenantId, String type, Handler<AsyncResult<JsonObject>> asyncResultHandler) {
     try {
       Criterion criterion;
       Criteria stateCrit = constructCriteria(STATE_JSONB_FIELD, Rule.State.ENABLED.toString());
@@ -171,7 +202,6 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
       logger.error("Error while getting all enabled rules by type", e.getCause());
       asyncResultHandler.handle(Future.failedFuture(e.getCause()));
     }
-
     return this;
   }
 

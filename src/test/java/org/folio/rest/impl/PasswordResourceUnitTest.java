@@ -31,7 +31,6 @@ import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
 @RunWith(MockitoJUnitRunner.class)
 public class PasswordResourceUnitTest {
 
-
   private static final String TENANT_ID = "diku";
 
   @Mock

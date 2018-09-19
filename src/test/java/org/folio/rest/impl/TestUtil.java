@@ -19,7 +19,6 @@ public class TestUtil {
   public static final Handler<AsyncResult<WrappedResponse>> NO_ASSERTS = x -> {
   };
 
-
   static class WrappedResponse {
     private String explanation;
     private int code;

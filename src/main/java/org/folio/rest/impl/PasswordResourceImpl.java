@@ -41,17 +41,24 @@ public class PasswordResourceImpl implements PasswordResource {
                                    final Map<String, String> okapiHeaders,
                                    final Handler<AsyncResult<Response>> asyncResultHandler,
                                    final Context vertxContext) {
-    validationEngineProxy.validatePassword(entity.getPassword(), okapiHeaders, result -> {
-      Response response;
-      if (result.succeeded()) {
-        response = PostPasswordValidateResponse.withJsonOK(result.result().mapTo(ValidationTemplateJson.class));
-      } else {
-        String errorMessage = "Failed to validate password: " + result.cause().getLocalizedMessage();
-        logger.error(errorMessage, result.cause());
-        response = PostPasswordValidateResponse.withPlainInternalServerError(result.cause().getLocalizedMessage());
-      }
-      asyncResultHandler.handle(Future.succeededFuture(response));
-    });
+    try {
+      validationEngineProxy.validatePassword(entity.getPassword(), okapiHeaders, result -> {
+        Response response;
+        if (result.succeeded()) {
+          response = PostPasswordValidateResponse.withJsonOK(result.result().mapTo(ValidationTemplateJson.class));
+        } else {
+          String errorMessage = "Failed to validate password: " + result.cause().getLocalizedMessage();
+          logger.error(errorMessage, result.cause());
+          response = PostPasswordValidateResponse.withPlainInternalServerError(Response.Status.INTERNAL_SERVER_ERROR.getReasonPhrase());
+        }
+        asyncResultHandler.handle(Future.succeededFuture(response));
+      });
+    } catch (Exception e) {
+      logger.error("Failed to validate password: " + e.getLocalizedMessage(), e.getCause());
+      asyncResultHandler.handle(Future.succeededFuture(
+        PostPasswordValidateResponse.withPlainInternalServerError(Response.Status.INTERNAL_SERVER_ERROR.getReasonPhrase())));
+    }
+
   }
 
   @Override
@@ -60,7 +67,7 @@ public class PasswordResourceImpl implements PasswordResource {
                                     final Handler<AsyncResult<Response>> asyncResultHandler,
                                     final Context vertxContext) throws Exception {
     try {
-      vertxContext.runOnContext(v -> validatorRegistryService.getActiveRulesByType(tenantId, type, reply -> {
+      vertxContext.runOnContext(v -> validatorRegistryService.getEnabledRulesByType(tenantId, type, reply -> {
         if (reply.succeeded()) {
           RuleCollection rules = reply.result().mapTo(RuleCollection.class);
           asyncResultHandler.handle(

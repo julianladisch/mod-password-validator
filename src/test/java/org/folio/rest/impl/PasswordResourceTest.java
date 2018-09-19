@@ -30,11 +30,11 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.folio.services.validator.util.ValidatorHelper.VALIDATION_INVALID_RESULT;
-import static org.folio.services.validator.util.ValidatorHelper.VALIDATION_VALID_RESULT;
 import static org.folio.services.validator.util.ValidatorHelper.REQUEST_PARAM_KEY;
 import static org.folio.services.validator.util.ValidatorHelper.RESPONSE_ERROR_MESSAGES_KEY;
 import static org.folio.services.validator.util.ValidatorHelper.RESPONSE_VALIDATION_RESULT_KEY;
+import static org.folio.services.validator.util.ValidatorHelper.VALIDATION_INVALID_RESULT;
+import static org.folio.services.validator.util.ValidatorHelper.VALIDATION_VALID_RESULT;
 
 @RunWith(VertxUnitRunner.class)
 public class PasswordResourceTest {
