@@ -90,7 +90,7 @@ public class PasswordResourceUnitTest {
     Handler<AsyncResult<Response>> checkingHandler = result -> {
       Response response = result.result();
       Assert.assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, response.getStatus());
-      Assert.assertThat((String) response.getEntity(), Matchers.containsString(exceptionMessage));
+      Assert.assertThat((String) response.getEntity(), Matchers.containsString(Response.Status.INTERNAL_SERVER_ERROR.getReasonPhrase()));
     };
 
     //when
