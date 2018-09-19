@@ -24,6 +24,21 @@ tenant.
 
  `POST` `/password/validate` to validate user password which accepts any JSON structure, and returns validation result.
 
+## API
+
+Module provides next API:
+
+
+| Interface                            | Description                                                                            |
+|--------------------------------------|----------------------------------------------------------------------------------------|
+| GET /password/validators?type={type} | returns a list of enabled validation rules with a particular type for a current tenant |
+| POST /password/validate              | validates a user credentials provided within the request body                          |
+| POST /tenant/rules                   | adds a rule to a tenant                                                                |
+| PUT /tenant/rules                    | enables/disables/changes rul                                                           |
+| GET /tenant/rules                    | returns all rules for a tenant                                                         |
+| GET /tenant/rules/{ruleId}           | returns a particular rule                                                              |
+
+
 ## Compiling
 
 ```
