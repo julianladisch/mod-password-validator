@@ -7,13 +7,8 @@
       "version": "1.0",
       "handlers": [
         {
-          "methods": ["GET"],
-          "pathPattern": "/password/validators",
-          "permissionsRequired" : [ "validation.rules.collection.get" ]
-        },
-        {
           "methods": ["POST"],
-          "pathPattern": "/password/validate",
+          "pathPattern": "/validate",
           "permissionsRequired" : [ "validation.validate.post" ]
         },
         {
