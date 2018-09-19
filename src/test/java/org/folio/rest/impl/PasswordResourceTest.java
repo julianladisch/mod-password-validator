@@ -14,7 +14,6 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.apache.http.HttpStatus;
 import org.folio.rest.RestVerticle;
 import org.folio.rest.client.TenantClient;
-import org.folio.rest.jaxrs.model.RuleCollection;
 import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.NetworkUtils;
@@ -27,8 +26,6 @@ import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.folio.services.validator.util.ValidatorHelper.REQUEST_PARAM_KEY;
 import static org.folio.services.validator.util.ValidatorHelper.RESPONSE_ERROR_MESSAGES_KEY;
@@ -59,49 +56,11 @@ public class PasswordResourceTest {
     .put("description", "Minimum eight characters")
     .put(ERR_MESSAGE_ID, "password.validation.error.min-8");
 
-  private static final JsonObject REGEXP_RULE_ENABLED = new JsonObject()
-    .put("ruleId", "7ab1c2cd-37ad-4b8f-a514-e78424798e27")
-    .put("name", "regexp rule")
-    .put("type", "RegExp")
-    .put("validationType", "Strong")
-    .put("state", "Enabled")
-    .put("moduleName", "mod-password-validator")
-    .put("expression", "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]+$")
-    .put("description", "At least one letter and one number")
-    .put("orderNo", 1)
-    .put("errMessageId", "");
-
-  private static final JsonObject REGEXP_RULE_DISABLED = new JsonObject()
-    .put("ruleId", "00d2c43c-06fe-450c-af3f-8700cdc28fc5")
-    .put("name", "regexp rule")
-    .put("type", "RegExp")
-    .put("validationType", "Strong")
-    .put("state", "Disabled")
-    .put("moduleName", "mod-password-validator")
-    .put("expression", "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]+$")
-    .put("description", "At least one letter and one number")
-    .put("orderNo", 1)
-    .put("errMessageId", "");
-
-  private static final JsonObject PROGRAMMATIC_RULE = new JsonObject()
-    .put("ruleId", "1ed60281-bfb0-44c4-adb3-3d4e04fba550")
-    .put("name", "programmatic rule")
-    .put("type", "Programmatic")
-    .put("validationType", "Soft")
-    .put("state", "Enabled")
-    .put("moduleName", "mod-password-validator")
-    .put("expression", "")
-    .put("implementationReference", "Some implementation")
-    .put("description", "Programmatic rule")
-    .put("orderNo", 1)
-    .put("errMessageId", "");
-
 
   private static final String HOST = "http://localhost:";
   private static final String HTTP_PORT = "http.port";
   private static final String ORDER_NO = "orderNo";
   private static final String STATE = "state";
-  private static final String VALIDATION_PATH_QUERYABLE = "/password/validators?type=";
   private static final String VALIDATOR_RULE_TYPE_REGEXP = "RegExp";
 
   private static final String TENANT = "diku";
@@ -238,87 +197,6 @@ public class PasswordResourceTest {
     });
   }
 
-  @Test
-  public void shouldNotReturnProgrammaticOnGetActiveRegExpValidators(final TestContext context) {
-    final Async async = context.async();
-    postRule(PROGRAMMATIC_RULE, result -> context.assertEquals(result.result().getCode(), HttpStatus.SC_CREATED))
-      .compose(r -> getTenantRulesByType(VALIDATOR_RULE_TYPE_REGEXP, result -> {
-        context.assertEquals(result.result().getCode(), HttpStatus.SC_OK);
-        List<org.folio.rest.jaxrs.model.Rule> rules = new JsonObject(result.result().getBody()).mapTo(RuleCollection.class).getRules();
-        context.assertTrue(rules.stream().noneMatch(rule1 -> rule1.getType() == org.folio.rest.jaxrs.model.Rule.Type.PROGRAMMATIC));
-      }))
-      .setHandler(chainedRes -> {
-        if (chainedRes.failed()) {
-          context.fail(chainedRes.cause());
-        } else {
-          async.complete();
-        }
-      });
-  }
-
-  @Test
-  public void shouldNotReturnDisabledOnGetActiveRegExpValidators(final TestContext context) {
-    final Async async = context.async();
-    postRule(REGEXP_RULE_DISABLED, result -> context.assertEquals(result.result().getCode(), HttpStatus.SC_CREATED))
-      .compose(r -> getTenantRulesByType(VALIDATOR_RULE_TYPE_REGEXP, result -> {
-        context.assertEquals(result.result().getCode(), HttpStatus.SC_OK);
-        List<org.folio.rest.jaxrs.model.Rule> rules = new JsonObject(result.result().getBody()).mapTo(RuleCollection.class).getRules();
-        context.assertTrue(rules.stream().noneMatch(rule1 -> rule1.getState() == org.folio.rest.jaxrs.model.Rule.State.DISABLED));
-      }))
-      .setHandler(chainedRes -> {
-        if (chainedRes.failed()) {
-          context.fail(chainedRes.cause());
-        } else {
-          async.complete();
-        }
-      });
-  }
-
-  @Test
-  public void shouldReturnRulesOnGetActiveRegExpValidators(final TestContext context) {
-    final Async async = context.async();
-    postRule(REGEXP_RULE_ENABLED, result -> context.assertEquals(result.result().getCode(), HttpStatus.SC_CREATED))
-      .compose(r -> getTenantRulesByType(VALIDATOR_RULE_TYPE_REGEXP, result -> {
-        context.assertEquals(result.result().getCode(), HttpStatus.SC_OK);
-        List<org.folio.rest.jaxrs.model.Rule> rules = new JsonObject(result.result().getBody()).mapTo(RuleCollection.class).getRules();
-        context.assertTrue(rules.stream().allMatch(rule1 -> rule1.getState() == org.folio.rest.jaxrs.model.Rule.State.ENABLED
-          && rule1.getType() == org.folio.rest.jaxrs.model.Rule.Type.REG_EXP));
-      }))
-      .setHandler(chainedRes -> {
-        if (chainedRes.failed()) {
-          context.fail(chainedRes.cause());
-        } else {
-          async.complete();
-        }
-      });
-  }
-
-  @Test
-  public void shouldReturnAllActiveTenantRulesWhenTypeNotSpecified(final TestContext context) {
-    final Async async = context.async();
-    postRule(PROGRAMMATIC_RULE, result -> context.assertEquals(result.result().getCode(), HttpStatus.SC_CREATED))
-      .compose(r -> postRule(REGEXP_RULE_DISABLED, result -> context.assertEquals(result.result().getCode(), HttpStatus.SC_CREATED)))
-      .compose(r -> postRule(REGEXP_RULE_ENABLED, result -> context.assertEquals(result.result().getCode(), HttpStatus.SC_CREATED)))
-      .compose(r -> getTenantRulesByType("", result -> {
-        context.assertEquals(result.result().getCode(), HttpStatus.SC_OK);
-        RuleCollection collection = new JsonObject(result.result().getBody()).mapTo(RuleCollection.class);
-        context.assertTrue(collection.getTotalRecords() == 2);
-        List<org.folio.rest.jaxrs.model.Rule> rules = collection.getRules();
-        context.assertTrue(rules.size() == 2);
-        context.assertTrue(rules.stream().filter(rule1 ->
-          rule1.getName().equals(PROGRAMMATIC_RULE.getString("name"))).collect(Collectors.toList()).size() == 1);
-        context.assertTrue(rules.stream().filter(rule1 ->
-          rule1.getName().equals(REGEXP_RULE_ENABLED.getString("name"))).collect(Collectors.toList()).size() == 1);
-      }))
-      .setHandler(chainedRes -> {
-        if (chainedRes.failed()) {
-          context.fail(chainedRes.cause());
-        } else {
-          async.complete();
-        }
-      });
-  }
-
   private Future<TestUtil.WrappedResponse> postRule(JsonObject rule,
                                                     Handler<AsyncResult<TestUtil.WrappedResponse>> handler) {
     return TestUtil.doRequest(vertx, HOST + port + "/tenant/rules", HttpMethod.POST, null, rule.toString(),
@@ -327,12 +205,8 @@ public class PasswordResourceTest {
 
   private Future<TestUtil.WrappedResponse> validatePassword(JsonObject password, int expectedCode,
                                                             Handler<AsyncResult<TestUtil.WrappedResponse>> handler) {
-    return TestUtil.doRequest(vertx, HOST + port + "/password/validate", HttpMethod.POST, null,
+    return TestUtil.doRequest(vertx, HOST + port + "/validate", HttpMethod.POST, null,
       password.toString(), expectedCode, "Validating password", handler);
   }
 
-  private Future<TestUtil.WrappedResponse> getTenantRulesByType(String type, Handler<AsyncResult<TestUtil.WrappedResponse>> handler) {
-    return TestUtil.doRequest(vertx, HOST + port + VALIDATION_PATH_QUERYABLE + type, HttpMethod.GET, null, null,
-      HttpStatus.SC_OK, "Getting enabled rules by type", handler);
-  }
 }
