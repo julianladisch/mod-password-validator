@@ -44,32 +44,30 @@ public class ProgrammaticRulesProcessingTest {
   private static final String OKAPI_HEADER_TENANT_VALUE = "tenant";
   private static final String OKAPI_HEADER_TOKEN_VALUE = "token";
 
-  private static final Rule STRONG_PROGRAMMATIC_RULE = new JsonObject()
-    .put("ruleId", "739c63d4-bb53-11e8-a355-529269fb1459")
-    .put("name", "is_in_bad_password_list")
-    .put("type", "Programmatic")
-    .put("validationType", "Strong")
-    .put("state", "Enabled")
-    .put("moduleName", "mod-login")
-    .put("implementationReference", "/auth/credentials/isInBadPasswordList")
-    .put("description", "Password must not be in bad password list")
-    .put("orderNo", 0)
-    .put("errMessageId", "password.in.bad.password.list")
-    .mapTo(Rule.class);
+  private static final Rule STRONG_PROGRAMMATIC_RULE = new Rule()
+    .withRuleId("739c63d4-bb53-11e8-a355-529269fb1459")
+    .withName("is_in_bad_password_list")
+    .withType(Rule.Type.PROGRAMMATIC)
+    .withValidationType(Rule.ValidationType.STRONG)
+    .withState(Rule.State.ENABLED)
+    .withModuleName("mod-login")
+    .withImplementationReference("/auth/credentials/isInBadPasswordList")
+    .withDescription("Password must not be in bad password list")
+    .withOrderNo(0)
+    .withErrMessageId("password.in.bad.password.list");
 
 
-  private static final Rule SOFT_PROGRAMMATIC_RULE = new JsonObject()
-    .put("ruleId", "739c66f4-bb53-11e8-a355-529269fb1459")
-    .put("name", "soft-programmatic-role")
-    .put("type", "Programmatic")
-    .put("validationType", "Soft")
-    .put("state", "Enabled")
-    .put("moduleName", "mod-login")
-    .put("implementationReference", "/auth/credentials/isInBadPasswordList")
-    .put("description", "Password must not be in bad password list")
-    .put("orderNo", 0)
-    .put("errMessageId", "password.in.bad.password.list")
-    .mapTo(Rule.class);
+  private static final Rule SOFT_PROGRAMMATIC_RULE = new Rule()
+    .withRuleId("739c66f4-bb53-11e8-a355-529269fb1459")
+    .withName("soft-programmatic-role")
+    .withType(Rule.Type.PROGRAMMATIC)
+    .withValidationType(Rule.ValidationType.SOFT)
+    .withState(Rule.State.ENABLED)
+    .withModuleName("mod-login")
+    .withImplementationReference("/auth/credentials/isInBadPasswordList")
+    .withDescription("Password must not be in bad password list")
+    .withOrderNo(0)
+    .withErrMessageId("password.in.bad.password.list");
 
   @Mock
   private ValidatorRegistryService validatorRegistryService;
