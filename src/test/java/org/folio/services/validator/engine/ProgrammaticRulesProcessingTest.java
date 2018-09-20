@@ -125,7 +125,7 @@ public class ProgrammaticRulesProcessingTest {
 
     //then
     Mockito.verify(validatorRegistryService).getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(),
-      ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
+      ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any());
   }
 
   /**
@@ -159,7 +159,7 @@ public class ProgrammaticRulesProcessingTest {
 
     //then
     Mockito.verify(validatorRegistryService).getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(),
-      ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
+      ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any());
   }
 
   /**
@@ -192,7 +192,7 @@ public class ProgrammaticRulesProcessingTest {
 
     //then
     Mockito.verify(validatorRegistryService).getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(),
-      ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
+      ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any());
   }
 
   /**
@@ -217,16 +217,16 @@ public class ProgrammaticRulesProcessingTest {
 
     //then
     Mockito.verify(validatorRegistryService).getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(),
-      ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
+      ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any());
   }
 
 
   private void mockRegistryService(List<Rule> rules) {
     JsonObject registryResponse = JsonObject.mapFrom(new RuleCollection().withRules(rules));
-    Mockito.doAnswer(new GenericHandlerAnswer<>(Future.succeededFuture(JsonObject.mapFrom(registryResponse)), 5))
+    Mockito.doAnswer(new GenericHandlerAnswer<>(Future.succeededFuture(JsonObject.mapFrom(registryResponse)), 4))
       .when(validatorRegistryService)
       .getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(), ArgumentMatchers.anyInt(),
-        ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
+        ArgumentMatchers.any(), ArgumentMatchers.any());
   }
 
   private void mockHttpClient(int status, JsonObject response) {

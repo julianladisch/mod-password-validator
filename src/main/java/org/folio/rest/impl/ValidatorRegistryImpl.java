@@ -34,10 +34,10 @@ public class ValidatorRegistryImpl implements TenantRulesResource {
   }
 
   @Override
-  public void getTenantRules(int length, int start, String sortBy, String query, Map<String, String> okapiHeaders,
+  public void getTenantRules(int length, int start, String query, Map<String, String> okapiHeaders,
                              Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) throws Exception {
     try {
-      vertxContext.runOnContext(v -> validatorRegistryService.getAllTenantRules(tenantId, length, start, sortBy, query, reply -> {
+      vertxContext.runOnContext(v -> validatorRegistryService.getAllTenantRules(tenantId, length, start, query, reply -> {
         if (reply.succeeded()) {
           RuleCollection rules = reply.result().mapTo(RuleCollection.class);
           asyncResultHandler.handle(
@@ -123,7 +123,6 @@ public class ValidatorRegistryImpl implements TenantRulesResource {
       asyncResultHandler.handle(Future.succeededFuture(
         PutTenantRulesResponse.withPlainInternalServerError(Response.Status.INTERNAL_SERVER_ERROR.getReasonPhrase())));
     }
-
   }
 
   @Override
