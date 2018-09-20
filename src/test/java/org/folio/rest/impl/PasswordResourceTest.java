@@ -43,7 +43,7 @@ public class PasswordResourceTest {
     .put("type", "RegExp")
     .put("validationType", "Strong")
     .put("moduleName", "mod-password-validator")
-    .put("expression", "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]+$")
+    .put("expression", "^(?=.*[A-Za-z])(?=.*\\d).+$")
     .put("description", "At least one letter and one number")
     .put(ERR_MESSAGE_ID, "password.validation.error.one-letter-one-number");
 
@@ -127,30 +127,9 @@ public class PasswordResourceTest {
   }
 
   @Test
-  public void shouldReturnSuccessfulValidationWhenNoActiveRulesForTargetTenantExists(final TestContext context) {
-    Async async = context.async();
-    JsonObject passwordBody = new JsonObject().put(REQUEST_PARAM_KEY, "test");
-    JsonObject expectedResponse = new JsonObject().put(RESPONSE_VALIDATION_RESULT_KEY, VALIDATION_VALID_RESULT)
-      .put(RESPONSE_ERROR_MESSAGES_KEY, new JsonArray());
-
-    postRule(REGEXP_RULE_ONE_LETTER_ONE_NUMBER.put(ORDER_NO, 0).put(STATE, "Disabled"), TestUtil.NO_ASSERTS)
-      .compose(r -> validatePassword(passwordBody, 200, result -> {
-        context.assertEquals(result.result().getCode(), HttpStatus.SC_OK);
-        context.assertEquals(new JsonObject(result.result().getBody()), expectedResponse);
-        async.complete();
-      })).setHandler(chainedRes -> {
-      if (chainedRes.failed()) {
-        context.fail(chainedRes.cause());
-      } else {
-        async.complete();
-      }
-    });
-  }
-
-  @Test
   public void shouldReturnSuccessfulValidationWhenPasswordPassesAllRules(final TestContext context) {
     Async async = context.async();
-    JsonObject passwordBody = new JsonObject().put(REQUEST_PARAM_KEY, "password123");
+    JsonObject passwordBody = new JsonObject().put(REQUEST_PARAM_KEY, "P@sword12");
     JsonObject expectedResponse = new JsonObject().put(RESPONSE_VALIDATION_RESULT_KEY, VALIDATION_VALID_RESULT)
       .put(RESPONSE_ERROR_MESSAGES_KEY, new JsonArray());
 

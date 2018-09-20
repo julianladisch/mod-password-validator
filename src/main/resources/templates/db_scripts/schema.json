@@ -12,7 +12,8 @@
           "fieldName": "id",
           "tOps": "ADD"
         }
-      ]
+      ],
+      "customSnippetPath": "populate-rules.sql"
     }
   ]
 }

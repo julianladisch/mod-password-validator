@@ -14,29 +14,36 @@ Version 2.0. See the file "[LICENSE](LICENSE)" for more information.
 
 ## Introduction
 
-The main purposes of the module are providing a validation flow for user password and storing
-Rules for the tenant.
+The module provides a default rule set for a tenant and functionality to manage them via REST API and 
+also allows to use a validation flow for a user password.
 
-The module supports following requests:
-
- `GET` request to `/password/validators?type={type}`, which just returns the list of the rules applied to the current
-tenant.
-
- `POST` `/password/validate` to validate user password which accepts any JSON structure, and returns validation result.
+ The module supports following rules for a password
+  
+  The password MUST:
+      
+ |    Description                                 |  Invalid examples                 |
+ |------------------------------------------------|-----------------------------------|
+ | Contain minimum 8 characters                   | 'pasword'                         |
+ | Contain both lowercase and uppercase letters   | 'password', 'PASSWORD'            |
+ | Contain at least one numeric character         | 'password'                        |
+ | Contain at least one special character         | 'password'                        |
+ | NOT contain your username                      | 'pas<USER_NAME>sword'             | 
+ | NOT contain a keyboard sequence                | 'qwerty12', '12345678', 'q1234567'|
+ | NOT contain the same character                 | 'password'                        |
+ | NOT contain whitespace                         | 'pas sword'                       |
 
 ## API
 
 Module provides next API:
 
-
-| Interface                            | Description                                                                            |
-|--------------------------------------|----------------------------------------------------------------------------------------|
-| POST /validate                       | validates a user credentials provided within the request body                          |
-| POST /tenant/rules                   | adds a rule to a tenant                                                                |
-| PUT /tenant/rules                    | enables/disables/changes rul                                                           |
-| GET /tenant/rules                    | returns all rules for a tenant                                                         |
-| GET /tenant/rules/{ruleId}           | returns a particular rule                                                              |
-
+ | METHOD |  URL                          | DESCRIPTION                                                       |
+ |--------|-------------------------------|-------------------------------------------------------------------|
+ | GET    | /tenant/rules                 | Get list of the rules                                             |
+ | POST   | /tenant/rules                 | Add a new rule to a tenant                                        |
+ | PUT    | /tenant/rules                 | Change a rule for a tenant                                        |
+ | GET    | /tenant/rules/{ruleId}        | Returns a particular rule by id                                   |
+ | POST   | /password/validate            | Validates a user credentials provided within the request body     |
+ | GET    | /password/validators          | Get list of the rules applied for current tenant                  |
 
 ## Compiling
 
