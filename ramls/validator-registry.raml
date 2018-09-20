@@ -10,6 +10,9 @@ schemas:
   - ruleCollection: !include ruleCollection.json
   - rule.json: !include rule.json
   - raml-util/schemas/metadata.schema: !include raml-util/schemas/metadata.schema
+  - errors: !include raml-util/schemas/errors.schema
+  - error.schema: !include raml-util/schemas/error.schema
+  - parameters.schema: !include raml-util/schemas/parameters.schema
 
 traits:
   - pageable:
@@ -35,6 +38,7 @@ traits:
          description: "A query string to filter rules based on matching criteria in fields."
          required: false
          type: string
+  - validate: !include raml-util/traits/validation.raml
 
 /tenant/rules:
   get:
@@ -54,6 +58,7 @@ traits:
           text/plain:
             example: "Internal server error"
   post:
+    is: [validate]
     description: Add a rule to a tenant
     body:
       application/json:
