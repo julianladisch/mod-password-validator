@@ -67,9 +67,10 @@ public class RegExpRulesProcessingTest {
     // given
     String password = "Password";
 
-    Mockito.doAnswer(new GenericHandlerAnswer<>(Future.succeededFuture(JsonObject.mapFrom(regExpRuleCollection)), 2))
+    Mockito.doAnswer(new GenericHandlerAnswer<>(Future.succeededFuture(JsonObject.mapFrom(regExpRuleCollection)), 5))
       .when(validatorRegistryService)
-      .getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
+      .getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(),
+        ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
 
     // when
     Handler<AsyncResult<JsonObject>> checkingHandler = result -> {
@@ -82,7 +83,8 @@ public class RegExpRulesProcessingTest {
     validationEngineService.validatePassword(password, requestHeaders, checkingHandler);
 
     // then
-    Mockito.verify(validatorRegistryService).getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
+    Mockito.verify(validatorRegistryService).getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(),
+      ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
   }
 
   /**
@@ -99,9 +101,10 @@ public class RegExpRulesProcessingTest {
     // given
     String password = "passw";
 
-    Mockito.doAnswer(new GenericHandlerAnswer<>(Future.succeededFuture(JsonObject.mapFrom(regExpRuleCollection)), 2))
+    Mockito.doAnswer(new GenericHandlerAnswer<>(Future.succeededFuture(JsonObject.mapFrom(regExpRuleCollection)), 5))
       .when(validatorRegistryService)
-      .getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
+      .getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(),
+        ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
 
     // when
     Handler<AsyncResult<JsonObject>> checkingHandler = result -> {
@@ -115,7 +118,8 @@ public class RegExpRulesProcessingTest {
     validationEngineService.validatePassword(password, requestHeaders, checkingHandler);
 
     // then
-    Mockito.verify(validatorRegistryService).getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
+    Mockito.verify(validatorRegistryService).getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(),
+      ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
   }
 
   /**
@@ -132,9 +136,10 @@ public class RegExpRulesProcessingTest {
     // given
     String password = "9password";
 
-    Mockito.doAnswer(new GenericHandlerAnswer<>(Future.succeededFuture(JsonObject.mapFrom(regExpRuleCollection)), 2))
+    Mockito.doAnswer(new GenericHandlerAnswer<>(Future.succeededFuture(JsonObject.mapFrom(regExpRuleCollection)), 5))
       .when(validatorRegistryService)
-      .getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
+      .getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(),
+        ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
 
     // when
     Handler<AsyncResult<JsonObject>> checkingHandler = result -> {
@@ -148,7 +153,8 @@ public class RegExpRulesProcessingTest {
     validationEngineService.validatePassword(password, requestHeaders, checkingHandler);
 
     // then
-    Mockito.verify(validatorRegistryService).getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
+    Mockito.verify(validatorRegistryService).getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(),
+      ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
   }
 
   /**
@@ -165,9 +171,10 @@ public class RegExpRulesProcessingTest {
   public void shouldReturnInvalidResultForEachRegExpRule() {
     // given
     String password = "9pass";
-    Mockito.doAnswer(new GenericHandlerAnswer<>(Future.succeededFuture(JsonObject.mapFrom(regExpRuleCollection)), 2))
+    Mockito.doAnswer(new GenericHandlerAnswer<>(Future.succeededFuture(JsonObject.mapFrom(regExpRuleCollection)), 5))
       .when(validatorRegistryService)
-      .getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
+      .getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(),
+        ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
 
     // when
     Handler<AsyncResult<JsonObject>> checkingHandler = result -> {
@@ -184,7 +191,8 @@ public class RegExpRulesProcessingTest {
     validationEngineService.validatePassword(password, requestHeaders, checkingHandler);
 
     // then
-    Mockito.verify(validatorRegistryService).getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
+    Mockito.verify(validatorRegistryService).getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(),
+      ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
   }
 
   private static void initRequestHeaders() {

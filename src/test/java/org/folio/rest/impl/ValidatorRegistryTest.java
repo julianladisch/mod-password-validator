@@ -167,7 +167,7 @@ public class ValidatorRegistryTest {
   @Test
   public void shouldReturnEmptyListIfNoRulesExist(final TestContext context) {
     final Async async = context.async();
-    getTenantRules(result -> {
+    getTenantRules("", result -> {
       context.assertEquals(result.result().getCode(), HttpStatus.SC_OK);
       RuleCollection collection = new JsonObject(result.result().getBody()).mapTo(RuleCollection.class);
       context.assertTrue(collection.getTotalRecords() == 0);
@@ -184,13 +184,13 @@ public class ValidatorRegistryTest {
   }
 
   @Test
-  public void shouldReturnAllTenantRules(final TestContext context) {
+  public void shouldReturnAllTenantRulesWhenNoQueryIsSpecified(final TestContext context) {
     final Async async = context.async();
     postRule(PROGRAMMATIC_RULE_DISABLED, HttpStatus.SC_CREATED, result -> context.assertEquals(result.result().getCode(), HttpStatus.SC_CREATED))
       .compose(r -> postRule(REGEXP_RULE_DISABLED, HttpStatus.SC_CREATED, result -> context.assertEquals(result.result().getCode(), HttpStatus.SC_CREATED)))
       .compose(r -> postRule(REGEXP_RULE_ENABLED, HttpStatus.SC_CREATED, result -> context.assertEquals(result.result().getCode(), HttpStatus.SC_CREATED)))
       .compose(r -> postRule(PROGRAMMATIC_RULE_ENABLED, HttpStatus.SC_CREATED, result -> context.assertEquals(result.result().getCode(), HttpStatus.SC_CREATED)))
-      .compose(r -> getTenantRules(result -> {
+      .compose(r -> getTenantRules("", result -> {
         context.assertEquals(result.result().getCode(), HttpStatus.SC_OK);
         RuleCollection collection = new JsonObject(result.result().getBody()).mapTo(RuleCollection.class);
         context.assertTrue(collection.getTotalRecords() == 4);
@@ -204,6 +204,44 @@ public class ValidatorRegistryTest {
           rule1.getName().equals(REGEXP_RULE_ENABLED.getString("name"))).collect(Collectors.toList()).size() == 1);
         context.assertTrue(rules.stream().filter(rule1 ->
           rule1.getName().equals(PROGRAMMATIC_RULE_ENABLED.getString("name"))).collect(Collectors.toList()).size() == 1);
+      }))
+      .setHandler(chainedRes -> {
+        if (chainedRes.failed()) {
+          context.fail(chainedRes.cause());
+        } else {
+          async.complete();
+        }
+      });
+  }
+
+  @Test
+  public void shouldNotReturnProgrammaticOnGetTenantRulesByTypeRegExp(final TestContext context) {
+    final Async async = context.async();
+    String query = "query=type=RegExp";
+    postRule(PROGRAMMATIC_RULE_ENABLED, HttpStatus.SC_CREATED, result -> context.assertEquals(result.result().getCode(), HttpStatus.SC_CREATED))
+      .compose(r -> getTenantRules(query, result -> {
+        context.assertEquals(result.result().getCode(), HttpStatus.SC_OK);
+        List<org.folio.rest.jaxrs.model.Rule> rules = new JsonObject(result.result().getBody()).mapTo(RuleCollection.class).getRules();
+        context.assertTrue(rules.stream().noneMatch(rule1 -> rule1.getType() == org.folio.rest.jaxrs.model.Rule.Type.PROGRAMMATIC));
+      }))
+      .setHandler(chainedRes -> {
+        if (chainedRes.failed()) {
+          context.fail(chainedRes.cause());
+        } else {
+          async.complete();
+        }
+      });
+  }
+
+  @Test
+  public void shouldNotReturnDisabledOnGetTenantRulesByStateEnabled(final TestContext context) {
+    final Async async = context.async();
+    String query = "query=state=Enabled";
+    postRule(REGEXP_RULE_DISABLED,  HttpStatus.SC_CREATED, result -> context.assertEquals(result.result().getCode(), HttpStatus.SC_CREATED))
+      .compose(r -> getTenantRules(query, result -> {
+        context.assertEquals(result.result().getCode(), HttpStatus.SC_OK);
+        List<org.folio.rest.jaxrs.model.Rule> rules = new JsonObject(result.result().getBody()).mapTo(RuleCollection.class).getRules();
+        context.assertTrue(rules.stream().noneMatch(rule1 -> rule1.getState() == org.folio.rest.jaxrs.model.Rule.State.DISABLED));
       }))
       .setHandler(chainedRes -> {
         if (chainedRes.failed()) {
@@ -260,7 +298,10 @@ public class ValidatorRegistryTest {
     postRule(PROGRAMMATIC_RULE_ENABLED.put("implementationReference", ""), HttpStatus.SC_BAD_REQUEST, result ->
       context.assertEquals(result.result().getCode(), HttpStatus.SC_BAD_REQUEST))
       .compose(r -> postRule(PROGRAMMATIC_RULE_ENABLED.put("implementationReference", ref), HttpStatus.SC_BAD_REQUEST,
-        result -> context.assertEquals(result.result().getCode(), HttpStatus.SC_BAD_REQUEST)))
+        result -> {
+        context.assertEquals(result.result().getCode(), HttpStatus.SC_BAD_REQUEST);
+          PROGRAMMATIC_RULE_ENABLED.put("implementationReference", "smth");
+        }))
       .setHandler(result -> {
         if (result.failed()) {
           context.fail(result.cause());
@@ -425,8 +466,8 @@ public class ValidatorRegistryTest {
       expectedStatus, "Adding new rule", handler);
   }
 
-  private Future<TestUtil.WrappedResponse> getTenantRules(Handler<AsyncResult<TestUtil.WrappedResponse>> handler) {
-    return TestUtil.doRequest(vertx, HOST + port + TENANT_RULES_PATH, HttpMethod.GET, null, null,
+  private Future<TestUtil.WrappedResponse> getTenantRules(String query, Handler<AsyncResult<TestUtil.WrappedResponse>> handler) {
+    return TestUtil.doRequest(vertx, HOST + port + TENANT_RULES_PATH + "?" + query, HttpMethod.GET, null, null,
       HttpStatus.SC_OK, "Getting all tenant rules", handler);
   }
 

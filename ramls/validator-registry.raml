@@ -11,9 +11,45 @@ schemas:
   - rule.json: !include rule.json
   - raml-util/schemas/metadata.schema: !include raml-util/schemas/metadata.schema
 
+traits:
+  - pageable:
+     queryParameters:
+       length:
+         description: "The maximum number of results to return."
+         required: false
+         type: integer
+         example: 10
+         minimum: 1
+         default: 10
+         maximum: 1000
+       start:
+         description: "The starting index in a list of results (starts at one)."
+         required: false
+         type: integer
+         minimum: 1
+         default: 1
+         maximum: 1000
+  - sortable:
+     queryParameters:
+       sortBy:
+         description: "A comma-separated list of fieldnames to sort by"
+         required: false
+         type: string
+  - queryable:
+     queryParameters:
+       query:
+         description: "A query string to filter rules based on matching criteria in fields."
+         required: false
+         type: string
+
 /tenant/rules:
   get:
     description: Get a list of existing validation rules for a tenant
+    is: [
+      pageable,
+      sortable,
+      queryable
+    ]
     responses:
       200:
         body:

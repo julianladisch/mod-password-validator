@@ -61,7 +61,6 @@ public class PasswordResourceTest {
   private static final String HTTP_PORT = "http.port";
   private static final String ORDER_NO = "orderNo";
   private static final String STATE = "state";
-  private static final String VALIDATOR_RULE_TYPE_REGEXP = "RegExp";
 
   private static final String TENANT = "diku";
   private static final String VALIDATION_RULES_TABLE_NAME = "validation_rules";

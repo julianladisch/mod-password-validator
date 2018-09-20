@@ -86,7 +86,7 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
     MultiMap caseInsensitiveHeaders = new CaseInsensitiveHeaders().addAll(requestHeaders);
     String tenantId = caseInsensitiveHeaders.get(OKAPI_HEADER_TENANT);
 
-    validatorRegistryProxy.getEnabledRulesByType(tenantId, null, response -> {
+    validatorRegistryProxy.getAllTenantRules(tenantId, 500, 1, "orderNo", "query=state=Enabled", response -> {
       if (response.succeeded()) {
 
         List<Rule> rules = response.result().mapTo(RuleCollection.class).getRules();

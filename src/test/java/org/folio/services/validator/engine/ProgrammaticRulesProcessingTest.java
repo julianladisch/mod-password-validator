@@ -124,7 +124,8 @@ public class ProgrammaticRulesProcessingTest {
     validationEngineService.validatePassword(givenPassword, requestHeaders, checkingHandler);
 
     //then
-    Mockito.verify(validatorRegistryService).getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
+    Mockito.verify(validatorRegistryService).getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(),
+      ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
   }
 
   /**
@@ -157,7 +158,8 @@ public class ProgrammaticRulesProcessingTest {
     validationEngineService.validatePassword(givenPassword, requestHeaders, checkingHandler);
 
     //then
-    Mockito.verify(validatorRegistryService).getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
+    Mockito.verify(validatorRegistryService).getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(),
+      ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
   }
 
   /**
@@ -189,7 +191,8 @@ public class ProgrammaticRulesProcessingTest {
     validationEngineService.validatePassword(givenPassword, requestHeaders, checkingHandler);
 
     //then
-    Mockito.verify(validatorRegistryService).getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
+    Mockito.verify(validatorRegistryService).getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(),
+      ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
   }
 
   /**
@@ -213,15 +216,17 @@ public class ProgrammaticRulesProcessingTest {
     validationEngineService.validatePassword(givenPassword, requestHeaders, checkingHandler);
 
     //then
-    Mockito.verify(validatorRegistryService).getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
+    Mockito.verify(validatorRegistryService).getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(),
+      ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
   }
 
 
   private void mockRegistryService(List<Rule> rules) {
     JsonObject registryResponse = JsonObject.mapFrom(new RuleCollection().withRules(rules));
-    Mockito.doAnswer(new GenericHandlerAnswer<>(Future.succeededFuture(JsonObject.mapFrom(registryResponse)), 2))
+    Mockito.doAnswer(new GenericHandlerAnswer<>(Future.succeededFuture(JsonObject.mapFrom(registryResponse)), 5))
       .when(validatorRegistryService)
-      .getEnabledRulesByType(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
+      .getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(), ArgumentMatchers.anyInt(),
+        ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
   }
 
   private void mockHttpClient(int status, JsonObject response) {

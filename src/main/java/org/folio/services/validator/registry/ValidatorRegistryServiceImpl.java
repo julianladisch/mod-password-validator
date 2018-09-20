@@ -11,6 +11,8 @@ import org.folio.rest.jaxrs.model.Rule;
 import org.folio.rest.jaxrs.model.RuleCollection;
 import org.folio.rest.persist.Criteria.Criteria;
 import org.folio.rest.persist.Criteria.Criterion;
+import org.folio.rest.persist.Criteria.Limit;
+import org.folio.rest.persist.Criteria.Offset;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.persist.cql.CQLWrapper;
 import org.z3950.zing.cql.cql2pgjson.CQL2PgJSON;
@@ -25,8 +27,6 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
   private static final String VALIDATION_RULES_TABLE_NAME = "validation_rules";
   private static final String RULE_ID_FIELD = "ruleId";
   private static final String RULE_ID_JSONB_FIELD = "'ruleId'";
-  private static final String STATE_JSONB_FIELD = "'state'";
-  private static final String TYPE_JSONB_FIELD = "'type'";
 
   private final Vertx vertx;
 
@@ -38,15 +38,17 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
    * Returns all rules for tenant
    *
    * @param tenantId           tenant id
+   * @param length             maximum number of results to return
+   * @param start              starting index in a list of results (starts at one)
+   * @param sortBy             comma-separated list of field names to sort by
+   * @param query              query string to filter rules based on matching criteria in fields
    * @param asyncResultHandler result handler
    * @return a reference to this, so the API can be used fluently
    */
   @Override
-  public ValidatorRegistryService getAllTenantRules(String tenantId, Handler<AsyncResult<JsonObject>> asyncResultHandler) {
+  public ValidatorRegistryService getAllTenantRules(String tenantId, int length, int start, String sortBy, String query, Handler<AsyncResult<JsonObject>> asyncResultHandler) {
     try {
-      CQL2PgJSON cql2pgJson = new CQL2PgJSON(VALIDATION_RULES_TABLE_NAME + ".jsonb");
-      CQLWrapper cql = new CQLWrapper();
-      cql.setField(cql2pgJson);
+      CQLWrapper cql = getCQL(query, length, start - 1);
       String[] fieldList = {"*"};
       PostgresClient.getInstance(vertx, tenantId).get(VALIDATION_RULES_TABLE_NAME, Rule.class, fieldList, cql, true, false, getReply -> {
         if (getReply.failed()) {
@@ -166,51 +168,27 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
     return this;
   }
 
-  /**
-   * Searches for enabled rules with specified tenant id and rule type
-   *
-   * @param tenantId           tenant id
-   * @param type               rule type
-   * @param asyncResultHandler result handler
-   * @return a reference to this, so the API can be used fluently
-   */
-  @Override
-  public ValidatorRegistryService getEnabledRulesByType(String tenantId, String type, Handler<AsyncResult<JsonObject>> asyncResultHandler) {
-    try {
-      Criterion criterion;
-      Criteria stateCrit = constructCriteria(STATE_JSONB_FIELD, Rule.State.ENABLED.toString());
-      if (type != null && !type.isEmpty()) {
-        Criteria typeCrit = constructCriteria(TYPE_JSONB_FIELD, type);
-        criterion = new Criterion();
-        criterion.addCriterion(stateCrit, "AND", typeCrit);
-      } else {
-        criterion = new Criterion(stateCrit);
-      }
-      PostgresClient.getInstance(vertx, tenantId).get(VALIDATION_RULES_TABLE_NAME, Rule.class, criterion, true, false, getReply -> {
-        if (getReply.failed()) {
-          logger.error("Error while querying the db to get all enabled tenant rules by type", getReply.cause());
-          asyncResultHandler.handle(Future.failedFuture(getReply.cause()));
-        } else {
-          RuleCollection rules = new RuleCollection();
-          List<Rule> ruleList = (List<Rule>) getReply.result().getResults();
-          rules.setRules(ruleList);
-          rules.setTotalRecords(ruleList.size());
-          asyncResultHandler.handle(Future.succeededFuture(JsonObject.mapFrom(rules)));
-        }
-      });
-    } catch (Exception e) {
-      logger.error("Error while getting all enabled rules by type", e);
-      asyncResultHandler.handle(Future.failedFuture(e));
-    }
-    return this;
-  }
-
   private Criteria constructCriteria(String jsonbField, String value) {
     Criteria criteria = new Criteria();
     criteria.addField(jsonbField);
     criteria.setOperation("=");
     criteria.setValue(value);
     return criteria;
+  }
+
+  /**
+   * Build CQL from request URL query
+   *
+   * @param query - query from URL
+   * @param limit - limit of records for pagination
+   * @return - CQL wrapper for building postgres request to database
+   * @throws org.z3950.zing.cql.cql2pgjson.FieldException
+   */
+  private CQLWrapper getCQL(String query, int limit, int offset) throws org.z3950.zing.cql.cql2pgjson.FieldException {
+    CQL2PgJSON cql2pgJson = new CQL2PgJSON(VALIDATION_RULES_TABLE_NAME + ".jsonb");
+    return new CQLWrapper(cql2pgJson, query)
+      .setLimit(new Limit(limit))
+      .setOffset(new Offset(offset));
   }
 
 }
