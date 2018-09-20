@@ -123,6 +123,7 @@ public class ValidatorRegistryImpl implements TenantRulesResource {
       asyncResultHandler.handle(Future.succeededFuture(
         PutTenantRulesResponse.withPlainInternalServerError(Response.Status.INTERNAL_SERVER_ERROR.getReasonPhrase())));
     }
+
   }
 
   @Override
