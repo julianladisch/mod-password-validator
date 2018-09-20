@@ -50,20 +50,25 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
     try {
       CQLWrapper cql = getCQL(query, length, start - 1);
       String[] fieldList = {"*"};
-      PostgresClient.getInstance(vertx, tenantId).get(VALIDATION_RULES_TABLE_NAME, Rule.class, fieldList, cql, true, false, getReply -> {
-        if (getReply.failed()) {
-          logger.error("Error while querying the db to get all tenant rules", getReply.cause());
-          asyncResultHandler.handle(Future.failedFuture(getReply.cause()));
-        } else {
-          RuleCollection rules = new RuleCollection();
-          List<Rule> ruleList = (List<Rule>) getReply.result().getResults();
-          rules.setRules(ruleList);
-          rules.setTotalRecords(ruleList.size());
-          asyncResultHandler.handle(Future.succeededFuture(JsonObject.mapFrom(rules)));
-        }
-      });
+      try {
+        PostgresClient.getInstance(vertx, tenantId).get(VALIDATION_RULES_TABLE_NAME, Rule.class, fieldList, cql, true, false, getReply -> {
+          if (getReply.failed()) {
+            logger.error("Error while querying the db to get all tenant rules", getReply.cause());
+            asyncResultHandler.handle(Future.failedFuture(getReply.cause()));
+          } else {
+            RuleCollection rules = new RuleCollection();
+            List<Rule> ruleList = (List<Rule>) getReply.result().getResults();
+            rules.setRules(ruleList);
+            rules.setTotalRecords(ruleList.size());
+            asyncResultHandler.handle(Future.succeededFuture(JsonObject.mapFrom(rules)));
+          }
+        });
+      } catch (Exception e) {
+        logger.error("PostgresClient error while getting all tenant rules", e);
+        asyncResultHandler.handle(Future.failedFuture(e));
+      }
     } catch (Exception e) {
-      logger.error("Error while getting all tenant rules", e);
+      logger.error("Error while creating CQLWrapper to get all tenant rules", e);
       asyncResultHandler.handle(Future.failedFuture(e));
     }
     return this;
@@ -110,26 +115,36 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
     try {
       String id = validationRule.getString(RULE_ID_FIELD);
       Criteria idCrit = constructCriteria(RULE_ID_JSONB_FIELD, id);
-      PostgresClient.getInstance(vertx, tenantId).get(VALIDATION_RULES_TABLE_NAME, Rule.class, new Criterion(idCrit), true, false, getReply -> {
-        if (getReply.failed()) {
-          logger.error("Error while querying the db to get the rule by id", getReply.cause());
-          asyncResultHandler.handle(Future.failedFuture(getReply.cause()));
-        } else if (getReply.result().getResults().isEmpty()) {
-          logger.debug("Rule " + id + " was not found in the db");
-          asyncResultHandler.handle(Future.succeededFuture(null));
-        } else {
-          PostgresClient.getInstance(vertx, tenantId).update(VALIDATION_RULES_TABLE_NAME, validationRule.mapTo(Rule.class), new Criterion(idCrit), true, putReply -> {
-            if (putReply.failed()) {
-              logger.error("Error while updating the rule " + id + " in the db", putReply.cause());
-              asyncResultHandler.handle(Future.failedFuture(putReply.cause()));
-            } else {
-              asyncResultHandler.handle(Future.succeededFuture(validationRule));
+      try {
+        PostgresClient.getInstance(vertx, tenantId).get(VALIDATION_RULES_TABLE_NAME, Rule.class, new Criterion(idCrit), true, false, getReply -> {
+          if (getReply.failed()) {
+            logger.error("Error while querying the db to get the rule by id", getReply.cause());
+            asyncResultHandler.handle(Future.failedFuture(getReply.cause()));
+          } else if (getReply.result().getResults().isEmpty()) {
+            logger.debug("Rule " + id + " was not found in the db");
+            asyncResultHandler.handle(Future.succeededFuture(null));
+          } else {
+            try {
+              PostgresClient.getInstance(vertx, tenantId).update(VALIDATION_RULES_TABLE_NAME, validationRule.mapTo(Rule.class), new Criterion(idCrit), true, putReply -> {
+                if (putReply.failed()) {
+                  logger.error("Error while updating the rule " + id + " in the db", putReply.cause());
+                  asyncResultHandler.handle(Future.failedFuture(putReply.cause()));
+                } else {
+                  asyncResultHandler.handle(Future.succeededFuture(validationRule));
+                }
+              });
+            } catch (Exception e) {
+              logger.error("PostgresClient error while querying the db to update the rule by id", e);
+              asyncResultHandler.handle(Future.failedFuture(e));
             }
-          });
-        }
-      });
+          }
+        });
+      } catch (Exception e) {
+        logger.error("PostgresClient error while querying the db to get the rule by id", e);
+        asyncResultHandler.handle(Future.failedFuture(e));
+      }
     } catch (Exception e) {
-      logger.error("Error while updating the rule in the db", e);
+      logger.error("Error creating the Criteria to update rule in the db", e);
       asyncResultHandler.handle(Future.failedFuture(e));
     }
     return this;
@@ -147,22 +162,27 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
   public ValidatorRegistryService getTenantRuleByRuleId(String tenantId, String ruleId, Handler<AsyncResult<JsonObject>> asyncResultHandler) {
     try {
       Criteria idCrit = constructCriteria(RULE_ID_JSONB_FIELD, ruleId);
-      PostgresClient.getInstance(vertx, tenantId).get(VALIDATION_RULES_TABLE_NAME, Rule.class, new Criterion(idCrit), true, false, getReply -> {
-        if (getReply.failed()) {
-          logger.error("Error while querying the db to get the rule by id", getReply.cause());
-          asyncResultHandler.handle(Future.failedFuture(getReply.cause()));
-        } else {
-          List<Rule> ruleList = (List<Rule>) getReply.result().getResults();
-          if (ruleList.isEmpty()) {
-            logger.debug("Rule " + ruleId + "was not found in the db");
-            asyncResultHandler.handle(Future.succeededFuture(null));
+      try {
+        PostgresClient.getInstance(vertx, tenantId).get(VALIDATION_RULES_TABLE_NAME, Rule.class, new Criterion(idCrit), true, false, getReply -> {
+          if (getReply.failed()) {
+            logger.error("Error while querying the db to get the rule by id", getReply.cause());
+            asyncResultHandler.handle(Future.failedFuture(getReply.cause()));
           } else {
-            asyncResultHandler.handle(Future.succeededFuture(JsonObject.mapFrom(ruleList.get(0))));
+            List<Rule> ruleList = (List<Rule>) getReply.result().getResults();
+            if (ruleList.isEmpty()) {
+              logger.debug("Rule " + ruleId + "was not found in the db");
+              asyncResultHandler.handle(Future.succeededFuture(null));
+            } else {
+              asyncResultHandler.handle(Future.succeededFuture(JsonObject.mapFrom(ruleList.get(0))));
+            }
           }
-        }
-      });
+        });
+      } catch (Exception e) {
+        logger.error("PostgresClient error while getting rule by id", e);
+        asyncResultHandler.handle(Future.failedFuture(e));
+      }
     } catch (Exception e) {
-      logger.error("Error while getting rule by id", e);
+      logger.error("Error creating the Criteria to get rule by id", e);
       asyncResultHandler.handle(Future.failedFuture(e));
     }
     return this;
