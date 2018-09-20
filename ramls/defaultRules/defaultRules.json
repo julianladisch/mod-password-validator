@@ -56,7 +56,7 @@
       "state": "Enabled",
       "moduleName": "mod-password-validator",
       "expression": "^(?:(?!<USER_NAME>).)+$",
-      "description": "The password must contain at least one special character",
+      "description": "The password must not contain your username",
       "orderNo": 4,
       "errMessageId": "password.usernameDuplicate.invalid"
     },
