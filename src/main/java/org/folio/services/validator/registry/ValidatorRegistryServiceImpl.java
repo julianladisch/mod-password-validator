@@ -20,6 +20,10 @@ import org.z3950.zing.cql.cql2pgjson.CQL2PgJSON;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Implementation of Validator Registry Service,
+ * calls PostgresClient to perform CRUD operations on Rule entity
+ */
 public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
 
   private final Logger logger = LoggerFactory.getLogger(ValidatorRegistryServiceImpl.class);
@@ -167,6 +171,13 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
     return this;
   }
 
+  /**
+   * Builds criteria by which db result is filtered
+   *
+   * @param jsonbField - json key name
+   * @param value - value corresponding to the key
+   * @return - Criteria object
+   */
   private Criteria constructCriteria(String jsonbField, String value) {
     Criteria criteria = new Criteria();
     criteria.addField(jsonbField);

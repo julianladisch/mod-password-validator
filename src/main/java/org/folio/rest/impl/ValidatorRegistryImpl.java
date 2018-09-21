@@ -43,9 +43,10 @@ public class ValidatorRegistryImpl implements TenantRulesResource {
           asyncResultHandler.handle(
             Future.succeededFuture(GetTenantRulesResponse.withJsonOK(rules)));
         } else {
-          logger.error("Failed to get all tenant rules", reply.cause());
+          String message = "Failed to get all tenant rules";
+          logger.error(message, reply.cause());
           asyncResultHandler.handle(
-            Future.succeededFuture(GetTenantRulesResponse.withPlainInternalServerError("Failed to get all tenant rules")));
+            Future.succeededFuture(GetTenantRulesResponse.withPlainInternalServerError(message)));
         }
       }));
     } catch (Exception e) {
@@ -72,9 +73,10 @@ public class ValidatorRegistryImpl implements TenantRulesResource {
               asyncResultHandler.handle(
                 Future.succeededFuture(PostTenantRulesResponse.withJsonCreated(reply.result().mapTo(Rule.class))));
             } else {
-              logger.error("Failed to create new rule", reply.cause());
+              String message = "Failed to create new rule";
+              logger.error(message, reply.cause());
               asyncResultHandler.handle(
-                Future.succeededFuture(PostTenantRulesResponse.withPlainInternalServerError("Failed to create new rule")));
+                Future.succeededFuture(PostTenantRulesResponse.withPlainInternalServerError(message)));
             }
           });
         }
@@ -111,9 +113,10 @@ public class ValidatorRegistryImpl implements TenantRulesResource {
                   Future.succeededFuture(PutTenantRulesResponse.withJsonOK(result.mapTo(Rule.class))));
               }
             } else {
-              logger.error("Failed to update rule", reply.cause());
+              String message = "Failed to update rule";
+              logger.error(message, reply.cause());
               asyncResultHandler.handle(
-                Future.succeededFuture(PutTenantRulesResponse.withPlainInternalServerError("Failed to update rule")));
+                Future.succeededFuture(PutTenantRulesResponse.withPlainInternalServerError(message)));
             }
           });
         }
@@ -144,9 +147,10 @@ public class ValidatorRegistryImpl implements TenantRulesResource {
               Future.succeededFuture(GetTenantRulesByRuleIdResponse.withJsonOK(result.mapTo(Rule.class))));
           }
         } else {
-          logger.error("Failed to get rule by id " + ruleId, reply.cause());
+          String message = "Failed to get rule by id " + ruleId;
+          logger.error(message, reply.cause());
           asyncResultHandler.handle(
-            Future.succeededFuture(GetTenantRulesByRuleIdResponse.withPlainInternalServerError("Failed to get rule by id " + ruleId)));
+            Future.succeededFuture(GetTenantRulesByRuleIdResponse.withPlainInternalServerError(message)));
         }
       }));
     } catch (Exception e) {
@@ -156,6 +160,12 @@ public class ValidatorRegistryImpl implements TenantRulesResource {
     }
   }
 
+  /**
+   * Validates Rule entity
+   *
+   * @param entity - Rule entity to validate
+   * @return error message
+   */
   private String validateRule(Rule entity) {
     String errorMessage = null;
     if (entity.getOrderNo() < 0) {
