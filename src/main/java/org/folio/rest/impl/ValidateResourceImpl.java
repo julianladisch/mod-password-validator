@@ -45,7 +45,7 @@ public class ValidateResourceImpl implements ValidateResource {
     }
   }
 
-  //Workaround for raml module builder bug
+  //Workaround for raml module builder bug RMB-1 (fixed in raml-module-builder version 20.0.0)
   @Override
   public void getValidate(Map<String, String> okapiHeaders, Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) throws Exception {
     asyncResultHandler.handle(Future.succeededFuture(GetValidateResponse.withPlainOK("stub")));
