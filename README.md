@@ -43,7 +43,6 @@ Module provides next API:
  | PUT    | /tenant/rules                 | Change a rule for a tenant                                        |
  | GET    | /tenant/rules/{ruleId}        | Returns a particular rule by id                                   |
  | POST   | /password/validate            | Validates a user credentials provided within the request body     |
- | GET    | /password/validators          | Get list of the rules applied for current tenant                  |
 
 ## Compiling
 

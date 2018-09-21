@@ -30,6 +30,6 @@
  | PUT    | /tenant/rules                 | Change a rule for a tenant                         |
  | GET    | /tenant/rules/{ruleId}        | Get a rule by id                                   |
  | POST   | /password/validate            | Validate user password                             |
- | GET    | /password/validators          | Get list of the rules applied for current tenant   |
+
 ## 2018-09-04 v0.0.1
  * Initial module setup
