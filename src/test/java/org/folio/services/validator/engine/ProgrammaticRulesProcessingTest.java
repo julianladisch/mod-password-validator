@@ -34,10 +34,10 @@ import java.util.Map;
 
 import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
 import static org.folio.rest.RestVerticle.OKAPI_HEADER_TOKEN;
+import static org.folio.services.validator.util.ValidatorHelper.RESPONSE_ERROR_MESSAGES_KEY;
 import static org.folio.services.validator.util.ValidatorHelper.RESPONSE_VALIDATION_RESULT_KEY;
 import static org.folio.services.validator.util.ValidatorHelper.VALIDATION_INVALID_RESULT;
 import static org.folio.services.validator.util.ValidatorHelper.VALIDATION_VALID_RESULT;
-import static org.folio.services.validator.util.ValidatorHelper.RESPONSE_ERROR_MESSAGES_KEY;
 
 
 /**
@@ -48,6 +48,14 @@ public class ProgrammaticRulesProcessingTest {
 
   private static final String OKAPI_HEADER_TENANT_VALUE = "tenant";
   private static final String OKAPI_HEADER_TOKEN_VALUE = "token";
+
+  private static final JsonObject USER_SERVICE_MOCK_RESPONSE = new JsonObject()
+    .put("users", new JsonArray()
+      .add(new JsonObject()
+        .put("username", "admin")
+        .put("id", "9d990cae-2685-4868-9fca-d0ad013c0640")
+        .put("active", true)))
+    .put("totalRecords", 1);
 
   private static final Rule STRONG_PROGRAMMATIC_RULE = new Rule()
     .withRuleId("739c63d4-bb53-11e8-a355-529269fb1459")
@@ -60,7 +68,6 @@ public class ProgrammaticRulesProcessingTest {
     .withDescription("Password must not be in bad password list")
     .withOrderNo(0)
     .withErrMessageId("password.in.bad.password.list");
-
 
   private static final Rule SOFT_PROGRAMMATIC_RULE = new Rule()
     .withRuleId("739c66f4-bb53-11e8-a355-529269fb1459")
@@ -78,10 +85,6 @@ public class ProgrammaticRulesProcessingTest {
   private ValidatorRegistryService validatorRegistryService;
   @Mock
   private HttpClient httpClient;
-  @Mock
-  private HttpClientRequest httpClientRequest;
-  @Mock
-  private HttpClientResponse httpClientResponse;
   @InjectMocks
   private ValidationEngineService validationEngineService = new ValidationEngineServiceImpl();
 
@@ -92,6 +95,7 @@ public class ProgrammaticRulesProcessingTest {
     requestHeaders = new HashMap<>();
     requestHeaders.put(OKAPI_HEADER_TENANT, OKAPI_HEADER_TENANT_VALUE);
     requestHeaders.put(OKAPI_HEADER_TOKEN, OKAPI_HEADER_TOKEN_VALUE);
+    mockUserModule(HttpStatus.SC_OK, USER_SERVICE_MOCK_RESPONSE);
   }
 
   /**
@@ -99,8 +103,8 @@ public class ProgrammaticRulesProcessingTest {
    * Expected result is to receive the response contains valid validation result
    * and empty error message list:
    * {
-   *    "result" : "valid"
-   *    "messages" : []
+   * "result" : "valid"
+   * "messages" : []
    * }
    */
   @Test
@@ -110,7 +114,7 @@ public class ProgrammaticRulesProcessingTest {
 
     JsonObject httpClientMockResponse = new JsonObject()
       .put(RESPONSE_VALIDATION_RESULT_KEY, VALIDATION_VALID_RESULT);
-    mockHttpClient(HttpStatus.SC_OK, httpClientMockResponse);
+    mockProgrammaticRuleClient(HttpStatus.SC_OK, httpClientMockResponse);
 
     //when
     JsonObject expectedResult = new JsonObject()
@@ -133,8 +137,8 @@ public class ProgrammaticRulesProcessingTest {
    * Expected result is to receive the response contains invalid validation result
    * and error message code belongs to the rule:
    * {
-   *    "result" : "invalid",
-   *    "messages" : "[password.in.bad.password.list]"
+   * "result" : "invalid",
+   * "messages" : "[password.in.bad.password.list]"
    * }
    */
   @Test
@@ -144,7 +148,7 @@ public class ProgrammaticRulesProcessingTest {
 
     JsonObject httpClientMockResponse = new JsonObject()
       .put(RESPONSE_VALIDATION_RESULT_KEY, VALIDATION_INVALID_RESULT);
-    mockHttpClient(HttpStatus.SC_OK, httpClientMockResponse);
+    mockProgrammaticRuleClient(HttpStatus.SC_OK, httpClientMockResponse);
 
     //when
     JsonObject expectedResult = new JsonObject()
@@ -166,8 +170,8 @@ public class ProgrammaticRulesProcessingTest {
    * Testing the case when received password satisfies Soft Programmatic rule.
    * Expected result is to receive the response contains valid validation result:
    * {
-   *    "result" : "valid",
-   *    "messages" : "[]"
+   * "result" : "valid",
+   * "messages" : "[]"
    * }
    */
   @Test
@@ -177,7 +181,7 @@ public class ProgrammaticRulesProcessingTest {
 
     JsonObject httpClientMockResponse = new JsonObject()
       .put(RESPONSE_VALIDATION_RESULT_KEY, VALIDATION_VALID_RESULT);
-    mockHttpClient(HttpStatus.SC_INTERNAL_SERVER_ERROR, httpClientMockResponse);
+    mockProgrammaticRuleClient(HttpStatus.SC_INTERNAL_SERVER_ERROR, httpClientMockResponse);
 
     //when
     JsonObject expectedResult = new JsonObject()
@@ -206,7 +210,7 @@ public class ProgrammaticRulesProcessingTest {
 
     JsonObject httpClientMockResponse = new JsonObject()
       .put(RESPONSE_VALIDATION_RESULT_KEY, VALIDATION_VALID_RESULT);
-    mockHttpClient(HttpStatus.SC_INTERNAL_SERVER_ERROR, httpClientMockResponse);
+    mockProgrammaticRuleClient(HttpStatus.SC_INTERNAL_SERVER_ERROR, httpClientMockResponse);
 
     //when
     Handler<AsyncResult<JsonObject>> checkingHandler = result -> {
@@ -229,13 +233,46 @@ public class ProgrammaticRulesProcessingTest {
         ArgumentMatchers.any(), ArgumentMatchers.any());
   }
 
-  private void mockHttpClient(int status, JsonObject response) {
-    Mockito.doAnswer(new GenericHandlerAnswer<>(httpClientResponse, 1, httpClientRequest))
+  private void mockUserModule(int status, JsonObject response) {
+    HttpClientResponse userModuleResponse = Mockito.mock(HttpClientResponse.class);
+    HttpClientRequest userModuleRequest = Mockito.mock(HttpClientRequest.class);
+
+    Mockito.doReturn(userModuleRequest)
+      .when(httpClient)
+      .getAbs(ArgumentMatchers.anyString());
+
+    Mockito.doAnswer(new GenericHandlerAnswer<>(userModuleResponse, 0))
+      .when(userModuleRequest)
+      .handler(ArgumentMatchers.any(Handler.class));
+
+    Mockito.doReturn(status)
+      .when(userModuleResponse)
+      .statusCode();
+
+    Buffer userBodyMock = Mockito.mock(Buffer.class);
+    Mockito.doReturn(response)
+      .when(userBodyMock)
+      .toJsonObject();
+
+    Mockito.doAnswer(new GenericHandlerAnswer<>(userBodyMock, 0, userModuleResponse))
+      .when(userModuleResponse)
+      .bodyHandler(ArgumentMatchers.any(Handler.class));
+
+    Mockito.doAnswer(InvocationOnMock::getMock)
+      .when(userModuleRequest)
+      .putHeader(ArgumentMatchers.anyString(), ArgumentMatchers.anyString());
+  }
+
+  private void mockProgrammaticRuleClient(int status, JsonObject response) {
+    HttpClientResponse programmaticRuleResponse = Mockito.mock(HttpClientResponse.class);
+    HttpClientRequest programmaticRuleRequest = Mockito.mock(HttpClientRequest.class);
+
+    Mockito.doAnswer(new GenericHandlerAnswer<>(programmaticRuleResponse, 1, programmaticRuleRequest))
       .when(httpClient)
       .post(ArgumentMatchers.anyString(), ArgumentMatchers.any(Handler.class));
 
     Mockito.doReturn(status)
-      .when(httpClientResponse)
+      .when(programmaticRuleResponse)
       .statusCode();
 
     Buffer ruleResponseBodyMock = Mockito.mock(Buffer.class);
@@ -243,16 +280,15 @@ public class ProgrammaticRulesProcessingTest {
       .when(ruleResponseBodyMock)
       .toJsonObject();
 
-    Mockito.doAnswer(new GenericHandlerAnswer<>(ruleResponseBodyMock, 0, httpClientResponse))
-      .when(httpClientResponse)
+    Mockito.doAnswer(new GenericHandlerAnswer<>(ruleResponseBodyMock, 0, programmaticRuleResponse))
+      .when(programmaticRuleResponse)
       .bodyHandler(ArgumentMatchers.any(Handler.class));
 
     Mockito.doAnswer(InvocationOnMock::getMock)
-      .when(httpClientRequest)
+      .when(programmaticRuleRequest)
       .putHeader(ArgumentMatchers.anyString(), ArgumentMatchers.anyString());
     Mockito.doAnswer(InvocationOnMock::getMock)
-      .when(httpClientRequest)
+      .when(programmaticRuleRequest)
       .write(ArgumentMatchers.anyString());
   }
-
 }

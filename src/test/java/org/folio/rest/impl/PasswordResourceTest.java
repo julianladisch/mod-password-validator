@@ -5,6 +5,7 @@ import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.http.CaseInsensitiveHeaders;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -27,6 +28,8 @@ import org.junit.runner.RunWith;
 
 import java.io.IOException;
 
+import static org.folio.rest.RestVerticle.OKAPI_HEADER_TOKEN;
+import static org.folio.rest.RestVerticle.OKAPI_USERID_HEADER;
 import static org.folio.services.validator.util.ValidatorHelper.REQUEST_PARAM_KEY;
 import static org.folio.services.validator.util.ValidatorHelper.RESPONSE_ERROR_MESSAGES_KEY;
 import static org.folio.services.validator.util.ValidatorHelper.RESPONSE_VALIDATION_RESULT_KEY;
@@ -62,11 +65,13 @@ public class PasswordResourceTest {
   private static final String ORDER_NO = "orderNo";
   private static final String STATE = "state";
 
+  private static final String OKAPI_URL_HEADER = "x-okapi-url";
   private static final String TENANT = "diku";
   private static final String VALIDATION_RULES_TABLE_NAME = "validation_rules";
 
   private static Vertx vertx;
   private static int port;
+  private static int userMockPort;
 
 
   @Rule
@@ -77,21 +82,32 @@ public class PasswordResourceTest {
     Async async = context.async();
     vertx = Vertx.vertx();
     port = NetworkUtils.nextFreePort();
+    userMockPort = NetworkUtils.nextFreePort();
 
     PostgresClient.setIsEmbedded(true);
     PostgresClient.getInstance(vertx).startEmbeddedPostgres();
     TenantClient tenantClient = new TenantClient("localhost", port, TENANT, TENANT);
 
     final DeploymentOptions options = new DeploymentOptions().setConfig(new JsonObject().put(HTTP_PORT, port));
-    vertx.deployVerticle(RestVerticle.class.getName(), options, res -> {
-      try {
-        tenantClient.post(null, res2 -> {
-          async.complete();
+    DeploymentOptions userMockOptions = new DeploymentOptions()
+      .setConfig(new JsonObject().put("port", userMockPort)).setWorker(true);
+    vertx.deployVerticle(UserMock.class.getName(), userMockOptions, mockRes -> {
+      if (mockRes.failed()) {
+        mockRes.cause().printStackTrace();
+        context.fail(mockRes.cause());
+      } else {
+        vertx.deployVerticle(RestVerticle.class.getName(), options, res -> {
+          try {
+            tenantClient.post(null, res2 -> {
+              async.complete();
+            });
+          } catch (Exception e) {
+            e.printStackTrace();
+          }
         });
-      } catch (Exception e) {
-        e.printStackTrace();
       }
     });
+
   }
 
   @AfterClass
@@ -183,7 +199,11 @@ public class PasswordResourceTest {
 
   private Future<TestUtil.WrappedResponse> validatePassword(JsonObject password, int expectedCode,
                                                             Handler<AsyncResult<TestUtil.WrappedResponse>> handler) {
-    return TestUtil.doRequest(vertx, HOST + port + "/validate", HttpMethod.POST, null,
+    CaseInsensitiveHeaders headers = new CaseInsensitiveHeaders();
+    headers.add(OKAPI_USERID_HEADER, UserMock.ADMIN_ID);
+    headers.add(OKAPI_URL_HEADER, HOST + userMockPort);
+    headers.add(OKAPI_HEADER_TOKEN, "token");
+    return TestUtil.doRequest(vertx, HOST + port + "/validate", HttpMethod.POST, headers,
       password.toString(), expectedCode, "Validating password", handler);
   }
 

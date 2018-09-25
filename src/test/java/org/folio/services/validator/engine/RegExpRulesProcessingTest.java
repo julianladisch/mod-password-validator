@@ -4,13 +4,19 @@ package org.folio.services.validator.engine;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpClientRequest;
+import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import org.apache.http.HttpStatus;
 import org.folio.rest.impl.GenericHandlerAnswer;
 import org.folio.rest.jaxrs.model.Rule;
 import org.folio.rest.jaxrs.model.RuleCollection;
 import org.folio.services.validator.registry.ValidatorRegistryService;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -18,6 +24,7 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.ArrayList;
@@ -36,6 +43,14 @@ import static org.folio.services.validator.util.ValidatorHelper.VALIDATION_VALID
 @RunWith(MockitoJUnitRunner.class)
 public class RegExpRulesProcessingTest {
 
+  private static final JsonObject USER_SERVICE_MOCK_RESPONSE = new JsonObject()
+    .put("users", new JsonArray()
+      .add(new JsonObject()
+        .put("username", "admin")
+        .put("id", "9d990cae-2685-4868-9fca-d0ad013c0640")
+        .put("active", true)))
+    .put("totalRecords", 1);
+
   private static final String OKAPI_HEADER_TENANT_VALUE = "tenant";
   private static final String OKAPI_HEADER_TOKEN_VALUE = "token";
 
@@ -46,11 +61,18 @@ public class RegExpRulesProcessingTest {
   private ValidationEngineService validationEngineService = new ValidationEngineServiceImpl();
   @Mock
   private ValidatorRegistryService validatorRegistryService;
+  @Mock
+  private HttpClient httpClient;
 
   @BeforeClass
-  public static void setUp() {
+  public static void setUpBeforeClass() {
     initRequestHeaders();
     initRegExpRules();
+  }
+
+  @Before
+  public void setUp() throws Exception {
+    mockUserModule(HttpStatus.SC_OK, USER_SERVICE_MOCK_RESPONSE);
   }
 
   /**
@@ -236,4 +258,33 @@ public class RegExpRulesProcessingTest {
     regExpRuleCollection.setRules(rulesList);
   }
 
+  private void mockUserModule(int status, JsonObject response) {
+    HttpClientResponse userModuleResponse = Mockito.mock(HttpClientResponse.class);
+    HttpClientRequest userModuleRequest = Mockito.mock(HttpClientRequest.class);
+
+    Mockito.doReturn(userModuleRequest)
+      .when(httpClient)
+      .getAbs(ArgumentMatchers.anyString());
+
+    Mockito.doAnswer(new GenericHandlerAnswer<>(userModuleResponse, 0))
+      .when(userModuleRequest)
+      .handler(ArgumentMatchers.any(Handler.class));
+
+    Mockito.doReturn(status)
+      .when(userModuleResponse)
+      .statusCode();
+
+    Buffer userBodyMock = Mockito.mock(Buffer.class);
+    Mockito.doReturn(response)
+      .when(userBodyMock)
+      .toJsonObject();
+
+    Mockito.doAnswer(new GenericHandlerAnswer<>(userBodyMock, 0, userModuleResponse))
+      .when(userModuleResponse)
+      .bodyHandler(ArgumentMatchers.any(Handler.class));
+
+    Mockito.doAnswer(InvocationOnMock::getMock)
+      .when(userModuleRequest)
+      .putHeader(ArgumentMatchers.anyString(), ArgumentMatchers.anyString());
+  }
 }

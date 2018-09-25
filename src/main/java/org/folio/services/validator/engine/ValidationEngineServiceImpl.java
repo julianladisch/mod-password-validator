@@ -26,10 +26,12 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static org.folio.rest.RestVerticle.MODULE_SPECIFIC_ARGS;
 import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
 import static org.folio.rest.RestVerticle.OKAPI_HEADER_TOKEN;
+import static org.folio.rest.RestVerticle.OKAPI_USERID_HEADER;
 
 /**
  * Implementation of validation engine;
@@ -40,6 +42,7 @@ import static org.folio.rest.RestVerticle.OKAPI_HEADER_TOKEN;
 public class ValidationEngineServiceImpl implements ValidationEngineService {
 
   private static final String OKAPI_URL_HEADER = "x-okapi-url";
+  private static final String REGEXP_USER_NAME_PLACEHOLDER = "<USER_NAME>";
 
   // Logger
   private final Logger logger = LoggerFactory
@@ -85,22 +88,37 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
                                final Handler<AsyncResult<JsonObject>> resultHandler) {
     MultiMap caseInsensitiveHeaders = new CaseInsensitiveHeaders().addAll(requestHeaders);
     String tenantId = caseInsensitiveHeaders.get(OKAPI_HEADER_TENANT);
-
-    validatorRegistryProxy.getAllTenantRules(tenantId, 500, 1,"query=state=Enabled", response -> {
-      if (response.succeeded()) {
-
-        List<Rule> rules = response.result().mapTo(RuleCollection.class).getRules();
-
-        Future<List<String>> errorMessagesFuture = validatePasswordByRules(rules, password, caseInsensitiveHeaders);
-        errorMessagesFuture.setHandler(asyncResult -> {
-          if (asyncResult.succeeded()) {
-            prepareResponse(asyncResult.result(), resultHandler);
-          } else {
-            resultHandler.handle(Future.failedFuture(asyncResult.cause().getMessage()));
+    validatorRegistryProxy.getAllTenantRules(tenantId, 500, 1, "query=state=Enabled", rulesResponse -> {
+      if (rulesResponse.succeeded()) {
+        lookupUser(caseInsensitiveHeaders).setHandler(lookupUserHandler -> {
+          if (lookupUserHandler.succeeded()) {
+            List<Rule> rules = rulesResponse.result().mapTo(RuleCollection.class).getRules();
+            prepareRulesBeforeValidation(rules, lookupUserHandler);
+            Future<List<String>> errorMessagesFuture = validatePasswordByRules(rules, password, caseInsensitiveHeaders);
+            errorMessagesFuture.setHandler(asyncResult -> {
+              if (asyncResult.succeeded()) {
+                prepareResponse(asyncResult.result(), resultHandler);
+              } else {
+                resultHandler.handle(Future.failedFuture(asyncResult.cause().getMessage()));
+              }
+            });
           }
         });
+      } else {
+        resultHandler.handle(Future.failedFuture(rulesResponse.cause().getMessage()));
       }
     });
+  }
+
+  private List<Rule> prepareRulesBeforeValidation(List<Rule> rules, AsyncResult<JsonObject> lookupUserHandler) {
+    JsonObject user = lookupUserHandler.result();
+    String userName = user.getString("username");
+    for (Rule rule : rules) {
+      if (Rule.Type.REG_EXP.equals(rule.getType())) {
+        rule.setExpression(rule.getExpression().replace(REGEXP_USER_NAME_PLACEHOLDER, userName));
+      }
+    }
+    return rules.stream().sorted(Comparator.comparing(Rule::getOrderNo)).collect(Collectors.toList());
   }
 
   private Future<List<String>> validatePasswordByRules(final List<Rule> rules,
@@ -111,7 +129,6 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
 
     Future<List<String>> future = Future.future();
     List<Future> programmaticRulesFutures = new ArrayList<>();
-
     for (Rule rule : rules) {
       if (Rule.Type.REG_EXP.equals(rule.getType())) {
         validatePasswordByRexExpRule(password, rule, errorMessages);
@@ -119,7 +136,6 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
         programmaticRulesFutures.add(getValidatePasswordByProgrammaticRuleFuture(password, rule, errorMessages, headers));
       }
     }
-
     // Notify external method future handler when all programmatic rule futures complete
     CompositeFuture.all(programmaticRulesFutures).setHandler(compositeFutureAsyncResult -> {
       if (compositeFutureAsyncResult.succeeded()) {
@@ -138,6 +154,52 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
     if (!Pattern.compile(expression).matcher(password).matches()) {
       errorMessages.add(rule.getErrMessageId());
     }
+  }
+
+  private Future<JsonObject> lookupUser(MultiMap headers) {
+    Future<JsonObject> future = Future.future();
+    String userId = headers.get(OKAPI_USERID_HEADER);
+    String okapiUrl = headers.get(OKAPI_URL_HEADER);
+    String userNameRequestUrl = String.format("%s/users?query=id==%s", okapiUrl, userId);
+    HttpClientRequest request = httpClient.getAbs(userNameRequestUrl);
+    request
+      .putHeader(OKAPI_HEADER_TOKEN, headers.get(OKAPI_HEADER_TOKEN))
+      .putHeader(OKAPI_HEADER_TENANT, headers.get(OKAPI_HEADER_TENANT))
+      .putHeader(HttpHeaders.CONTENT_TYPE.toString(), MediaType.APPLICATION_JSON)
+      .putHeader(HttpHeaders.ACCEPT.toString(), MediaType.APPLICATION_JSON)
+      .handler(response -> {
+        if (response.statusCode() != 200) {
+          response.bodyHandler(buf -> {
+            String message = "Error looking up user at url '" + userNameRequestUrl
+              + "' Expected status code 200, got '" + response.statusCode() +
+              "' :" + buf.toString();
+            future.fail(message);
+          });
+        } else {
+          response.bodyHandler(buf -> {
+            JsonObject resultObject = buf.toJsonObject();
+            if (!resultObject.containsKey("totalRecords") || !resultObject.containsKey("users")) {
+              future.fail("Error, missing field(s) 'totalRecords' and/or 'users' in user response object");
+            } else {
+              int recordCount = resultObject.getInteger("totalRecords");
+              if (recordCount > 1) {
+                String errorMessage = "Bad results from username";
+                logger.error(errorMessage);
+                future.fail(errorMessage);
+              } else if (recordCount == 0) {
+                String errorMessage = "No user found by user id :" + userId;
+                logger.error(errorMessage);
+                future.fail(errorMessage);
+              } else {
+                JsonObject resultUser = resultObject.getJsonArray("users").getJsonObject(0);
+                future.complete(resultUser);
+              }
+            }
+          });
+        }
+      });
+    request.end();
+    return future;
   }
 
   private Future<String> getValidatePasswordByProgrammaticRuleFuture(final String password,

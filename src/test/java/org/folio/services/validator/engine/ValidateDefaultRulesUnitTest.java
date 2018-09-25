@@ -3,13 +3,19 @@ package org.folio.services.validator.engine;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpClientRequest;
+import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import org.apache.http.HttpStatus;
 import org.folio.rest.impl.GenericHandlerAnswer;
 import org.folio.rest.jaxrs.model.Rule;
 import org.folio.rest.jaxrs.model.RuleCollection;
 import org.folio.services.validator.registry.ValidatorRegistryService;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -17,31 +23,57 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnitRunner;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import static org.folio.services.validator.util.ValidatorHelper.RESPONSE_VALIDATION_RESULT_KEY;
+
+import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
+import static org.folio.rest.RestVerticle.OKAPI_HEADER_TOKEN;
 import static org.folio.services.validator.util.ValidatorHelper.RESPONSE_ERROR_MESSAGES_KEY;
+import static org.folio.services.validator.util.ValidatorHelper.RESPONSE_VALIDATION_RESULT_KEY;
 import static org.folio.services.validator.util.ValidatorHelper.VALIDATION_INVALID_RESULT;
 import static org.folio.services.validator.util.ValidatorHelper.VALIDATION_VALID_RESULT;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ValidateDefaultRulesUnitTest {
 
+  private static final String OKAPI_HEADER_TENANT_VALUE = "tenant";
+  private static final String OKAPI_HEADER_TOKEN_VALUE = "token";
+
+  private static final JsonObject USER_SERVICE_MOCK_RESPONSE = new JsonObject()
+    .put("users", new JsonArray()
+      .add(new JsonObject()
+        .put("username", "admin")
+        .put("id", "9d990cae-2685-4868-9fca-d0ad013c0640")
+        .put("active", true)))
+    .put("totalRecords", 1);
+
   private static RuleCollection regExpRuleCollection;
 
   @Mock
   private ValidatorRegistryService validatorRegistryService;
+  @Mock
+  private HttpClient httpClient;
 
   @InjectMocks
   private ValidationEngineService validationEngineService = new ValidationEngineServiceImpl();
-  private Map<String, String> requestHeaders = new HashMap<>();
+  private Map<String, String> requestHeaders;
 
   @BeforeClass
-  public static void setUp() {
+  public static void setUpBeforeClass() {
     initRegExpRules();
+  }
+
+  @Before
+  public void setUp() {
+    requestHeaders = new HashMap<>();
+    requestHeaders.put(OKAPI_HEADER_TENANT, OKAPI_HEADER_TENANT_VALUE);
+    requestHeaders.put(OKAPI_HEADER_TOKEN, OKAPI_HEADER_TOKEN_VALUE);
+    mockUserModule(HttpStatus.SC_OK, USER_SERVICE_MOCK_RESPONSE);
   }
 
   private static void initRegExpRules() {
@@ -171,7 +203,7 @@ public class ValidateDefaultRulesUnitTest {
 
     Mockito.doAnswer(new GenericHandlerAnswer<>(Future.succeededFuture(JsonObject.mapFrom(regExpRuleCollection)), 4))
       .when(validatorRegistryService).getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(),
-        ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any());
+      ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any());
 
     // when
     Handler<AsyncResult<JsonObject>> checkingHandler = result -> {
@@ -195,7 +227,7 @@ public class ValidateDefaultRulesUnitTest {
 
     Mockito.doAnswer(new GenericHandlerAnswer<>(Future.succeededFuture(JsonObject.mapFrom(regExpRuleCollection)), 4))
       .when(validatorRegistryService).getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(),
-        ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any());
+      ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any());
 
     // when
     Handler<AsyncResult<JsonObject>> checkingHandler = result -> {
@@ -220,7 +252,7 @@ public class ValidateDefaultRulesUnitTest {
 
     Mockito.doAnswer(new GenericHandlerAnswer<>(Future.succeededFuture(JsonObject.mapFrom(regExpRuleCollection)), 4))
       .when(validatorRegistryService).getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(),
-        ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any());
+      ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any());
 
     // when
     Handler<AsyncResult<JsonObject>> checkingHandler = result -> {
@@ -245,7 +277,7 @@ public class ValidateDefaultRulesUnitTest {
 
     Mockito.doAnswer(new GenericHandlerAnswer<>(Future.succeededFuture(JsonObject.mapFrom(regExpRuleCollection)), 4))
       .when(validatorRegistryService).getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(),
-        ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any());
+      ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any());
 
     // when
     Handler<AsyncResult<JsonObject>> checkingHandler = result -> {
@@ -270,7 +302,7 @@ public class ValidateDefaultRulesUnitTest {
 
     Mockito.doAnswer(new GenericHandlerAnswer<>(Future.succeededFuture(JsonObject.mapFrom(regExpRuleCollection)), 4))
       .when(validatorRegistryService).getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(),
-        ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any());
+      ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any());
 
     // when
     Handler<AsyncResult<JsonObject>> checkingHandler = result -> {
@@ -295,7 +327,7 @@ public class ValidateDefaultRulesUnitTest {
 
     Mockito.doAnswer(new GenericHandlerAnswer<>(Future.succeededFuture(JsonObject.mapFrom(regExpRuleCollection)), 4))
       .when(validatorRegistryService).getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(),
-        ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any());
+      ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any());
 
     // when
     Handler<AsyncResult<JsonObject>> checkingHandler = result -> {
@@ -313,10 +345,29 @@ public class ValidateDefaultRulesUnitTest {
       ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any());
   }
 
-  //TODO : add the test for userName when the code is ready
   @Test
   public void shouldFailWhenPasswordContainsUserName() {
+    // given
+    String password = "P@swadmin0rd1";
 
+    Mockito.doAnswer(new GenericHandlerAnswer<>(Future.succeededFuture(JsonObject.mapFrom(regExpRuleCollection)), 4))
+      .when(validatorRegistryService).getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(),
+      ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any());
+
+    // when
+    Handler<AsyncResult<JsonObject>> checkingHandler = result -> {
+      JsonObject response = result.result();
+      String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
+      Assert.assertEquals(VALIDATION_INVALID_RESULT, validationResult);
+      JsonArray errorMessages = (JsonArray) response.getValue(RESPONSE_ERROR_MESSAGES_KEY);
+      Assert.assertEquals(1, errorMessages.getList().size());
+      Assert.assertEquals(regExpRuleCollection.getRules().get(4).getErrMessageId(), errorMessages.getList().get(0));
+    };
+    validationEngineService.validatePassword(password, requestHeaders, checkingHandler);
+
+    // then
+    Mockito.verify(validatorRegistryService).getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(),
+      ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any());
   }
 
   @Test
@@ -326,7 +377,7 @@ public class ValidateDefaultRulesUnitTest {
 
     Mockito.doAnswer(new GenericHandlerAnswer<>(Future.succeededFuture(JsonObject.mapFrom(regExpRuleCollection)), 4))
       .when(validatorRegistryService).getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(),
-        ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any());
+      ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any());
 
     // when
     Handler<AsyncResult<JsonObject>> checkingHandler = result -> {
@@ -351,7 +402,7 @@ public class ValidateDefaultRulesUnitTest {
 
     Mockito.doAnswer(new GenericHandlerAnswer<>(Future.succeededFuture(JsonObject.mapFrom(regExpRuleCollection)), 4))
       .when(validatorRegistryService).getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(),
-        ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any());
+      ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any());
 
     // when
     Handler<AsyncResult<JsonObject>> checkingHandler = result -> {
@@ -376,7 +427,7 @@ public class ValidateDefaultRulesUnitTest {
 
     Mockito.doAnswer(new GenericHandlerAnswer<>(Future.succeededFuture(JsonObject.mapFrom(regExpRuleCollection)), 4))
       .when(validatorRegistryService).getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(),
-        ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any());
+      ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any());
 
     // when
     Handler<AsyncResult<JsonObject>> checkingHandler = result -> {
@@ -392,5 +443,35 @@ public class ValidateDefaultRulesUnitTest {
     // then
     Mockito.verify(validatorRegistryService).getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(),
       ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any());
+  }
+
+  private void mockUserModule(int status, JsonObject response) {
+    HttpClientResponse userModuleResponse = Mockito.mock(HttpClientResponse.class);
+    HttpClientRequest userModuleRequest = Mockito.mock(HttpClientRequest.class);
+
+    Mockito.doReturn(userModuleRequest)
+      .when(httpClient)
+      .getAbs(ArgumentMatchers.anyString());
+
+    Mockito.doAnswer(new GenericHandlerAnswer<>(userModuleResponse, 0))
+      .when(userModuleRequest)
+      .handler(ArgumentMatchers.any(Handler.class));
+
+    Mockito.doReturn(status)
+      .when(userModuleResponse)
+      .statusCode();
+
+    Buffer userBodyMock = Mockito.mock(Buffer.class);
+    Mockito.doReturn(response)
+      .when(userBodyMock)
+      .toJsonObject();
+
+    Mockito.doAnswer(new GenericHandlerAnswer<>(userBodyMock, 0, userModuleResponse))
+      .when(userModuleResponse)
+      .bodyHandler(ArgumentMatchers.any(Handler.class));
+
+    Mockito.doAnswer(InvocationOnMock::getMock)
+      .when(userModuleRequest)
+      .putHeader(ArgumentMatchers.anyString(), ArgumentMatchers.anyString());
   }
 }
