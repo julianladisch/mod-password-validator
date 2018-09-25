@@ -34,10 +34,13 @@ import static org.folio.rest.RestVerticle.OKAPI_HEADER_TOKEN;
 import static org.folio.rest.RestVerticle.OKAPI_USERID_HEADER;
 
 /**
- * Implementation of validation engine;
+ * Implementation of the ValidationEngineService;
  * calls ValidationRegistry service to obtain rules,
  * runs rules to validate password,
  * pushes validation result in result handler to return.
+ *
+ * @see ValidationEngineService
+ * @see ValidatorRegistryService
  */
 public class ValidationEngineServiceImpl implements ValidationEngineService {
 

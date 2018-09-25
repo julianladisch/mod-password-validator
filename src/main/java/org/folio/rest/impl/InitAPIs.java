@@ -12,7 +12,7 @@ import org.folio.services.validator.registry.ValidatorRegistryService;
 import org.folio.services.validator.util.ValidatorHelper;
 
 /**
- * Performs prepossessing operations before the verticle is deployed,
+ * Performs preprocessing operations before the verticle is deployed,
  * e.g. components registration, initializing, binding.
  */
 public class InitAPIs implements InitAPI {
