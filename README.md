@@ -116,3 +116,7 @@ curl -w '\n' -X POST -D -   \
     http://localhost:9130/_/proxy/tenants/<tenant_name>/modules
 ```
 
+### Issue tracker
+
+See project [MODLOGIN](https://issues.folio.org/browse/MODLOGIN)
+at the [FOLIO issue tracker](https://dev.folio.org/guidelines/issue-tracker/).
