@@ -120,18 +120,42 @@ public class ValidatorRegistryTest {
 
   private static Vertx vertx;
   private static int port;
+  private static String useExternalDatabase;
 
   @Rule
   public Timeout rule = Timeout.seconds(180);
 
   @BeforeClass
-  public static void setUpClass(final TestContext context) throws IOException {
+  public static void setUpClass(final TestContext context) throws Exception {
     Async async = context.async();
     vertx = Vertx.vertx();
     port = NetworkUtils.nextFreePort();
 
-    PostgresClient.setIsEmbedded(true);
-    PostgresClient.getInstance(vertx).startEmbeddedPostgres();
+    useExternalDatabase = System.getProperty(
+      "org.folio.password.validator.test.database",
+      "embedded");
+
+    switch(useExternalDatabase) {
+      case "environment":
+        System.out.println("Using environment settings");
+        break;
+      case "external":
+        String postgresConfigPath = System.getProperty(
+          "org.folio.password.validator.test.config",
+          "/postgres-conf-local.json");
+        PostgresClient.setConfigFilePath(postgresConfigPath);
+        break;
+      case "embedded":
+        PostgresClient.setIsEmbedded(true);
+        PostgresClient.getInstance(vertx).startEmbeddedPostgres();
+        break;
+      default:
+        String message = "No understood database choice made." +
+          "Please set org.folio.password.validator.test.config" +
+          "to 'external', 'environment' or 'embedded'";
+        throw new Exception(message);
+    }
+
     TenantClient tenantClient = new TenantClient("localhost", port, TENANT, "diku");
 
     final DeploymentOptions options = new DeploymentOptions().setConfig(new JsonObject().put(HTTP_PORT, port));
@@ -150,7 +174,9 @@ public class ValidatorRegistryTest {
   public static void tearDownClass(final TestContext context) {
     Async async = context.async();
     vertx.close(context.asyncAssertSuccess(res -> {
-      PostgresClient.stopEmbeddedPostgres();
+      if(useExternalDatabase.equals("embedded")) {
+        PostgresClient.stopEmbeddedPostgres();
+      }
       async.complete();
     }));
   }
