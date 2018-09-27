@@ -25,7 +25,6 @@ import org.junit.Test;
 import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 

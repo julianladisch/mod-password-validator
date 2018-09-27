@@ -10,11 +10,14 @@ import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 
 import java.util.Map;
 
-
 public class TestUtil {
+
+  private static final Logger logger = LoggerFactory.getLogger(TestUtil.class);
 
   public static final Handler<AsyncResult<WrappedResponse>> NO_ASSERTS = x -> {
   };
@@ -71,7 +74,6 @@ public class TestUtil {
                                                   Integer expectedCode, String explanation,
                                                   Handler<AsyncResult<WrappedResponse>> handler) {
     Future<WrappedResponse> future = Future.future();
-    boolean addPayLoad = false;
     HttpClient client = vertx.createHttpClient();
     HttpClientRequest request = client.requestAbs(method, url);
     //Add standard headers
@@ -81,14 +83,11 @@ public class TestUtil {
     if (headers != null) {
       for (Map.Entry entry : headers.entries()) {
         request.putHeader((String) entry.getKey(), (String) entry.getValue());
-        System.out.println(String.format("Adding header '%s' with value '%s'",
-          (String) entry.getKey(), (String) entry.getValue()));
+        logger.debug("Adding header {} with value {}", entry.getKey(), entry.getValue());
       }
     }
     //standard exception handler
-    request.exceptionHandler(e -> {
-      future.fail(e);
-    });
+    request.exceptionHandler(future::fail);
     request.handler(req -> {
       req.bodyHandler(buf -> {
         String explainString = "(no explanation)";
@@ -100,15 +99,14 @@ public class TestUtil {
             + expectedCode + ", got status code " + req.statusCode() + ": "
             + buf.toString() + " | " + explainString);
         } else {
-          System.out.println("Got status code " + req.statusCode() + " with payload of: " + buf.toString() + " | " + explainString);
+          logger.debug("Got status code {} with payload of: {} | {}", req.statusCode(), buf.toString(), explainString);
           WrappedResponse wr = new WrappedResponse(explanation, req.statusCode(), buf.toString(), req);
           handler.handle(Future.succeededFuture(wr));
           future.complete(wr);
         }
       });
     });
-    System.out.println("Sending " + method.toString() + " request to url '" +
-      url + " with payload: " + payload + "'\n");
+    logger.debug("Sending {} request to url '{} with payload: {} '\n", method.toString(), url, payload);
     if (method == HttpMethod.PUT || method == HttpMethod.POST) {
       request.end(payload);
     } else {

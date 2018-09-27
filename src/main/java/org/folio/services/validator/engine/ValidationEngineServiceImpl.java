@@ -92,24 +92,26 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
     MultiMap caseInsensitiveHeaders = new CaseInsensitiveHeaders().addAll(requestHeaders);
     String tenantId = caseInsensitiveHeaders.get(OKAPI_HEADER_TENANT);
     validatorRegistryProxy.getAllTenantRules(tenantId, 500, 1, "query=state=Enabled", rulesResponse -> {
-      if (rulesResponse.succeeded()) {
-        lookupUser(caseInsensitiveHeaders).setHandler(lookupUserHandler -> {
-          if (lookupUserHandler.succeeded()) {
-            List<Rule> rules = rulesResponse.result().mapTo(RuleCollection.class).getRules();
-            prepareRulesBeforeValidation(rules, lookupUserHandler);
-            Future<List<String>> errorMessagesFuture = validatePasswordByRules(rules, password, caseInsensitiveHeaders);
-            errorMessagesFuture.setHandler(asyncResult -> {
-              if (asyncResult.succeeded()) {
-                prepareResponse(asyncResult.result(), resultHandler);
-              } else {
-                resultHandler.handle(Future.failedFuture(asyncResult.cause().getMessage()));
-              }
-            });
-          }
-        });
-      } else {
+      if (rulesResponse.failed()) {
         resultHandler.handle(Future.failedFuture(rulesResponse.cause().getMessage()));
+        return;
       }
+      lookupUser(caseInsensitiveHeaders).setHandler(lookupUserHandler -> {
+        if (lookupUserHandler.failed()) {
+          resultHandler.handle(Future.failedFuture(lookupUserHandler.cause().getMessage()));
+          return;
+        }
+        List<Rule> rules = rulesResponse.result().mapTo(RuleCollection.class).getRules();
+        prepareRulesBeforeValidation(rules, lookupUserHandler);
+        Future<List<String>> errorMessagesFuture = validatePasswordByRules(rules, password, caseInsensitiveHeaders);
+        errorMessagesFuture.setHandler(asyncResult -> {
+          if (asyncResult.failed()) {
+            resultHandler.handle(Future.failedFuture(asyncResult.cause()));
+            return;
+          }
+          prepareResponse(asyncResult.result(), resultHandler);
+        });
+      });
     });
   }
 
@@ -127,7 +129,7 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
   private Future<List<String>> validatePasswordByRules(final List<Rule> rules,
                                                        final String password,
                                                        final MultiMap headers) {
-    List<String> errorMessages = new ArrayList(rules.size());
+    List<String> errorMessages = new ArrayList<>(rules.size());
     rules.sort(Comparator.comparing(Rule::getOrderNo));
 
     Future<List<String>> future = Future.future();
@@ -163,7 +165,7 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
     Future<JsonObject> future = Future.future();
     String userId = headers.get(OKAPI_USERID_HEADER);
     String okapiUrl = headers.get(OKAPI_URL_HEADER);
-    String userNameRequestUrl = String.format("%s/users?query=id==%s", okapiUrl, userId);
+    String userNameRequestUrl = String.format("%s/users/%s", okapiUrl, userId);
     HttpClientRequest request = httpClient.getAbs(userNameRequestUrl);
     request
       .putHeader(OKAPI_HEADER_TOKEN, headers.get(OKAPI_HEADER_TOKEN))

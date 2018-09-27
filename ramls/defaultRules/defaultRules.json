@@ -8,7 +8,7 @@
       "state": "Enabled",
       "moduleName": "mod-password-validator",
       "expression": "^.{8,}$",
-      "description": "The password length must be minimum 8 digits",
+      "description": "The password length must be at least 8 characters long",
       "orderNo": 0,
       "errMessageId": "password.length.invalid"
     },
@@ -68,7 +68,7 @@
       "state": "Enabled",
       "moduleName": "mod-password-validator",
       "expression": "^(?:(?!qwe)(?!asd)(?!zxc)(?!qaz)(?!zaq)(?!xsw)(?!wsx)(?!edc)(?!cde)(?!rfv)(?!vfr)(?!tgb)(?!bgt)(?!yhn)(?!nhy)(?!ujm)(?!mju)(?!ik,)(?!,ki)(?!ol.)(?!.lo)(?!p;/)(?!/;p)(?!123).)+$",
-      "description": "The password must contain at least one special character",
+      "description": "The password must not contain a keyboard sequence",
       "orderNo": 5,
       "errMessageId": "password.keyboardSequence.invalid"
     },

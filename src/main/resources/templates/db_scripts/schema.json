@@ -9,7 +9,7 @@
       "pkColumnName": "_id",
       "index": [
         {
-          "fieldName": "id",
+          "fieldName": "ruleId",
           "tOps": "ADD"
         }
       ],
