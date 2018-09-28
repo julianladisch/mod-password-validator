@@ -42,16 +42,16 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
    * Returns all rules for tenant
    *
    * @param tenantId           tenant id
-   * @param length             maximum number of results to return
-   * @param start              starting index in a list of results (starts at one)
+   * @param limit              maximum number of results to return
+   * @param offset             starting index in a list of results
    * @param query              query string to filter rules based on matching criteria in fields
    * @param asyncResultHandler result handler
    * @return a reference to this, so the API can be used fluently
    */
   @Override
-  public ValidatorRegistryService getAllTenantRules(String tenantId, int length, int start, String query, Handler<AsyncResult<JsonObject>> asyncResultHandler) {
+  public ValidatorRegistryService getAllTenantRules(String tenantId, int limit, int offset, String query, Handler<AsyncResult<JsonObject>> asyncResultHandler) {
     try {
-      CQLWrapper cql = getCQL(query, length, start - 1);
+      CQLWrapper cql = getCQL(query, limit, offset);
       String[] fieldList = {"*"};
       PostgresClient.getInstance(vertx, tenantId).get(VALIDATION_RULES_TABLE_NAME, Rule.class, fieldList, cql, true, false, getReply -> {
         if (getReply.failed()) {

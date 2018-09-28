@@ -15,23 +15,6 @@ schemas:
   - parameters.schema: !include raml-util/schemas/parameters.schema
 
 traits:
-  - pageable:
-     queryParameters:
-       length:
-         description: "The maximum number of results to return."
-         required: false
-         type: integer
-         example: 10
-         minimum: 1
-         default: 10
-         maximum: 1000
-       start:
-         description: "The starting index in a list of results (starts at one)."
-         required: false
-         type: integer
-         minimum: 1
-         default: 1
-         maximum: 1000
   - queryable:
      queryParameters:
        query:
@@ -39,6 +22,7 @@ traits:
          required: false
          type: string
   - validate: !include raml-util/traits/validation.raml
+  - pageable: !include raml-util/traits/pageable.raml
 
 /tenant/rules:
   get:

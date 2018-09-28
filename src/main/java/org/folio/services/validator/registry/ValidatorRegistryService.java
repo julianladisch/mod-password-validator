@@ -22,7 +22,7 @@ public interface ValidatorRegistryService {
   }
 
   @Fluent
-  ValidatorRegistryService getAllTenantRules(String tenantId, int length, int start, String query, Handler<AsyncResult<JsonObject>> asyncResultHandler);
+  ValidatorRegistryService getAllTenantRules(String tenantId, int limit, int offset, String query, Handler<AsyncResult<JsonObject>> asyncResultHandler);
 
   @Fluent
   ValidatorRegistryService createTenantRule(String tenantId, JsonObject validationRule, Handler<AsyncResult<JsonObject>> asyncResultHandler);

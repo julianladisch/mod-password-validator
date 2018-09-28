@@ -91,7 +91,7 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
                                final Handler<AsyncResult<JsonObject>> resultHandler) {
     MultiMap caseInsensitiveHeaders = new CaseInsensitiveHeaders().addAll(requestHeaders);
     String tenantId = caseInsensitiveHeaders.get(OKAPI_HEADER_TENANT);
-    validatorRegistryProxy.getAllTenantRules(tenantId, 500, 1, "query=state=Enabled", rulesResponse -> {
+    validatorRegistryProxy.getAllTenantRules(tenantId, 500, 0, "query=state=Enabled", rulesResponse -> {
       if (rulesResponse.failed()) {
         resultHandler.handle(Future.failedFuture(rulesResponse.cause().getMessage()));
         return;
