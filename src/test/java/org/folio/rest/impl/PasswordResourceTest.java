@@ -226,7 +226,7 @@ public class PasswordResourceTest {
     headers.add(OKAPI_USERID_HEADER, UserMock.ADMIN_ID);
     headers.add(OKAPI_URL_HEADER, HOST + userMockPort);
     headers.add(OKAPI_HEADER_TOKEN, "token");
-    return TestUtil.doRequest(vertx, HOST + port + "/validate", HttpMethod.POST, headers,
+    return TestUtil.doRequest(vertx, HOST + port + "/password/validate", HttpMethod.POST, headers,
       password.toString(), expectedCode, "Validating password", handler);
   }
 
