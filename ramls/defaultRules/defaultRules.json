@@ -1,4 +1,5 @@
 {
+  "description": "Initial ruleset that would be enabled for a tenant",
   "rules": [
     {
       "ruleId": "5105b55a-b9a3-4f76-9402-a5243ea63c95",

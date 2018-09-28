@@ -4,12 +4,15 @@
   "type": "object",
   "properties": {
     "ruleId": {
+      "description": "Rule id",
       "type": "string"
     },
     "name": {
+      "description": "Rule name",
       "type": "string"
     },
     "type": {
+      "description": "Rule type: RegExp or Programmatic",
       "type": "string",
       "enum": [
         "RegExp",
@@ -17,6 +20,7 @@
       ]
     },
     "validationType": {
+      "description": "Validation type: Strong or Soft. In case of soft rule validation failure the password processing can be continued",
       "type": "string",
       "enum": [
         "Soft",
@@ -24,6 +28,7 @@
       ]
     },
     "state": {
+      "description": "Rule state: Enabled or Disabled",
       "type": "string",
       "enum": [
         "Enabled",
@@ -31,16 +36,19 @@
       ]
     },
     "moduleName": {
+      "description": "Name of the module",
       "type": "string"
     },
     "implementationReference": {
-      "description": " ImplementationReference reflects the approach to call particular validation implementation whether it REST endpoint or local service",
+      "description": "For Programmatic rules ImplementationReference reflects the approach to call particular validation implementation whether it REST endpoint or local service",
       "type": "string"
     },
     "expression": {
+      "description": "For RegExp type contains the actual expression",
       "type": "string"
     },
     "description": {
+      "description": "Validation rule description",
       "type": "string"
     },
     "orderNo": {
