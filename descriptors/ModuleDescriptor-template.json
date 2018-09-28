@@ -8,7 +8,7 @@
       "handlers": [
         {
           "methods": ["POST"],
-          "pathPattern": "/validate",
+          "pathPattern": "/password/validate",
           "permissionsRequired" : [ "validation.validate.post" ]
         },
         {
