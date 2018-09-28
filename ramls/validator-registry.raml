@@ -1,0 +1,107 @@
+#%RAML 0.8
+title: Validator Registry
+baseUri: http://github.com/org/folio/mod-password-validator
+
+documentation:
+  - title: Validator Registry API
+    content: This component manages password validation rules.
+
+schemas:
+  - ruleCollection: !include ruleCollection.json
+  - rule.json: !include rule.json
+  - raml-util/schemas/metadata.schema: !include raml-util/schemas/metadata.schema
+  - errors: !include raml-util/schemas/errors.schema
+  - error.schema: !include raml-util/schemas/error.schema
+  - parameters.schema: !include raml-util/schemas/parameters.schema
+
+traits:
+  - queryable:
+     queryParameters:
+       query:
+         description: "A query string to filter rules based on matching criteria in fields."
+         required: false
+         type: string
+  - validate: !include raml-util/traits/validation.raml
+  - pageable: !include raml-util/traits/pageable.raml
+
+/tenant/rules:
+  get:
+    description: Get a list of existing validation rules for a tenant
+    is: [
+      pageable,
+      queryable
+    ]
+    responses:
+      200:
+        body:
+          application/json:
+            schema: ruleCollection
+      500:
+        description: "Internal server error"
+        body:
+          text/plain:
+            example: "Internal server error"
+  post:
+    is: [validate]
+    description: Add a rule to a tenant
+    body:
+      application/json:
+        schema: rule.json
+    responses:
+      201:
+        body:
+          application/json:
+            schema: rule.json
+      400:
+        description: "Bad request"
+        body:
+          text/plain:
+            example: "Bad request"
+      500:
+        description: "Internal server error"
+        body:
+          text/plain:
+            example: "Internal server error"
+  put:
+    description: Enable/disable/change the rule
+    body:
+      application/json:
+        schema: rule.json
+    responses:
+      200:
+        body:
+          application/json:
+            schema: rule.json
+      400:
+        description: "Bad request"
+        body:
+          text/plain:
+            example: "Bad request"
+      404:
+        description: "Rule not found"
+        body:
+          text/plain:
+            example: "Rule not found"
+      500:
+        description: "Internal server error"
+        body:
+          text/plain:
+            example: "Internal server error"
+  /{ruleId}:
+    description: Get a particular rule
+    get:
+      responses:
+        200:
+          body:
+            application/json:
+              schema: rule.json
+        404:
+          description: "Rule not found"
+          body:
+            text/plain:
+              example: "Rule not found"
+        500:
+          description: "Internal server error"
+          body:
+            text/plain:
+              example: "Internal server error"

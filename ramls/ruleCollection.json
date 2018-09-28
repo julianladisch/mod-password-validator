@@ -4,6 +4,7 @@
   "type": "object",
   "properties": {
     "rules": {
+      "description": "List of rules",
       "type": "array",
       "id": "ruleList",
       "items": {

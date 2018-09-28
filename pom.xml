@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.folio</groupId>
   <artifactId>mod-password-validator</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>1.0.1-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <licenses>
@@ -95,6 +95,12 @@
       <artifactId>JUnitParams</artifactId>
       <version>1.0.4</version>
     </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>2.21.0</version>
+      <scope>test</scope>
+    </dependency>
 
   </dependencies>
 
@@ -118,7 +124,7 @@
           <annotationProcessors>
             <annotationProcessor>io.vertx.codegen.CodeGenProcessor</annotationProcessor>
           </annotationProcessors>
-          <generatedSourcesDirectory>${project.build.directory}/generated-sources</generatedSourcesDirectory>
+          <generatedSourcesDirectory>${project.build.directory}/generated-sources/services</generatedSourcesDirectory>
         </configuration>
         <executions>
           <execution>

@@ -9,6 +9,9 @@
     },
     "messages": {
       "type": "array",
+      "items": {
+        "type": "string"
+      },
       "description": "validation messages"
     }
   }

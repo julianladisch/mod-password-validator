@@ -7,12 +7,29 @@
       "version": "1.0",
       "handlers": [
         {
+          "methods": ["POST"],
+          "pathPattern": "/validate",
+          "permissionsRequired" : [ "validation.validate.post" ]
+        },
+        {
           "methods": ["GET"],
-          "pathPattern": "/password/validators"
+          "pathPattern": "/tenant/rules",
+          "permissionsRequired" : [ "validation.rules.collection.get" ]
         },
         {
           "methods": ["POST"],
-          "pathPattern": "/password/validate"
+          "pathPattern": "/tenant/rules",
+          "permissionsRequired" : [ "validation.rules.item.post" ]
+        },
+        {
+          "methods": ["PUT"],
+          "pathPattern": "/tenant/rules",
+          "permissionsRequired" : [ "validation.rules.item.put" ]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/tenant/rules/{ruleId}",
+          "permissionsRequired" : [ " validation.rules.item.get" ]
         }
       ]
     },
@@ -25,6 +42,45 @@
           "methods": ["POST"],
           "pathPattern": "/_/tenant"
         }
+      ]
+    }
+  ],
+  "permissionSets" : [
+    {
+      "permissionName" : "validation.rules.collection.get",
+      "displayName" : "get validation rules collection",
+      "description" : "Get a list of validators"
+    },
+    {
+      "permissionName" : "validation.validate.post",
+      "displayName" : "validate password post",
+      "description" : "Validate a password"
+    },
+    {
+      "permissionName" : "validation.rules.item.post",
+      "displayName" : "create validation rule",
+      "description" : "Add a new rule"
+    },
+    {
+      "permissionName" : "validation.rules.item.put",
+      "displayName" : "modify validation rule",
+      "description" : "Modify the rule info"
+    },
+    {
+      "permissionName" : "validation.rules.item.get",
+      "displayName" : "get validation rule",
+      "description" : "Get a rule by id"
+    },
+    {
+      "permissionName" : "validation.all",
+      "displayName" : "password validator module - all permissions",
+      "description" : "All permissions for password validation",
+      "subPermissions" : [
+        "validation.rules.collection.get",
+        "validation.validate.post",
+        "validation.rules.item.post",
+        "validation.rules.item.put",
+        "validation.rules.item.get"
       ]
     }
   ],
