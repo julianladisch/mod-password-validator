@@ -165,7 +165,7 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
     Future<JsonObject> future = Future.future();
     String userId = headers.get(OKAPI_USERID_HEADER);
     String okapiUrl = headers.get(OKAPI_URL_HEADER);
-    String userNameRequestUrl = String.format("%s/users/%s", okapiUrl, userId);
+    String userNameRequestUrl = String.format("%s/users?query=id==%s", okapiUrl, userId);
     HttpClientRequest request = httpClient.getAbs(userNameRequestUrl);
     request
       .putHeader(OKAPI_HEADER_TOKEN, headers.get(OKAPI_HEADER_TOKEN))
