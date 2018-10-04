@@ -1,11 +1,10 @@
 package org.folio.rest.impl;
 
-import io.vertx.core.AsyncResult;
+import io.restassured.RestAssured;
+import io.restassured.http.Header;
+import io.restassured.response.Response;
 import io.vertx.core.DeploymentOptions;
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
@@ -13,20 +12,27 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.apache.http.HttpStatus;
 import org.folio.rest.RestVerticle;
 import org.folio.rest.client.TenantClient;
-import org.folio.rest.jaxrs.model.RuleCollection;
+import org.folio.rest.jaxrs.model.Rule;
 import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.NetworkUtils;
-import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 
+import javax.ws.rs.core.MediaType;
+import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
+
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.everyItem;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 
 @RunWith(VertxUnitRunner.class)
 public class ValidatorRegistryTest {
@@ -117,12 +123,14 @@ public class ValidatorRegistryTest {
   private static final String RULE_ID = "ruleId";
   private static final String VALIDATION_RULES_TABLE_NAME = "validation_rules";
 
+  private static final Header TENANT_HEADER = new Header(RestVerticle.OKAPI_HEADER_TENANT, TENANT);
+
   private static Vertx vertx;
   private static int port;
   private static String useExternalDatabase;
 
-  @Rule
-  public Timeout rule = Timeout.seconds(180);
+  @org.junit.Rule
+  public Timeout timeout = Timeout.seconds(180);
 
   @BeforeClass
   public static void setUpClass(final TestContext context) throws Exception {
@@ -134,7 +142,7 @@ public class ValidatorRegistryTest {
       "org.folio.password.validator.test.database",
       "embedded");
 
-    switch(useExternalDatabase) {
+    switch (useExternalDatabase) {
       case "environment":
         System.out.println("Using environment settings");
         break;
@@ -173,15 +181,338 @@ public class ValidatorRegistryTest {
   public static void tearDownClass(final TestContext context) {
     Async async = context.async();
     vertx.close(context.asyncAssertSuccess(res -> {
-      if(useExternalDatabase.equals("embedded")) {
+      if (useExternalDatabase.equals("embedded")) {
         PostgresClient.stopEmbeddedPostgres();
       }
       async.complete();
     }));
   }
 
-  @After
-  public void tearDown(TestContext context) throws Exception {
+  @Before
+  public void setUp(TestContext context) throws Exception {
+    clearRulesTable(context);
+  }
+
+  @Test
+  public void shouldReturnEmptyListIfNoRulesExist(final TestContext context) {
+    RestAssured.given()
+      .port(port)
+      .header(TENANT_HEADER)
+      .when()
+      .get(TENANT_RULES_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_OK)
+      .body("totalRecords", is(0))
+      .body("rules", empty());
+  }
+
+  @Test
+  public void shouldReturnAllTenantRulesWhenNoQueryIsSpecified(final TestContext context) {
+    List<JsonObject> rulesToPost = Arrays.asList(PROGRAMMATIC_RULE_DISABLED, REGEXP_RULE_DISABLED,
+      REGEXP_RULE_ENABLED, PROGRAMMATIC_RULE_ENABLED);
+    for (JsonObject rule : rulesToPost) {
+      RestAssured.given()
+        .port(port)
+        .contentType(MediaType.APPLICATION_JSON)
+        .header(TENANT_HEADER)
+        .body(rule.toString())
+        .when()
+        .post(TENANT_RULES_PATH)
+        .then()
+        .statusCode(HttpStatus.SC_CREATED);
+    }
+
+    Object[] ruleNames = rulesToPost.stream().map(r -> r.getString("name")).toArray();
+    RestAssured.given()
+      .port(port)
+      .header(TENANT_HEADER)
+      .when()
+      .get(TENANT_RULES_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_OK)
+      .body("totalRecords", is(rulesToPost.size()))
+      .body("rules*.name", contains(ruleNames));
+  }
+
+  @Test
+  public void shouldNotReturnProgrammaticOnGetTenantRulesByTypeRegExp(final TestContext context) {
+    List<JsonObject> rulesToPost = Arrays.asList(REGEXP_RULE_ENABLED, PROGRAMMATIC_RULE_ENABLED);
+    for (JsonObject rule : rulesToPost) {
+      RestAssured.given()
+        .port(port)
+        .contentType(MediaType.APPLICATION_JSON)
+        .header(TENANT_HEADER)
+        .body(rule.toString())
+        .when()
+        .post(TENANT_RULES_PATH)
+        .then()
+        .statusCode(HttpStatus.SC_CREATED);
+    }
+
+
+    RestAssured.given()
+      .port(port)
+      .header(TENANT_HEADER)
+      .param("query", "type=RegExp")
+      .when()
+      .get(TENANT_RULES_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_OK)
+      .body("rules*.type", everyItem(not(Rule.Type.PROGRAMMATIC.toString())));
+
+  }
+
+  @Test
+  public void shouldNotReturnDisabledOnGetTenantRulesByStateEnabled(final TestContext context) {
+    List<JsonObject> rulesToPost = Arrays.asList(PROGRAMMATIC_RULE_DISABLED, REGEXP_RULE_DISABLED,
+      REGEXP_RULE_ENABLED, PROGRAMMATIC_RULE_ENABLED);
+    for (JsonObject rule : rulesToPost) {
+      RestAssured.given()
+        .port(port)
+        .contentType(MediaType.APPLICATION_JSON)
+        .header(TENANT_HEADER)
+        .body(rule.toString())
+        .when()
+        .post(TENANT_RULES_PATH)
+        .then()
+        .statusCode(HttpStatus.SC_CREATED);
+    }
+
+    RestAssured.given()
+      .port(port)
+      .header(TENANT_HEADER)
+      .param("query", "state=Enabled")
+      .when()
+      .get(TENANT_RULES_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_OK)
+      .body("rules*.state", everyItem(not(Rule.State.DISABLED.toString())));
+  }
+
+  @Test
+  public void shouldReturnBadRequestOnPostWhenNoRulePassedInBody(final TestContext context) {
+    RestAssured.given()
+      .port(port)
+      .contentType(MediaType.APPLICATION_JSON)
+      .header(TENANT_HEADER)
+      .body(new JsonObject().toString())
+      .when()
+      .post(TENANT_RULES_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_UNPROCESSABLE_ENTITY);
+  }
+
+  @Test
+  public void shouldReturnBadRequestOnPostWhenNegativeOrderNumber(final TestContext context) {
+    RestAssured.given()
+      .port(port)
+      .contentType(MediaType.APPLICATION_JSON)
+      .header(TENANT_HEADER)
+      .body(INVALID_RULE_NEGATIVE_ORDER_NUMBER.toString())
+      .when()
+      .post(TENANT_RULES_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_BAD_REQUEST);
+  }
+
+  @Test
+  public void shouldReturnBadRequestOnPostWhenSoftValidationTypeForRegexpType(final TestContext context) {
+    RestAssured.given()
+      .port(port)
+      .contentType(MediaType.APPLICATION_JSON)
+      .header(TENANT_HEADER)
+      .body(INVALID_REGEXP_RULE_SOFT.toString())
+      .when()
+      .post(TENANT_RULES_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_BAD_REQUEST);
+  }
+
+  @Test
+  public void shouldReturnBadRequestOnPostWhenNoImplementationReferenceSpecifiedForProgrammaticType(final TestContext context) {
+    RestAssured.given()
+      .port(port)
+      .contentType(MediaType.APPLICATION_JSON)
+      .header(TENANT_HEADER)
+      .body(buildProgrammaticRuleEnabled().put("implementationReference", "").toString())
+      .when()
+      .post(TENANT_RULES_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_BAD_REQUEST);
+
+    RestAssured.given()
+      .port(port)
+      .contentType(MediaType.APPLICATION_JSON)
+      .header(TENANT_HEADER)
+      .body(buildProgrammaticRuleEnabled().put("implementationReference", (String) null).toString())
+      .when()
+      .post(TENANT_RULES_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_BAD_REQUEST);
+  }
+
+  @Test
+  public void shouldCreateValidRule(final TestContext context) {
+    RestAssured.given()
+      .port(port)
+      .contentType(MediaType.APPLICATION_JSON)
+      .header(TENANT_HEADER)
+      .body(VALID_RULE.toString())
+      .when()
+      .post(TENANT_RULES_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_CREATED)
+      .body("name", is(VALID_RULE.getString("name")))
+      .body("type", is(VALID_RULE.getString("type")))
+      .body("validationType", is(VALID_RULE.getString("validationType")))
+      .body("orderNo", is(VALID_RULE.getInteger("orderNo")))
+      .body("state", is(VALID_RULE.getString("state")))
+      .body("moduleName", is(VALID_RULE.getString("moduleName")))
+      .body("expression", is(VALID_RULE.getString("expression")))
+      .body("description", is(VALID_RULE.getString("description")));
+  }
+
+  @Test
+  public void shouldReturnBadRequestOnPutWhenNoRulePassedInBody(final TestContext context) {
+    RestAssured.given()
+      .port(port)
+      .contentType(MediaType.APPLICATION_JSON)
+      .header(TENANT_HEADER)
+      .body(new JsonObject().toString())
+      .when()
+      .put(TENANT_RULES_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_UNPROCESSABLE_ENTITY);
+  }
+
+  @Test
+  public void shouldReturnBadRequestOnPutWhenNegativeOrderNumber(final TestContext context) {
+    RestAssured.given()
+      .port(port)
+      .contentType(MediaType.APPLICATION_JSON)
+      .header(TENANT_HEADER)
+      .body(INVALID_RULE_NEGATIVE_ORDER_NUMBER.toString())
+      .when()
+      .put(TENANT_RULES_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_BAD_REQUEST);
+  }
+
+  @Test
+  public void shouldReturnBadRequestOnPutWhenSoftValidationTypeForRegexpType(final TestContext context) {
+    RestAssured.given()
+      .port(port)
+      .contentType(MediaType.APPLICATION_JSON)
+      .header(TENANT_HEADER)
+      .body(INVALID_REGEXP_RULE_SOFT.toString())
+      .when()
+      .put(TENANT_RULES_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_BAD_REQUEST);
+  }
+
+  @Test
+  public void shouldReturnBadRequestOnPutWhenNoImplementationReferenceSpecifiedForProgrammaticType(final TestContext context) {
+    RestAssured.given()
+      .port(port)
+      .contentType(MediaType.APPLICATION_JSON)
+      .header(TENANT_HEADER)
+      .body(buildProgrammaticRuleEnabled().put("implementationReference", "").toString())
+      .when()
+      .put(TENANT_RULES_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_BAD_REQUEST);
+
+    RestAssured.given()
+      .port(port)
+      .contentType(MediaType.APPLICATION_JSON)
+      .header(TENANT_HEADER)
+      .body(buildProgrammaticRuleEnabled().put("implementationReference", (String) null).toString())
+      .when()
+      .put(TENANT_RULES_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_BAD_REQUEST);
+  }
+
+  @Test
+  public void shouldReturnNotFoundWhenRuleDoesNotExist(final TestContext context) {
+    RestAssured.given()
+      .port(port)
+      .contentType(MediaType.APPLICATION_JSON)
+      .header(TENANT_HEADER)
+      .body(REGEXP_RULE_ENABLED.toString())
+      .when()
+      .put(TENANT_RULES_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_NOT_FOUND);
+  }
+
+  @Test
+  public void shouldUpdateExistingRule(final TestContext context) {
+    Response response = RestAssured.given()
+      .port(port)
+      .contentType(MediaType.APPLICATION_JSON)
+      .header(TENANT_HEADER)
+      .body(PROGRAMMATIC_RULE_DISABLED.toString())
+      .when()
+      .post(TENANT_RULES_PATH);
+
+    Assert.assertThat(response.statusCode(), is(HttpStatus.SC_CREATED));
+    Rule createdRule = response.body().as(Rule.class);
+    JsonObject ruleToUpdate = buildProgrammaticRuleDisabled()
+      .put(RULE_ID, createdRule.getRuleId())
+      .put("state", Rule.State.ENABLED.toString());
+
+    RestAssured.given()
+      .port(port)
+      .contentType(MediaType.APPLICATION_JSON)
+      .header(TENANT_HEADER)
+      .body(ruleToUpdate.toString())
+      .when()
+      .put(TENANT_RULES_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_OK)
+      .body("state", is(Rule.State.ENABLED.toString()));
+  }
+
+  @Test
+  public void shouldReturnNotFoundOnGetRuleByIdWhenRuleDoesNotExist(final TestContext context) {
+    RestAssured.given()
+      .port(port)
+      .contentType(MediaType.APPLICATION_JSON)
+      .header(TENANT_HEADER)
+      .pathParam("ruleId", "nonexistent_rule_id")
+      .when()
+      .get(TENANT_RULES_PATH + "/{ruleId}")
+      .then()
+      .statusCode(HttpStatus.SC_NOT_FOUND);
+  }
+
+  @Test
+  public void shouldReturnRuleById(final TestContext context) {
+    Response response = RestAssured.given()
+      .port(port)
+      .contentType(MediaType.APPLICATION_JSON)
+      .header(TENANT_HEADER)
+      .body(PROGRAMMATIC_RULE_DISABLED.toString())
+      .when()
+      .post(TENANT_RULES_PATH);
+    Assert.assertThat(response.statusCode(), is(HttpStatus.SC_CREATED));
+    Rule createdRule = response.body().as(Rule.class);
+
+    RestAssured.given()
+      .port(port)
+      .contentType(MediaType.APPLICATION_JSON)
+      .header(TENANT_HEADER)
+      .pathParam("ruleId", createdRule.getRuleId())
+      .when()
+      .get(TENANT_RULES_PATH + "/{ruleId}")
+      .then()
+      .statusCode(HttpStatus.SC_OK)
+      .body("ruleId", is(createdRule.getRuleId()));
+  }
+
+  private void clearRulesTable(TestContext context) {
     PostgresClient.getInstance(vertx, TENANT).delete(VALIDATION_RULES_TABLE_NAME, new Criterion(), event -> {
       if (event.failed()) {
         context.fail(event.cause());
@@ -189,321 +520,31 @@ public class ValidatorRegistryTest {
     });
   }
 
-  @Test
-  public void shouldReturnEmptyListIfNoRulesExist(final TestContext context) {
-    final Async async = context.async();
-    getTenantRules("", result -> {
-      context.assertEquals(result.result().getCode(), HttpStatus.SC_OK);
-      RuleCollection collection = new JsonObject(result.result().getBody()).mapTo(RuleCollection.class);
-      context.assertTrue(collection.getTotalRecords() == 0);
-      List<org.folio.rest.jaxrs.model.Rule> rules = collection.getRules();
-      context.assertTrue(rules.size() == 0);
-    })
-      .setHandler(result -> {
-        if (result.failed()) {
-          context.fail(result.cause());
-        } else {
-          async.complete();
-        }
-      });
+  private JsonObject buildProgrammaticRuleDisabled() {
+    return new JsonObject()
+      .put("name", "programmatic rule disabled")
+      .put("type", "Programmatic")
+      .put("validationType", "Soft")
+      .put("state", "Disabled")
+      .put("moduleName", "mod-password-validator")
+      .put("expression", "")
+      .put("implementationReference", "Some implementation")
+      .put("description", "Programmatic rule")
+      .put("orderNo", 0)
+      .put("errMessageId", "");
   }
 
-  @Test
-  public void shouldReturnAllTenantRulesWhenNoQueryIsSpecified(final TestContext context) {
-    final Async async = context.async();
-    postRule(PROGRAMMATIC_RULE_DISABLED, HttpStatus.SC_CREATED, result -> context.assertEquals(result.result().getCode(), HttpStatus.SC_CREATED))
-      .compose(r -> postRule(REGEXP_RULE_DISABLED, HttpStatus.SC_CREATED, result -> context.assertEquals(result.result().getCode(), HttpStatus.SC_CREATED)))
-      .compose(r -> postRule(REGEXP_RULE_ENABLED, HttpStatus.SC_CREATED, result -> context.assertEquals(result.result().getCode(), HttpStatus.SC_CREATED)))
-      .compose(r -> postRule(PROGRAMMATIC_RULE_ENABLED, HttpStatus.SC_CREATED, result -> context.assertEquals(result.result().getCode(), HttpStatus.SC_CREATED)))
-      .compose(r -> getTenantRules("", result -> {
-        context.assertEquals(result.result().getCode(), HttpStatus.SC_OK);
-        RuleCollection collection = new JsonObject(result.result().getBody()).mapTo(RuleCollection.class);
-        context.assertTrue(collection.getTotalRecords() == 4);
-        List<org.folio.rest.jaxrs.model.Rule> rules = collection.getRules();
-        context.assertTrue(rules.size() == 4);
-        context.assertTrue(rules.stream().filter(rule1 ->
-          rule1.getName().equals(PROGRAMMATIC_RULE_DISABLED.getString("name"))).collect(Collectors.toList()).size() == 1);
-        context.assertTrue(rules.stream().filter(rule1 ->
-          rule1.getName().equals(REGEXP_RULE_DISABLED.getString("name"))).collect(Collectors.toList()).size() == 1);
-        context.assertTrue(rules.stream().filter(rule1 ->
-          rule1.getName().equals(REGEXP_RULE_ENABLED.getString("name"))).collect(Collectors.toList()).size() == 1);
-        context.assertTrue(rules.stream().filter(rule1 ->
-          rule1.getName().equals(PROGRAMMATIC_RULE_ENABLED.getString("name"))).collect(Collectors.toList()).size() == 1);
-      }))
-      .setHandler(chainedRes -> {
-        if (chainedRes.failed()) {
-          context.fail(chainedRes.cause());
-        } else {
-          async.complete();
-        }
-      });
+  private JsonObject buildProgrammaticRuleEnabled() {
+    return new JsonObject()
+      .put("name", "programmatic rule enabled")
+      .put("type", "Programmatic")
+      .put("validationType", "Soft")
+      .put("state", "Disabled")
+      .put("moduleName", "mod-password-validator")
+      .put("expression", "")
+      .put("implementationReference", "Some implementation")
+      .put("description", "Programmatic rule")
+      .put("orderNo", 1)
+      .put("errMessageId", "");
   }
-
-  @Test
-  public void shouldNotReturnProgrammaticOnGetTenantRulesByTypeRegExp(final TestContext context) {
-    final Async async = context.async();
-    String query = "query=type=RegExp";
-    postRule(PROGRAMMATIC_RULE_ENABLED, HttpStatus.SC_CREATED, result -> context.assertEquals(result.result().getCode(), HttpStatus.SC_CREATED))
-      .compose(r -> getTenantRules(query, result -> {
-        context.assertEquals(result.result().getCode(), HttpStatus.SC_OK);
-        List<org.folio.rest.jaxrs.model.Rule> rules = new JsonObject(result.result().getBody()).mapTo(RuleCollection.class).getRules();
-        context.assertTrue(rules.stream().noneMatch(rule1 -> rule1.getType() == org.folio.rest.jaxrs.model.Rule.Type.PROGRAMMATIC));
-      }))
-      .setHandler(chainedRes -> {
-        if (chainedRes.failed()) {
-          context.fail(chainedRes.cause());
-        } else {
-          async.complete();
-        }
-      });
-  }
-
-  @Test
-  public void shouldNotReturnDisabledOnGetTenantRulesByStateEnabled(final TestContext context) {
-    final Async async = context.async();
-    String query = "query=state=Enabled";
-    postRule(REGEXP_RULE_DISABLED,  HttpStatus.SC_CREATED, result -> context.assertEquals(result.result().getCode(), HttpStatus.SC_CREATED))
-      .compose(r -> getTenantRules(query, result -> {
-        context.assertEquals(result.result().getCode(), HttpStatus.SC_OK);
-        List<org.folio.rest.jaxrs.model.Rule> rules = new JsonObject(result.result().getBody()).mapTo(RuleCollection.class).getRules();
-        context.assertTrue(rules.stream().noneMatch(rule1 -> rule1.getState() == org.folio.rest.jaxrs.model.Rule.State.DISABLED));
-      }))
-      .setHandler(chainedRes -> {
-        if (chainedRes.failed()) {
-          context.fail(chainedRes.cause());
-        } else {
-          async.complete();
-        }
-      });
-  }
-
-  @Test
-  public void shouldReturnBadRequestOnPostWhenNoRulePassedInBody(final TestContext context) {
-    final Async async = context.async();
-    postRule(new JsonObject(), HttpStatus.SC_UNPROCESSABLE_ENTITY, result -> context.assertEquals(result.result().getCode(), HttpStatus.SC_UNPROCESSABLE_ENTITY))
-      .setHandler(result -> {
-        if (result.failed()) {
-          context.fail(result.cause());
-        } else {
-          async.complete();
-        }
-      });
-  }
-
-  @Test
-  public void shouldReturnBadRequestOnPostWhenNegativeOrderNumber(final TestContext context) {
-    final Async async = context.async();
-    postRule(INVALID_RULE_NEGATIVE_ORDER_NUMBER, HttpStatus.SC_BAD_REQUEST, result -> context.assertEquals(result.result().getCode(), HttpStatus.SC_BAD_REQUEST))
-      .setHandler(result -> {
-        if (result.failed()) {
-          context.fail(result.cause());
-        } else {
-          async.complete();
-        }
-      });
-  }
-
-  @Test
-  public void shouldReturnBadRequestOnPostWhenSoftValidationTypeForRegexpType(final TestContext context) {
-    final Async async = context.async();
-    postRule(INVALID_REGEXP_RULE_SOFT, HttpStatus.SC_BAD_REQUEST, result -> context.assertEquals(result.result().getCode(), HttpStatus.SC_BAD_REQUEST))
-      .setHandler(result -> {
-        if (result.failed()) {
-          context.fail(result.cause());
-        } else {
-          async.complete();
-        }
-      });
-  }
-
-  @Test
-  public void shouldReturnBadRequestOnPostWhenNoImplementationReferenceSpecifiedForProgrammaticType(final TestContext context) {
-    final Async async = context.async();
-    String ref = null;
-    postRule(PROGRAMMATIC_RULE_ENABLED.put("implementationReference", ""), HttpStatus.SC_BAD_REQUEST, result ->
-      context.assertEquals(result.result().getCode(), HttpStatus.SC_BAD_REQUEST))
-      .compose(r -> postRule(PROGRAMMATIC_RULE_ENABLED.put("implementationReference", ref), HttpStatus.SC_BAD_REQUEST,
-        result -> {
-        context.assertEquals(result.result().getCode(), HttpStatus.SC_BAD_REQUEST);
-          PROGRAMMATIC_RULE_ENABLED.put("implementationReference", "smth");
-        }))
-      .setHandler(result -> {
-        if (result.failed()) {
-          context.fail(result.cause());
-        } else {
-          async.complete();
-        }
-      });
-  }
-
-  @Test
-  public void shouldCreateValidRule(final TestContext context) {
-    final Async async = context.async();
-    postRule(VALID_RULE, HttpStatus.SC_CREATED, result -> {
-      context.assertEquals(result.result().getCode(), HttpStatus.SC_CREATED);
-      org.folio.rest.jaxrs.model.Rule rule = new JsonObject(result.result().getBody()).mapTo(org.folio.rest.jaxrs.model.Rule.class);
-      context.assertEquals(rule.getName(), VALID_RULE.getString("name"));
-      context.assertEquals(rule.getType().toString(), VALID_RULE.getString("type"));
-      context.assertEquals(rule.getValidationType().toString(), VALID_RULE.getString("validationType"));
-      context.assertEquals(rule.getOrderNo(), VALID_RULE.getInteger("orderNo"));
-      context.assertEquals(rule.getState().toString(), VALID_RULE.getString("state"));
-      context.assertEquals(rule.getModuleName(), VALID_RULE.getString("moduleName"));
-      context.assertEquals(rule.getExpression(), VALID_RULE.getString("expression"));
-      context.assertEquals(rule.getDescription(), VALID_RULE.getString("description"));
-    })
-      .setHandler(chainedRes -> {
-        if (chainedRes.failed()) {
-          context.fail(chainedRes.cause());
-        } else {
-          async.complete();
-        }
-      });
-  }
-
-  @Test
-  public void shouldReturnBadRequestOnPutWhenNoRulePassedInBody(final TestContext context) {
-    final Async async = context.async();
-    updateRule(new JsonObject(), HttpStatus.SC_UNPROCESSABLE_ENTITY, result -> context.assertEquals(result.result().getCode(), HttpStatus.SC_UNPROCESSABLE_ENTITY))
-      .setHandler(result -> {
-        if (result.failed()) {
-          context.fail(result.cause());
-        } else {
-          async.complete();
-        }
-      });
-  }
-
-  @Test
-  public void shouldReturnBadRequestOnPutWhenNegativeOrderNumber(final TestContext context) {
-    final Async async = context.async();
-    updateRule(INVALID_RULE_NEGATIVE_ORDER_NUMBER, HttpStatus.SC_BAD_REQUEST, result -> context.assertEquals(result.result().getCode(), HttpStatus.SC_BAD_REQUEST))
-      .setHandler(result -> {
-        if (result.failed()) {
-          context.fail(result.cause());
-        } else {
-          async.complete();
-        }
-      });
-  }
-
-  @Test
-  public void shouldReturnBadRequestOnPutWhenSoftValidationTypeForRegexpType(final TestContext context) {
-    final Async async = context.async();
-    updateRule(INVALID_REGEXP_RULE_SOFT, HttpStatus.SC_BAD_REQUEST, result -> context.assertEquals(result.result().getCode(), HttpStatus.SC_BAD_REQUEST))
-      .setHandler(result -> {
-        if (result.failed()) {
-          context.fail(result.cause());
-        } else {
-          async.complete();
-        }
-      });
-  }
-
-  @Test
-  public void shouldReturnBadRequestOnPutWhenNoImplementationReferenceSpecifiedForProgrammaticType(final TestContext context) {
-    final Async async = context.async();
-    String ref = null;
-    updateRule(PROGRAMMATIC_RULE_ENABLED.put("implementationReference", ""), HttpStatus.SC_BAD_REQUEST, result ->
-      context.assertEquals(result.result().getCode(), HttpStatus.SC_BAD_REQUEST))
-      .compose(r -> updateRule(PROGRAMMATIC_RULE_ENABLED.put("implementationReference", ref), HttpStatus.SC_BAD_REQUEST,
-        result -> context.assertEquals(result.result().getCode(), HttpStatus.SC_BAD_REQUEST)))
-      .setHandler(result -> {
-        if (result.failed()) {
-          context.fail(result.cause());
-        } else {
-          async.complete();
-        }
-      });
-  }
-
-  @Test
-  public void shouldReturnNotFoundWhenRuleDoesNotExist(final TestContext context) {
-    final Async async = context.async();
-    updateRule(REGEXP_RULE_ENABLED, HttpStatus.SC_NOT_FOUND, result -> context.assertEquals(result.result().getCode(), HttpStatus.SC_NOT_FOUND))
-      .setHandler(result -> {
-        if (result.failed()) {
-          context.fail(result.cause());
-        } else {
-          async.complete();
-        }
-      });
-  }
-
-  @Test
-  public void shouldUpdateExistingRule(final TestContext context) {
-    final Async async = context.async();
-    postRule(PROGRAMMATIC_RULE_DISABLED, HttpStatus.SC_CREATED, result -> {
-      context.assertEquals(result.result().getCode(), HttpStatus.SC_CREATED);
-      org.folio.rest.jaxrs.model.Rule rule = new JsonObject(result.result().getBody()).mapTo(org.folio.rest.jaxrs.model.Rule.class);
-      PROGRAMMATIC_RULE_DISABLED.put(RULE_ID, rule.getRuleId());
-    })
-      .compose(r -> updateRule(PROGRAMMATIC_RULE_DISABLED.put("state", org.folio.rest.jaxrs.model.Rule.State.ENABLED.toString()), HttpStatus.SC_OK, result -> {
-        context.assertEquals(result.result().getCode(), HttpStatus.SC_OK);
-        org.folio.rest.jaxrs.model.Rule rule = new JsonObject(result.result().getBody()).mapTo(org.folio.rest.jaxrs.model.Rule.class);
-        context.assertEquals(rule.getState(), org.folio.rest.jaxrs.model.Rule.State.ENABLED);
-      }))
-      .setHandler(chainedRes -> {
-        if (chainedRes.failed()) {
-          context.fail(chainedRes.cause());
-        } else {
-          async.complete();
-        }
-      });
-  }
-
-  @Test
-  public void shouldReturnNotFoundOnGetRuleByIdWhenRuleDoesNotExist(final TestContext context) {
-    final Async async = context.async();
-    getRuleById("nonexistent_rule_id", HttpStatus.SC_NOT_FOUND, result -> context.assertEquals(result.result().getCode(), HttpStatus.SC_NOT_FOUND))
-      .setHandler(result -> {
-        if (result.failed()) {
-          context.fail(result.cause());
-        } else {
-          async.complete();
-        }
-      });
-  }
-
-  @Test
-  public void shouldReturnRuleById(final TestContext context) {
-    final Async async = context.async();
-    postRule(PROGRAMMATIC_RULE_DISABLED, HttpStatus.SC_CREATED, result -> {
-      context.assertEquals(result.result().getCode(), HttpStatus.SC_CREATED);
-      org.folio.rest.jaxrs.model.Rule rule = new JsonObject(result.result().getBody()).mapTo(org.folio.rest.jaxrs.model.Rule.class);
-      PROGRAMMATIC_RULE_DISABLED.put(RULE_ID, rule.getRuleId());
-    })
-      .compose(r -> getRuleById(PROGRAMMATIC_RULE_DISABLED.getString(RULE_ID), HttpStatus.SC_OK, result -> {
-        context.assertEquals(result.result().getCode(), HttpStatus.SC_OK);
-        org.folio.rest.jaxrs.model.Rule rule = new JsonObject(result.result().getBody()).mapTo(org.folio.rest.jaxrs.model.Rule.class);
-        context.assertEquals(rule.getRuleId(), PROGRAMMATIC_RULE_DISABLED.getString(RULE_ID));
-      }))
-      .setHandler(chainedRes -> {
-        if (chainedRes.failed()) {
-          context.fail(chainedRes.cause());
-        } else {
-          async.complete();
-        }
-      });
-  }
-
-  private Future<TestUtil.WrappedResponse> postRule(JsonObject rule, int expectedStatus, Handler<AsyncResult<TestUtil.WrappedResponse>> handler) {
-    return TestUtil.doRequest(vertx, HOST + port + TENANT_RULES_PATH, HttpMethod.POST, null, rule.toString(),
-      expectedStatus, "Adding new rule", handler);
-  }
-
-  private Future<TestUtil.WrappedResponse> getTenantRules(String query, Handler<AsyncResult<TestUtil.WrappedResponse>> handler) {
-    return TestUtil.doRequest(vertx, HOST + port + TENANT_RULES_PATH + "?" + query, HttpMethod.GET, null, null,
-      HttpStatus.SC_OK, "Getting all tenant rules", handler);
-  }
-
-  private Future<TestUtil.WrappedResponse> updateRule(JsonObject rule, int expectedStatus, Handler<AsyncResult<TestUtil.WrappedResponse>> handler) {
-    return TestUtil.doRequest(vertx, HOST + port + TENANT_RULES_PATH, HttpMethod.PUT, null, rule.toString(),
-      expectedStatus, "Updating a rule", handler);
-  }
-
-  private Future<TestUtil.WrappedResponse> getRuleById(String ruleId, int expectedStatus, Handler<AsyncResult<TestUtil.WrappedResponse>> handler) {
-    return TestUtil.doRequest(vertx, HOST + port + TENANT_RULES_PATH + "/" + ruleId, HttpMethod.GET, null, null,
-      expectedStatus, "Getting a rule by id", handler);
-  }
-
 }
