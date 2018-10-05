@@ -3,7 +3,7 @@
   "name": "Password Validator Module",
   "provides": [
     {
-      "id": "${artifactId}",
+      "id": "password-validator",
       "version": "1.0",
       "handlers": [
         {
