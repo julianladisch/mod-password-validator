@@ -250,13 +250,12 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
         }
       }
     });
-    passwordValidationRequest.setChunked(true)
+    passwordValidationRequest
       .putHeader(OKAPI_HEADER_TOKEN, headers.get(OKAPI_HEADER_TOKEN))
       .putHeader(OKAPI_HEADER_TENANT, headers.get(OKAPI_HEADER_TENANT))
       .putHeader(HttpHeaders.CONTENT_TYPE.toString(), MediaType.APPLICATION_JSON)
       .putHeader(HttpHeaders.ACCEPT.toString(), MediaType.APPLICATION_JSON)
-      .write(new JsonObject().put(ValidatorHelper.REQUEST_PARAM_KEY, password).toString())
-      .end();
+      .end(new JsonObject().put(ValidatorHelper.REQUEST_PARAM_KEY, password).toString());
     return future;
   }
 
