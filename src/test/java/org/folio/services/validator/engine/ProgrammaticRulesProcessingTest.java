@@ -1,21 +1,26 @@
 package org.folio.services.validator.engine;
 
 
+import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.common.ConsoleNotifier;
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.buffer.Buffer;
+import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
-import io.vertx.core.http.HttpClientRequest;
-import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.unit.TestContext;
+import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.apache.http.HttpStatus;
 import org.folio.rest.impl.GenericHandlerAnswer;
 import org.folio.rest.jaxrs.model.Rule;
 import org.folio.rest.jaxrs.model.RuleCollection;
 import org.folio.services.validator.registry.ValidatorRegistryService;
 import org.folio.services.validator.util.ValidatorHelper;
+import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -24,16 +29,21 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.MockitoAnnotations;
+import org.mockito.Spy;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
 import static org.folio.rest.RestVerticle.OKAPI_HEADER_TOKEN;
+import static org.folio.rest.RestVerticle.OKAPI_USERID_HEADER;
 import static org.folio.services.validator.util.ValidatorHelper.RESPONSE_ERROR_MESSAGES_KEY;
 import static org.folio.services.validator.util.ValidatorHelper.RESPONSE_VALIDATION_RESULT_KEY;
 import static org.folio.services.validator.util.ValidatorHelper.VALIDATION_INVALID_RESULT;
@@ -43,11 +53,14 @@ import static org.folio.services.validator.util.ValidatorHelper.VALIDATION_VALID
 /**
  * Test for Validation Engine component. Testing password processing by Programmatic rules.
  */
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(VertxUnitRunner.class)
 public class ProgrammaticRulesProcessingTest {
 
   private static final String OKAPI_HEADER_TENANT_VALUE = "tenant";
   private static final String OKAPI_HEADER_TOKEN_VALUE = "token";
+  private static final String OKAPI_USERID_HEADER_VALUE = "db6ffb67-3160-43bf-8e2f-ecf9a420288b";
+
+  private static final String OKAPI_URL_HEADER = "x-okapi-url";
 
   private static final JsonObject USER_SERVICE_MOCK_RESPONSE = new JsonObject()
     .put("users", new JsonArray()
@@ -81,20 +94,30 @@ public class ProgrammaticRulesProcessingTest {
     .withOrderNo(0)
     .withErrMessageId("password.in.bad.password.list");
 
+
   @Mock
   private ValidatorRegistryService validatorRegistryService;
-  @Mock
-  private HttpClient httpClient;
+  @Spy
+  private HttpClient httpClient = Vertx.vertx().createHttpClient();
   @InjectMocks
   private ValidationEngineService validationEngineService = new ValidationEngineServiceImpl();
+
+  @org.junit.Rule
+  public WireMockRule userMockServer = new WireMockRule(
+    WireMockConfiguration.wireMockConfig()
+      .dynamicPort()
+      .notifier(new ConsoleNotifier(true)));
 
   private Map<String, String> requestHeaders;
 
   @Before
   public void setUp() throws Exception {
+    MockitoAnnotations.initMocks(this);
     requestHeaders = new HashMap<>();
     requestHeaders.put(OKAPI_HEADER_TENANT, OKAPI_HEADER_TENANT_VALUE);
     requestHeaders.put(OKAPI_HEADER_TOKEN, OKAPI_HEADER_TOKEN_VALUE);
+    requestHeaders.put(OKAPI_USERID_HEADER, OKAPI_USERID_HEADER_VALUE);
+    requestHeaders.put(OKAPI_URL_HEADER, "http://localhost:" + userMockServer.port());
     mockUserModule(HttpStatus.SC_OK, USER_SERVICE_MOCK_RESPONSE);
   }
 
@@ -108,28 +131,28 @@ public class ProgrammaticRulesProcessingTest {
    * }
    */
   @Test
-  public void shouldReturnValidResultWhenProgrammaticRuleReturnsValid() {
+  public void shouldReturnValidResultWhenProgrammaticRuleReturnsValid(TestContext testContext) {
     //given
     mockRegistryService(Collections.singletonList(STRONG_PROGRAMMATIC_RULE));
 
     JsonObject httpClientMockResponse = new JsonObject()
       .put(RESPONSE_VALIDATION_RESULT_KEY, VALIDATION_VALID_RESULT);
-    mockProgrammaticRuleClient(HttpStatus.SC_OK, httpClientMockResponse);
+    mockProgrammaticRuleClient(STRONG_PROGRAMMATIC_RULE.getImplementationReference(),
+      HttpStatus.SC_OK, httpClientMockResponse);
 
-    //when
+    //expect
     JsonObject expectedResult = new JsonObject()
       .put(RESPONSE_VALIDATION_RESULT_KEY, VALIDATION_VALID_RESULT)
       .put(RESPONSE_ERROR_MESSAGES_KEY, new JsonArray());
-    Handler<AsyncResult<JsonObject>> checkingHandler = result -> {
-      JsonObject response = result.result();
-      Assert.assertEquals(expectedResult, response);
-    };
+    Handler<AsyncResult<JsonObject>> checkingHandler = testContext.asyncAssertSuccess(response -> {
+      Assert.assertThat(response, Matchers.is(expectedResult));
+      Mockito.verify(validatorRegistryService).getAllTenantRules(ArgumentMatchers.any(),
+        ArgumentMatchers.anyInt(), ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any());
+    });
+
+    //when
     String givenPassword = "password";
     validationEngineService.validatePassword(givenPassword, requestHeaders, checkingHandler);
-
-    //then
-    Mockito.verify(validatorRegistryService).getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(),
-      ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any());
   }
 
   /**
@@ -142,28 +165,28 @@ public class ProgrammaticRulesProcessingTest {
    * }
    */
   @Test
-  public void shouldReturnInvalidResultWithMessagesWhenProgrammaticRulesReturnsInvalid() {
+  public void shouldReturnInvalidResultWithMessagesWhenProgrammaticRulesReturnsInvalid(TestContext testContext) {
     //given
     mockRegistryService(Collections.singletonList(STRONG_PROGRAMMATIC_RULE));
 
     JsonObject httpClientMockResponse = new JsonObject()
       .put(RESPONSE_VALIDATION_RESULT_KEY, VALIDATION_INVALID_RESULT);
-    mockProgrammaticRuleClient(HttpStatus.SC_OK, httpClientMockResponse);
+    mockProgrammaticRuleClient(STRONG_PROGRAMMATIC_RULE.getImplementationReference(),
+      HttpStatus.SC_OK, httpClientMockResponse);
 
-    //when
+    //expect
     JsonObject expectedResult = new JsonObject()
       .put(RESPONSE_VALIDATION_RESULT_KEY, VALIDATION_INVALID_RESULT)
       .put(ValidatorHelper.RESPONSE_ERROR_MESSAGES_KEY, new JsonArray().add(STRONG_PROGRAMMATIC_RULE.getErrMessageId()));
-    Handler<AsyncResult<JsonObject>> checkingHandler = result -> {
-      JsonObject response = result.result();
-      Assert.assertEquals(expectedResult, response);
-    };
+    Handler<AsyncResult<JsonObject>> checkingHandler = testContext.asyncAssertSuccess(response -> {
+      Assert.assertThat(response, Matchers.is(expectedResult));
+      Mockito.verify(validatorRegistryService).getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(),
+        ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any());
+    });
+
+    //when
     String givenPassword = "password";
     validationEngineService.validatePassword(givenPassword, requestHeaders, checkingHandler);
-
-    //then
-    Mockito.verify(validatorRegistryService).getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(),
-      ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any());
   }
 
   /**
@@ -175,28 +198,28 @@ public class ProgrammaticRulesProcessingTest {
    * }
    */
   @Test
-  public void shouldReturnValidResultWhenWhenSoftProgrammaticRuleReturnErrorStatus() {
+  public void shouldReturnValidResultWhenWhenSoftProgrammaticRuleReturnErrorStatus(TestContext testContext) {
     //given
     mockRegistryService(Collections.singletonList(SOFT_PROGRAMMATIC_RULE));
 
     JsonObject httpClientMockResponse = new JsonObject()
       .put(RESPONSE_VALIDATION_RESULT_KEY, VALIDATION_VALID_RESULT);
-    mockProgrammaticRuleClient(HttpStatus.SC_INTERNAL_SERVER_ERROR, httpClientMockResponse);
+    mockProgrammaticRuleClient(SOFT_PROGRAMMATIC_RULE.getImplementationReference(),
+      HttpStatus.SC_INTERNAL_SERVER_ERROR, httpClientMockResponse);
 
-    //when
+    //expect
     JsonObject expectedResult = new JsonObject()
       .put(RESPONSE_VALIDATION_RESULT_KEY, VALIDATION_VALID_RESULT)
       .put(RESPONSE_ERROR_MESSAGES_KEY, new JsonArray());
-    Handler<AsyncResult<JsonObject>> checkingHandler = result -> {
-      JsonObject response = result.result();
-      Assert.assertEquals(expectedResult, response);
-    };
+    Handler<AsyncResult<JsonObject>> checkingHandler = testContext.asyncAssertSuccess(response -> {
+      Assert.assertThat(response, Matchers.is(expectedResult));
+      Mockito.verify(validatorRegistryService).getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(),
+        ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any());
+    });
+
+    //when
     String givenPassword = "password";
     validationEngineService.validatePassword(givenPassword, requestHeaders, checkingHandler);
-
-    //then
-    Mockito.verify(validatorRegistryService).getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(),
-      ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any());
   }
 
   /**
@@ -204,24 +227,24 @@ public class ProgrammaticRulesProcessingTest {
    * Expected result is to receive failed async result.
    */
   @Test
-  public void shouldFailWhenStrongProgrammaticRuleReturnErrorStatus() {
+  public void shouldFailWhenStrongProgrammaticRuleReturnErrorStatus(TestContext testContext) {
     //given
     mockRegistryService(Collections.singletonList(STRONG_PROGRAMMATIC_RULE));
 
     JsonObject httpClientMockResponse = new JsonObject()
       .put(RESPONSE_VALIDATION_RESULT_KEY, VALIDATION_VALID_RESULT);
-    mockProgrammaticRuleClient(HttpStatus.SC_INTERNAL_SERVER_ERROR, httpClientMockResponse);
+    mockProgrammaticRuleClient(STRONG_PROGRAMMATIC_RULE.getImplementationReference(),
+      HttpStatus.SC_INTERNAL_SERVER_ERROR, httpClientMockResponse);
+
+    //expect
+    Handler<AsyncResult<JsonObject>> checkingHandler = testContext.asyncAssertFailure(exception -> {
+      Mockito.verify(validatorRegistryService).getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(),
+        ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any());
+    });
 
     //when
-    Handler<AsyncResult<JsonObject>> checkingHandler = result -> {
-      Assert.assertTrue(result.failed());
-    };
     String givenPassword = "password";
     validationEngineService.validatePassword(givenPassword, requestHeaders, checkingHandler);
-
-    //then
-    Mockito.verify(validatorRegistryService).getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(),
-      ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any());
   }
 
 
@@ -234,61 +257,16 @@ public class ProgrammaticRulesProcessingTest {
   }
 
   private void mockUserModule(int status, JsonObject response) {
-    HttpClientResponse userModuleResponse = Mockito.mock(HttpClientResponse.class);
-    HttpClientRequest userModuleRequest = Mockito.mock(HttpClientRequest.class);
-
-    Mockito.doReturn(userModuleRequest)
-      .when(httpClient)
-      .getAbs(ArgumentMatchers.anyString());
-
-    Mockito.doAnswer(new GenericHandlerAnswer<>(userModuleResponse, 0))
-      .when(userModuleRequest)
-      .handler(ArgumentMatchers.any(Handler.class));
-
-    Mockito.doReturn(status)
-      .when(userModuleResponse)
-      .statusCode();
-
-    Buffer userBodyMock = Mockito.mock(Buffer.class);
-    Mockito.doReturn(response)
-      .when(userBodyMock)
-      .toJsonObject();
-
-    Mockito.doAnswer(new GenericHandlerAnswer<>(userBodyMock, 0, userModuleResponse))
-      .when(userModuleResponse)
-      .bodyHandler(ArgumentMatchers.any(Handler.class));
-
-    Mockito.doAnswer(InvocationOnMock::getMock)
-      .when(userModuleRequest)
-      .putHeader(ArgumentMatchers.anyString(), ArgumentMatchers.anyString());
+    WireMock.stubFor(WireMock.get("/users?query=id==" + OKAPI_USERID_HEADER_VALUE)
+      .willReturn(WireMock.okJson(response.toString())
+      ));
   }
 
-  private void mockProgrammaticRuleClient(int status, JsonObject response) {
-    HttpClientResponse programmaticRuleResponse = Mockito.mock(HttpClientResponse.class);
-    HttpClientRequest programmaticRuleRequest = Mockito.mock(HttpClientRequest.class);
-
-    Mockito.doAnswer(new GenericHandlerAnswer<>(programmaticRuleResponse, 1, programmaticRuleRequest))
-      .when(httpClient)
-      .post(ArgumentMatchers.anyString(), ArgumentMatchers.any(Handler.class));
-
-    Mockito.doReturn(status)
-      .when(programmaticRuleResponse)
-      .statusCode();
-
-    Buffer ruleResponseBodyMock = Mockito.mock(Buffer.class);
-    Mockito.doReturn(response)
-      .when(ruleResponseBodyMock)
-      .toJsonObject();
-
-    Mockito.doAnswer(new GenericHandlerAnswer<>(ruleResponseBodyMock, 0, programmaticRuleResponse))
-      .when(programmaticRuleResponse)
-      .bodyHandler(ArgumentMatchers.any(Handler.class));
-
-    Mockito.doAnswer(InvocationOnMock::getMock)
-      .when(programmaticRuleRequest)
-      .putHeader(ArgumentMatchers.anyString(), ArgumentMatchers.anyString());
-    Mockito.doAnswer(InvocationOnMock::getMock)
-      .when(programmaticRuleRequest)
-      .write(ArgumentMatchers.anyString());
+  private void mockProgrammaticRuleClient(String urlPath, int status, JsonObject response) {
+    stubFor(post(urlEqualTo(urlPath))
+      .willReturn(aResponse()
+        .withStatus(status)
+        .withBody(response.toString())
+      ));
   }
 }

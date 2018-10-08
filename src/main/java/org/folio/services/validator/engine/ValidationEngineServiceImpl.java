@@ -215,7 +215,7 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
     String remoteModuleUrl = okapiURL + rule.getImplementationReference();
 
     Future<String> future = Future.future();
-    HttpClientRequest passwordValidationRequest = httpClient.post(remoteModuleUrl, validationResponse -> {
+    HttpClientRequest passwordValidationRequest = httpClient.postAbs(remoteModuleUrl, validationResponse -> {
       if (validationResponse.statusCode() == HttpStatus.SC_OK) {
         validationResponse.bodyHandler(body -> {
           String validationResult = body.toJsonObject().getString(ValidatorHelper.RESPONSE_VALIDATION_RESULT_KEY);
@@ -255,8 +255,7 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
       .putHeader(OKAPI_HEADER_TENANT, headers.get(OKAPI_HEADER_TENANT))
       .putHeader(HttpHeaders.CONTENT_TYPE.toString(), MediaType.APPLICATION_JSON)
       .putHeader(HttpHeaders.ACCEPT.toString(), MediaType.APPLICATION_JSON)
-      .write(new JsonObject().put(ValidatorHelper.REQUEST_PARAM_KEY, password).toString())
-      .end();
+      .end(new JsonObject().put(ValidatorHelper.REQUEST_PARAM_KEY, password).toString());
     return future;
   }
 

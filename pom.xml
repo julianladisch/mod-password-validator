@@ -20,6 +20,7 @@
     <ramlfiles_util_path>${basedir}/raml-util</ramlfiles_util_path>
     <raml-module-builder.version>19.4.1</raml-module-builder.version>
     <vertx-version>3.5.3</vertx-version>
+    <rest-assured.version>3.1.1</rest-assured.version>
   </properties>
 
 
@@ -68,15 +69,20 @@
 
     <!-- test dependencies -->
     <dependency>
-      <groupId>com.jayway.restassured</groupId>
+      <groupId>io.rest-assured</groupId>
       <artifactId>rest-assured</artifactId>
-      <version>2.9.0</version>
+      <version>${rest-assured.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>io.rest-assured</groupId>
-      <artifactId>json-schema-validator</artifactId>
-      <version>3.0.5</version>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>2.7.3</version>
+    </dependency>
+    <dependency>
+      <groupId>com.github.tomakehurst</groupId>
+      <artifactId>wiremock</artifactId>
+      <version>2.19.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
