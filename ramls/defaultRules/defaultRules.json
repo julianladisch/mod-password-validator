@@ -96,7 +96,19 @@
       "description": "The password must not contain a white space",
       "orderNo": 7,
       "errMessageId": "password.whiteSpace.invalid"
+    },
+    {
+      "ruleId": "5e515a3c-c27a-4304-a33b-b260ce15ffaf",
+      "name": "no_repeatable_password",
+      "type": "Programmatic",
+      "validationType": "Strong",
+      "state": "Enabled",
+      "moduleName": "mod-password-validator",
+      "implementationReference": "/authn/password/repeatable",
+      "description": "The password must differ from last 10 passwords",
+      "orderNo": 8,
+      "errMessageId": "password.lastTenPasswords.invalid"
     }
   ],
-  "totalRecords": 8
+  "totalRecords": 9
 }
