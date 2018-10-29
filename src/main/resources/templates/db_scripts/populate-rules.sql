@@ -94,4 +94,16 @@ INSERT INTO validation_rules (_id, jsonb) VALUES
       "description": "The password must not contain a white space",
       "orderNo": 7,
       "errMessageId": "password.whiteSpace.invalid"
-    }');
+    }'),
+('0ff6678f-53cd-4a32-9937-504c28f14077', '{
+      "ruleId": "5e515a3c-c27a-4304-a33b-b260ce15ffaf",
+      "name": "no_repeatable_password",
+      "type": "Programmatic",
+      "validationType": "Strong",
+      "state": "Enabled",
+      "moduleName": "mod-password-validator",
+      "implementationReference": "/authn/password/repeatable",
+      "description": "The password must not be previously used",
+      "orderNo": 8,
+      "errMessageId": "password.lastTenPasswords.invalid"
+    }') ON CONFLICT DO NOTHING;
