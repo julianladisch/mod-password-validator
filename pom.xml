@@ -19,7 +19,7 @@
     <ramlfiles_path>${basedir}/ramls</ramlfiles_path>
     <ramlfiles_util_path>${basedir}/raml-util</ramlfiles_util_path>
     <raml-module-builder.version>19.4.1</raml-module-builder.version>
-    <vertx-version>3.5.3</vertx-version>
+    <vertx-version>3.5.4</vertx-version>
     <rest-assured.version>3.1.1</rest-assured.version>
   </properties>
 
@@ -77,7 +77,7 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
-      <version>2.7.3</version>
+      <version>2.8.11.1</version>
     </dependency>
     <dependency>
       <groupId>com.github.tomakehurst</groupId>
