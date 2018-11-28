@@ -10,7 +10,7 @@
           "methods": ["POST"],
           "pathPattern": "/password/validate",
           "permissionsRequired" : [ "validation.validate.post" ],
-          "modulePermissions": [ "login.password.validate" ]
+          "modulePermissions": [ "login.password.validate", "users.collection.get"]
         },
         {
           "methods": ["GET"],
