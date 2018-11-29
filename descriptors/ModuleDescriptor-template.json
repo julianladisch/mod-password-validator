@@ -85,7 +85,12 @@
       ]
     }
   ],
-  "requires": [],
+  "requires": [
+    {
+      "id" : "users",
+      "version" : "15.0"
+    }
+  ],
   "launchDescriptor": {
     "dockerImage": "${artifactId}:${version}",
     "dockerArgs": {
