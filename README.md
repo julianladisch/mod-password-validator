@@ -14,20 +14,20 @@ Version 2.0. See the file "[LICENSE](LICENSE)" for more information.
 
 ## Introduction
 
-The module provides a default rule set for a tenant and functionality to manage them via REST API and 
+The module provides a default rule set for a tenant and functionality to manage them via REST API and
 also allows to use a validation flow for a user password.
 
  The module supports following rules for a password
-  
+
   The password MUST:
-      
+
  |    Description                                 |  Invalid examples                 |
  |------------------------------------------------|-----------------------------------|
  | Contain minimum 8 characters                   | 'pasword'                         |
  | Contain both lowercase and uppercase letters   | 'password', 'PASSWORD'            |
  | Contain at least one numeric character         | 'password'                        |
  | Contain at least one special character         | 'password'                        |
- | NOT contain your username                      | 'pas<USER_NAME>sword'             | 
+ | NOT contain your username                      | 'pas<USER_NAME>sword'             |
  | NOT contain a keyboard sequence                | 'qwerty12', '12345678', 'q1234567'|
  | NOT contain the same character                 | 'password'                        |
  | NOT contain whitespace                         | 'pas sword'                       |

@@ -1,16 +1,16 @@
 ## 2018-09-19 v1.0.1
- * Added default password validation rules 
+ * Added default password validation rules
  * Added creation of the default rule list during module enabling phase for a tenant
 
  The password MUST:
- 
+
 |    Description                                 |  Invalid examples                 |
 |------------------------------------------------|-----------------------------------|
 | Contain minimum 8 characters                   | 'pasword'                         |
 | Contain both lowercase and uppercase letters   | 'password', 'PASSWORD'            |
 | Contain at least one numeric character         | 'password'                        |
 | Contain at least one special character         | 'password'                        |
-| NOT contain your username                      | 'pas<USER_NAME>sword'             | 
+| NOT contain your username                      | 'pas<USER_NAME>sword'             |
 | NOT contain a keyboard sequence                | 'qwerty12', '12345678', 'q1234567'|
 | NOT contain the same character                 | 'password'                        |
 | NOT contain whitespace                         | 'pas sword'                       |
@@ -19,10 +19,10 @@
  * Add endpoints /tenant/rules with GET, POST and PUT methods to manage rules for tenant
  * Add endpoint /validate for password validation
  * Implement Validation Engine and Validation Registry services
- * Set up endpoint permissions 
- 
- CRUD API for rules and password: 
- 
+ * Set up endpoint permissions
+
+ CRUD API for rules and password:
+
  | METHOD |             URL               | DESCRIPTION                                        |
  |--------|-------------------------------|----------------------------------------------------|
  | GET    | /tenant/rules                 | Get list of the rules                              |
