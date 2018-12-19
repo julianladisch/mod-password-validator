@@ -118,5 +118,5 @@ curl -w '\n' -X POST -D -   \
 
 ### Issue tracker
 
-See project [MODLOGIN](https://issues.folio.org/browse/MODLOGIN)
+See project [MODPWD](https://issues.folio.org/browse/MODPWD)
 at the [FOLIO issue tracker](https://dev.folio.org/guidelines/issue-tracker/).
