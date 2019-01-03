@@ -16,7 +16,7 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.apache.http.HttpStatus;
 import org.folio.rest.RestVerticle;
 import org.folio.rest.client.TenantClient;
-import org.folio.rest.jaxrs.model.PasswordJson;
+import org.folio.rest.jaxrs.model.Password;
 import org.folio.rest.jaxrs.model.Rule;
 import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.PostgresClient;
@@ -109,7 +109,7 @@ public class PasswordResourceTest {
     DeploymentOptions restVerticleDeploymentOptions = new DeploymentOptions().setConfig(new JsonObject().put(HTTP_PORT, port));
     vertx.deployVerticle(RestVerticle.class.getName(), restVerticleDeploymentOptions, res -> {
       try {
-        tenantClient.post(null, res2 -> {
+        tenantClient.postTenant(null, res2 -> {
           async.complete();
         });
       } catch (Exception e) {
@@ -175,7 +175,7 @@ public class PasswordResourceTest {
       .statusCode(HttpStatus.SC_CREATED);
 
     mockUserService();
-    PasswordJson passwordToValidate = new PasswordJson().withPassword("P@sword12");
+    Password passwordToValidate = new Password().withPassword("P@sword12");
     RestAssured.given()
       .port(port)
       .contentType(MediaType.APPLICATION_JSON)
@@ -214,7 +214,7 @@ public class PasswordResourceTest {
       .statusCode(HttpStatus.SC_CREATED);
 
     mockUserService();
-    PasswordJson passwordToValidate = new PasswordJson().withPassword("badPassword");
+    Password passwordToValidate = new Password().withPassword("badPassword");
     RestAssured.given()
       .port(port)
       .contentType(MediaType.APPLICATION_JSON)

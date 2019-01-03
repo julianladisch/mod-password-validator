@@ -1,4 +1,4 @@
-#%RAML 0.8
+#%RAML 1.0
 title: Validator Registry
 baseUri: http://github.com/org/folio/mod-password-validator
 
@@ -6,23 +6,20 @@ documentation:
   - title: Validator Registry API
     content: This component manages password validation rules.
 
-schemas:
-  - ruleCollection: !include ruleCollection.json
-  - rule.json: !include rule.json
-  - raml-util/schemas/metadata.schema: !include raml-util/schemas/metadata.schema
-  - errors: !include raml-util/schemas/errors.schema
-  - error.schema: !include raml-util/schemas/error.schema
-  - parameters.schema: !include raml-util/schemas/parameters.schema
+types:
+  ruleCollection: !include ruleCollection.json
+  rule: !include rule.json
+  errors: !include raml-util/schemas/errors.schema
 
 traits:
-  - queryable:
+  queryable:
      queryParameters:
        query:
          description: "A query string to filter rules based on matching criteria in fields."
          required: false
          type: string
-  - validate: !include raml-util/traits/validation.raml
-  - pageable: !include raml-util/traits/pageable.raml
+  validate: !include raml-util/traits/validation.raml
+  pageable: !include raml-util/traits/pageable.raml
 
 /tenant/rules:
   get:
@@ -35,7 +32,7 @@ traits:
       200:
         body:
           application/json:
-            schema: ruleCollection
+            type: ruleCollection
       500:
         description: "Internal server error"
         body:
@@ -46,12 +43,12 @@ traits:
     description: Add a rule to a tenant
     body:
       application/json:
-        schema: rule.json
+        type: rule
     responses:
       201:
         body:
           application/json:
-            schema: rule.json
+            type: rule
       400:
         description: "Bad request"
         body:
@@ -66,12 +63,12 @@ traits:
     description: Enable/disable/change the rule
     body:
       application/json:
-        schema: rule.json
+        type: rule
     responses:
       200:
         body:
           application/json:
-            schema: rule.json
+            type: rule
       400:
         description: "Bad request"
         body:
@@ -94,7 +91,7 @@ traits:
         200:
           body:
             application/json:
-              schema: rule.json
+              type: rule
         404:
           description: "Rule not found"
           body:

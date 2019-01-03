@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.folio</groupId>
   <artifactId>mod-password-validator</artifactId>
@@ -18,7 +19,7 @@
     <http.port>8081</http.port>
     <ramlfiles_path>${basedir}/ramls</ramlfiles_path>
     <ramlfiles_util_path>${basedir}/raml-util</ramlfiles_util_path>
-    <raml-module-builder.version>19.4.1</raml-module-builder.version>
+    <raml-module-builder.version>23.0.0</raml-module-builder.version>
     <vertx-version>3.5.4</vertx-version>
     <rest-assured.version>3.1.1</rest-assured.version>
   </properties>
@@ -83,6 +84,12 @@
       <groupId>com.github.tomakehurst</groupId>
       <artifactId>wiremock</artifactId>
       <version>2.19.0</version>
+      <exclusions>
+        <exclusion>
+          <groupId>net.sf.jopt-simple</groupId>
+          <artifactId>jopt-simple</artifactId>
+        </exclusion>
+      </exclusions>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -376,11 +383,14 @@
             <phase>prepare-package</phase>
             <configuration>
               <tasks>
-                <replace token="baseUri: http://github.com/org/folio/lsp-apis" value="baseUri: http://localhost:${http.port}/apis" dir="${basedir}/target/classes/apidocs/raml">
-                  <include name="**/*.raml" />
+                <replace token="baseUri: http://github.com/org/folio/lsp-apis"
+                         value="baseUri: http://localhost:${http.port}/apis"
+                         dir="${basedir}/target/classes/apidocs/raml">
+                  <include name="**/*.raml"/>
                 </replace>
-                <replace token="protocols: [ HTTPS ]" value="protocols: [ HTTP ]" dir="${basedir}/target/classes/apidocs/raml">
-                  <include name="**/*.raml" />
+                <replace token="protocols: [ HTTPS ]" value="protocols: [ HTTP ]"
+                         dir="${basedir}/target/classes/apidocs/raml">
+                  <include name="**/*.raml"/>
                 </replace>
               </tasks>
             </configuration>
@@ -430,7 +440,8 @@
           <failsOnError>false</failsOnError>
           <failOnViolation>false</failOnViolation>
           <logViolationsToConsole>true</logViolationsToConsole>
-          <configLocation>https://raw.githubusercontent.com/folio-org/raml-module-builder/master/codestyles.xml</configLocation>
+          <configLocation>https://raw.githubusercontent.com/folio-org/raml-module-builder/master/codestyles.xml
+          </configLocation>
           <cacheFile>${basedir}/target/cachefile</cacheFile>
         </configuration>
       </plugin>
@@ -454,7 +465,7 @@
                   </manifestEntries>
                 </transformer>
               </transformers>
-              <artifactSet />
+              <artifactSet/>
               <outputFile>${project.build.directory}/${project.artifactId}-fat.jar</outputFile>
             </configuration>
           </execution>
