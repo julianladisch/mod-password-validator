@@ -163,12 +163,12 @@ public class ValidatorRegistryTest {
         throw new Exception(message);
     }
 
-    TenantClient tenantClient = new TenantClient("localhost", port, TENANT, "diku");
+    TenantClient tenantClient = new TenantClient("http://localhost:" + port, "diku", "diku", false);
 
     final DeploymentOptions options = new DeploymentOptions().setConfig(new JsonObject().put(HTTP_PORT, port));
     vertx.deployVerticle(RestVerticle.class.getName(), options, res -> {
       try {
-        tenantClient.post(null, res2 -> {
+        tenantClient.postTenant(null, res2 -> {
           async.complete();
         });
       } catch (Exception e) {
