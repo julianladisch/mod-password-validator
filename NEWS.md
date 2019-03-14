@@ -1,4 +1,8 @@
-## 2018-09-19 v1.0.1
+## 2019-03-14 v1.1.0
+ * Update to RAML 1.0 and RMB23 (MODPWD-8)
+ * Fix security vulnerabilities reported in jackson-databind (MODPWD-14)
+ 
+ ## 2018-09-19 v1.0.1
  * Added default password validation rules
  * Added creation of the default rule list during module enabling phase for a tenant
 
