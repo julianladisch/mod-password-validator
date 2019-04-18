@@ -27,6 +27,7 @@ import org.junit.runner.RunWith;
 import javax.ws.rs.core.MediaType;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.empty;
@@ -120,6 +121,7 @@ public class ValidatorRegistryTest {
   private static final String HOST = "http://localhost:";
   private static final String HTTP_PORT = "http.port";
   private static final String TENANT = "diku";
+  private static final String INCORRECT_TENANT = "test";
   private static final String RULE_ID = "ruleId";
   private static final String VALIDATION_RULES_TABLE_NAME = "validation_rules";
 
@@ -260,6 +262,59 @@ public class ValidatorRegistryTest {
       .statusCode(HttpStatus.SC_OK)
       .body("rules*.type", everyItem(not(Rule.Type.PROGRAMMATIC.toString())));
 
+  }
+
+  @Test
+  public void  testFailedGetTenantRules(){
+      RestAssured.given()
+        .port(port)
+        .header(new Header(RestVerticle.OKAPI_HEADER_TENANT, INCORRECT_TENANT))
+        .param("query", "type=RegExp")
+        .when()
+        .get(TENANT_RULES_PATH)
+        .then()
+        .statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+  }
+
+  @Test
+  public void testFailedGetTenantRulesByRuleId(){
+    RestAssured.given()
+      .port(port)
+      .contentType(MediaType.APPLICATION_JSON)
+      .header(new Header(RestVerticle.OKAPI_HEADER_TENANT, INCORRECT_TENANT))
+      .pathParam("ruleId", UUID.randomUUID())
+      .when()
+      .get(TENANT_RULES_PATH + "/{ruleId}")
+      .then()
+      .statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+  }
+
+  @Test
+  public void  testFailedPostTenantRules(){
+    List<JsonObject> rules = Arrays.asList(REGEXP_RULE_ENABLED, PROGRAMMATIC_RULE_ENABLED);
+    RestAssured.given()
+      .port(port)
+      .contentType(MediaType.APPLICATION_JSON)
+      .header(new Header(RestVerticle.OKAPI_HEADER_TENANT, INCORRECT_TENANT))
+      .body(rules.get(0).toString())
+      .when()
+      .post(TENANT_RULES_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+  }
+
+  @Test
+  public void testFailedPutTenantRules(){
+    List<JsonObject> rules = Arrays.asList(REGEXP_RULE_ENABLED, PROGRAMMATIC_RULE_ENABLED);
+    RestAssured.given()
+      .port(port)
+      .contentType(MediaType.APPLICATION_JSON)
+      .header(new Header(RestVerticle.OKAPI_HEADER_TENANT, INCORRECT_TENANT))
+      .body(rules.get(0).toString())
+      .when()
+      .put(TENANT_RULES_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
   }
 
   @Test
