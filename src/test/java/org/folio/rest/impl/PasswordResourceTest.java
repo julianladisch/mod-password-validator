@@ -7,6 +7,7 @@ import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import io.restassured.RestAssured;
 import io.restassured.http.Header;
+import io.restassured.specification.RequestSpecification;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
@@ -141,9 +142,7 @@ public class PasswordResourceTest {
   @Test
   public void shouldReturnBadRequestStatusWhenPasswordIsAbsentInBody(TestContext context) {
     JsonObject emptyJsonObject = new JsonObject();
-    RestAssured.given()
-      .port(port)
-      .contentType(MediaType.APPLICATION_JSON)
+    requestSpecification()
       .header(TENANT_HEADER)
       .header(USER_ID_HEADER)
       .header(TOKEN_HEADER)
@@ -157,9 +156,7 @@ public class PasswordResourceTest {
 
   @Test
   public void shouldReturnSuccessfulValidationWhenPasswordPassesAllRules(final TestContext context) {
-    RestAssured.given()
-      .port(port)
-      .contentType(MediaType.APPLICATION_JSON)
+    requestSpecification()
       .header(TENANT_HEADER)
       .body(buildRegexpRuleOneLetterOneNumber().withOrderNo(0).withState(Rule.State.ENABLED))
       .when()
@@ -167,9 +164,7 @@ public class PasswordResourceTest {
       .then()
       .statusCode(HttpStatus.SC_CREATED);
 
-    RestAssured.given()
-      .port(port)
-      .contentType(MediaType.APPLICATION_JSON)
+    requestSpecification()
       .header(TENANT_HEADER)
       .body(buildRegexpRuleMinLength8().withOrderNo(1).withState(Rule.State.ENABLED))
       .when()
@@ -179,9 +174,7 @@ public class PasswordResourceTest {
 
     mockUserService();
     Password passwordToValidate = new Password().withPassword("P@sword12");
-    RestAssured.given()
-      .port(port)
-      .contentType(MediaType.APPLICATION_JSON)
+    requestSpecification()
       .header(TENANT_HEADER)
       .header(USER_ID_HEADER)
       .header(TOKEN_HEADER)
@@ -202,9 +195,7 @@ public class PasswordResourceTest {
     initMockUserService(mockDefinition);
 
     Password passwordToValidate = new Password().withPassword("P@sword12");
-    RestAssured.given()
-      .port(port)
-      .contentType(MediaType.APPLICATION_JSON)
+    requestSpecification()
       .header(TENANT_HEADER)
       .header(USER_ID_HEADER)
       .header(TOKEN_HEADER)
@@ -222,9 +213,7 @@ public class PasswordResourceTest {
     initMockUserService(mockDefinition);
 
     Password passwordToValidate = new Password().withPassword("P@sword12");
-    RestAssured.given()
-      .port(port)
-      .contentType(MediaType.APPLICATION_JSON)
+    requestSpecification()
       .header(TENANT_HEADER)
       .header(USER_ID_HEADER)
       .header(TOKEN_HEADER)
@@ -243,9 +232,7 @@ public class PasswordResourceTest {
     initMockUserService(mockDefinition);
 
     Password passwordToValidate = new Password().withPassword("P@sword12");
-    RestAssured.given()
-      .port(port)
-      .contentType(MediaType.APPLICATION_JSON)
+    requestSpecification()
       .header(TENANT_HEADER)
       .header(USER_ID_HEADER)
       .header(TOKEN_HEADER)
@@ -265,9 +252,7 @@ public class PasswordResourceTest {
     initMockUserService(mockDefinition);
 
     Password passwordToValidate = new Password().withPassword("P@sword12");
-    RestAssured.given()
-      .port(port)
-      .contentType(MediaType.APPLICATION_JSON)
+    requestSpecification()
       .header(TENANT_HEADER)
       .header(USER_ID_HEADER)
       .header(TOKEN_HEADER)
@@ -281,9 +266,7 @@ public class PasswordResourceTest {
 
   @Test
   public void shouldReturnFailedValidationResultWithMessageWhenPasswordDidNotPassRule(final TestContext context) {
-    RestAssured.given()
-      .port(port)
-      .contentType(MediaType.APPLICATION_JSON)
+    requestSpecification()
       .header(TENANT_HEADER)
       .body(buildRegexpRuleOneLetterOneNumber().withOrderNo(0).withState(Rule.State.ENABLED))
       .when()
@@ -291,9 +274,7 @@ public class PasswordResourceTest {
       .then()
       .statusCode(HttpStatus.SC_CREATED);
 
-    RestAssured.given()
-      .port(port)
-      .contentType(MediaType.APPLICATION_JSON)
+    requestSpecification()
       .header(TENANT_HEADER)
       .body(buildRegexpRuleMinLength8().withOrderNo(1).withState(Rule.State.ENABLED))
       .when()
@@ -303,9 +284,7 @@ public class PasswordResourceTest {
 
     mockUserService();
     Password passwordToValidate = new Password().withPassword("badPassword");
-    RestAssured.given()
-      .port(port)
-      .contentType(MediaType.APPLICATION_JSON)
+    requestSpecification()
       .header(TENANT_HEADER)
       .header(USER_ID_HEADER)
       .header(TOKEN_HEADER)
@@ -319,6 +298,11 @@ public class PasswordResourceTest {
       .body(PASSWORD_VALIDATION_MESSAGES_JSON_PATH, contains(buildRegexpRuleOneLetterOneNumber().getErrMessageId()));
   }
 
+  private RequestSpecification requestSpecification() {
+    return RestAssured.given()
+      .port(port)
+      .contentType(MediaType.APPLICATION_JSON);
+  }
 
   private Rule buildRegexpRuleOneLetterOneNumber() {
     return new Rule()
