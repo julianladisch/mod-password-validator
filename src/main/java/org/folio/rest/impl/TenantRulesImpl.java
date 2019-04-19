@@ -37,7 +37,7 @@ public class TenantRulesImpl implements TenantRules {
   public void getTenantRules(int offset, int limit, String query, Map<String, String> okapiHeaders,
                              Handler<AsyncResult<Response>> asyncResultHandler, Context vertxContext) {
     try {
-      vertxContext.runOnContext(v -> validatorRegistryService.getAllTenantRules(tenantId, limit, offset, query, reply -> {
+      validatorRegistryService.getAllTenantRules(tenantId, limit, offset, query, reply -> {
         if (reply.succeeded()) {
           RuleCollection rules = reply.result().mapTo(RuleCollection.class);
           asyncResultHandler.handle(
@@ -48,7 +48,7 @@ public class TenantRulesImpl implements TenantRules {
           asyncResultHandler.handle(
             Future.succeededFuture(GetTenantRulesResponse.respond500WithTextPlain(message)));
         }
-      }));
+      });
     } catch (Exception e) {
       logger.error("Error running on verticle for getTenantRules: " + e.getMessage(), e);
       asyncResultHandler.handle(Future.succeededFuture(
@@ -62,25 +62,23 @@ public class TenantRulesImpl implements TenantRules {
                               final Handler<AsyncResult<Response>> asyncResultHandler,
                               final Context vertxContext) {
     try {
-      vertxContext.runOnContext(v -> {
-        String errorMessage = validateRule(entity);
-        if (errorMessage != null) {
-          asyncResultHandler.handle(
-            Future.succeededFuture(PostTenantRulesResponse.respond400WithTextPlain(errorMessage)));
-        } else {
-          validatorRegistryService.createTenantRule(tenantId, JsonObject.mapFrom(entity), reply -> {
-            if (reply.succeeded()) {
-              asyncResultHandler.handle(
-                Future.succeededFuture(PostTenantRulesResponse.respond201WithApplicationJson(reply.result().mapTo(Rule.class))));
-            } else {
-              String message = "Failed to create new rule";
-              logger.error(message, reply.cause());
-              asyncResultHandler.handle(
-                Future.succeededFuture(PostTenantRulesResponse.respond500WithTextPlain(message)));
-            }
-          });
-        }
-      });
+      String errorMessage = validateRule(entity);
+      if (errorMessage != null) {
+        asyncResultHandler.handle(
+          Future.succeededFuture(PostTenantRulesResponse.respond400WithTextPlain(errorMessage)));
+      } else {
+        validatorRegistryService.createTenantRule(tenantId, JsonObject.mapFrom(entity), reply -> {
+          if (reply.succeeded()) {
+            asyncResultHandler.handle(
+              Future.succeededFuture(PostTenantRulesResponse.respond201WithApplicationJson(reply.result().mapTo(Rule.class))));
+          } else {
+            String message = "Failed to create new rule";
+            logger.error(message, reply.cause());
+            asyncResultHandler.handle(
+              Future.succeededFuture(PostTenantRulesResponse.respond500WithTextPlain(message)));
+          }
+        });
+      }
     } catch (Exception e) {
       logger.error("Error running on verticle for postTenantRules: " + e.getMessage(), e);
       asyncResultHandler.handle(Future.succeededFuture(
@@ -94,33 +92,31 @@ public class TenantRulesImpl implements TenantRules {
                              final Handler<AsyncResult<Response>> asyncResultHandler,
                              final Context vertxContext) {
     try {
-      vertxContext.runOnContext(v -> {
-        String errorMessage = validateRule(entity);
-        if (errorMessage != null) {
-          asyncResultHandler.handle(
-            Future.succeededFuture(PutTenantRulesResponse.respond400WithTextPlain(errorMessage)));
-        } else {
-          validatorRegistryService.updateTenantRule(tenantId, JsonObject.mapFrom(entity), reply -> {
-            if (reply.succeeded()) {
-              JsonObject result = reply.result();
-              if (result == null) {
-                String message = "Rule " + entity.getRuleId() + " does not exist";
-                logger.debug(message);
-                asyncResultHandler.handle(
-                  Future.succeededFuture(PutTenantRulesResponse.respond404WithTextPlain(message)));
-              } else {
-                asyncResultHandler.handle(
-                  Future.succeededFuture(PutTenantRulesResponse.respond200WithApplicationJson(result.mapTo(Rule.class))));
-              }
-            } else {
-              String message = "Failed to update rule";
-              logger.error(message, reply.cause());
+      String errorMessage = validateRule(entity);
+      if (errorMessage != null) {
+        asyncResultHandler.handle(
+          Future.succeededFuture(PutTenantRulesResponse.respond400WithTextPlain(errorMessage)));
+      } else {
+        validatorRegistryService.updateTenantRule(tenantId, JsonObject.mapFrom(entity), reply -> {
+          if (reply.succeeded()) {
+            JsonObject result = reply.result();
+            if (result == null) {
+              String message = "Rule " + entity.getRuleId() + " does not exist";
+              logger.debug(message);
               asyncResultHandler.handle(
-                Future.succeededFuture(PutTenantRulesResponse.respond500WithTextPlain(message)));
+                Future.succeededFuture(PutTenantRulesResponse.respond404WithTextPlain(message)));
+            } else {
+              asyncResultHandler.handle(
+                Future.succeededFuture(PutTenantRulesResponse.respond200WithApplicationJson(result.mapTo(Rule.class))));
             }
-          });
-        }
-      });
+          } else {
+            String message = "Failed to update rule";
+            logger.error(message, reply.cause());
+            asyncResultHandler.handle(
+              Future.succeededFuture(PutTenantRulesResponse.respond500WithTextPlain(message)));
+          }
+        });
+      }
     } catch (Exception e) {
       logger.error("Error running on verticle for putTenantRules: " + e.getMessage(), e);
       asyncResultHandler.handle(Future.succeededFuture(
@@ -134,7 +130,7 @@ public class TenantRulesImpl implements TenantRules {
                                      final Handler<AsyncResult<Response>> asyncResultHandler,
                                      final Context vertxContext) {
     try {
-      vertxContext.runOnContext(v -> validatorRegistryService.getTenantRuleByRuleId(tenantId, ruleId, reply -> {
+      validatorRegistryService.getTenantRuleByRuleId(tenantId, ruleId, reply -> {
         if (reply.succeeded()) {
           JsonObject result = reply.result();
           if (result == null) {
@@ -152,7 +148,7 @@ public class TenantRulesImpl implements TenantRules {
           asyncResultHandler.handle(
             Future.succeededFuture(GetTenantRulesByRuleIdResponse.respond500WithTextPlain(message)));
         }
-      }));
+      });
     } catch (Exception e) {
       logger.error("Error running on verticle for getTenantRulesByRuleId: " + e.getMessage(), e);
       asyncResultHandler.handle(Future.succeededFuture(

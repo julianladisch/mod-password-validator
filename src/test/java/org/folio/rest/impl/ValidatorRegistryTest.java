@@ -3,6 +3,7 @@ package org.folio.rest.impl;
 import io.restassured.RestAssured;
 import io.restassured.http.Header;
 import io.restassured.response.Response;
+import io.restassured.specification.RequestSpecification;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
@@ -27,6 +28,7 @@ import org.junit.runner.RunWith;
 import javax.ws.rs.core.MediaType;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.empty;
@@ -120,6 +122,7 @@ public class ValidatorRegistryTest {
   private static final String HOST = "http://localhost:";
   private static final String HTTP_PORT = "http.port";
   private static final String TENANT = "diku";
+  private static final String INCORRECT_TENANT = "test";
   private static final String RULE_ID = "ruleId";
   private static final String VALIDATION_RULES_TABLE_NAME = "validation_rules";
 
@@ -263,6 +266,53 @@ public class ValidatorRegistryTest {
   }
 
   @Test
+  public void testFailedGetTenantRules() {
+    RestAssured.given()
+      .port(port)
+      .header(new Header(RestVerticle.OKAPI_HEADER_TENANT, INCORRECT_TENANT))
+      .param("query", "type=RegExp")
+      .when()
+      .get(TENANT_RULES_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+  }
+
+  @Test
+  public void testFailedGetTenantRulesByRuleId() {
+    requestSpecification()
+      .header(new Header(RestVerticle.OKAPI_HEADER_TENANT, INCORRECT_TENANT))
+      .pathParam("ruleId", UUID.randomUUID())
+      .when()
+      .get(TENANT_RULES_PATH + "/{ruleId}")
+      .then()
+      .statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+  }
+
+  @Test
+  public void testFailedPostTenantRules() {
+    List<JsonObject> rules = Arrays.asList(REGEXP_RULE_ENABLED, PROGRAMMATIC_RULE_ENABLED);
+    requestSpecification()
+      .header(new Header(RestVerticle.OKAPI_HEADER_TENANT, INCORRECT_TENANT))
+      .body(rules.get(0).toString())
+      .when()
+      .post(TENANT_RULES_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+  }
+
+  @Test
+  public void testFailedPutTenantRules() {
+    List<JsonObject> rules = Arrays.asList(REGEXP_RULE_ENABLED, PROGRAMMATIC_RULE_ENABLED);
+    requestSpecification()
+      .header(new Header(RestVerticle.OKAPI_HEADER_TENANT, INCORRECT_TENANT))
+      .body(rules.get(0).toString())
+      .when()
+      .put(TENANT_RULES_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+  }
+
+  @Test
   public void shouldNotReturnDisabledOnGetTenantRulesByStateEnabled(final TestContext context) {
     List<JsonObject> rulesToPost = Arrays.asList(PROGRAMMATIC_RULE_DISABLED, REGEXP_RULE_DISABLED,
       REGEXP_RULE_ENABLED, PROGRAMMATIC_RULE_ENABLED);
@@ -291,9 +341,7 @@ public class ValidatorRegistryTest {
 
   @Test
   public void shouldReturnBadRequestOnPostWhenNoRulePassedInBody(final TestContext context) {
-    RestAssured.given()
-      .port(port)
-      .contentType(MediaType.APPLICATION_JSON)
+    requestSpecification()
       .header(TENANT_HEADER)
       .body(new JsonObject().toString())
       .when()
@@ -304,9 +352,7 @@ public class ValidatorRegistryTest {
 
   @Test
   public void shouldReturnBadRequestOnPostWhenNegativeOrderNumber(final TestContext context) {
-    RestAssured.given()
-      .port(port)
-      .contentType(MediaType.APPLICATION_JSON)
+    requestSpecification()
       .header(TENANT_HEADER)
       .body(INVALID_RULE_NEGATIVE_ORDER_NUMBER.toString())
       .when()
@@ -317,9 +363,7 @@ public class ValidatorRegistryTest {
 
   @Test
   public void shouldReturnBadRequestOnPostWhenSoftValidationTypeForRegexpType(final TestContext context) {
-    RestAssured.given()
-      .port(port)
-      .contentType(MediaType.APPLICATION_JSON)
+    requestSpecification()
       .header(TENANT_HEADER)
       .body(INVALID_REGEXP_RULE_SOFT.toString())
       .when()
@@ -330,9 +374,7 @@ public class ValidatorRegistryTest {
 
   @Test
   public void shouldReturnBadRequestOnPostWhenNoImplementationReferenceSpecifiedForProgrammaticType(final TestContext context) {
-    RestAssured.given()
-      .port(port)
-      .contentType(MediaType.APPLICATION_JSON)
+    requestSpecification()
       .header(TENANT_HEADER)
       .body(buildProgrammaticRuleEnabled().put("implementationReference", "").toString())
       .when()
@@ -340,9 +382,7 @@ public class ValidatorRegistryTest {
       .then()
       .statusCode(HttpStatus.SC_BAD_REQUEST);
 
-    RestAssured.given()
-      .port(port)
-      .contentType(MediaType.APPLICATION_JSON)
+    requestSpecification()
       .header(TENANT_HEADER)
       .body(buildProgrammaticRuleEnabled().put("implementationReference", (String) null).toString())
       .when()
@@ -353,9 +393,7 @@ public class ValidatorRegistryTest {
 
   @Test
   public void shouldCreateValidRule(final TestContext context) {
-    RestAssured.given()
-      .port(port)
-      .contentType(MediaType.APPLICATION_JSON)
+    requestSpecification()
       .header(TENANT_HEADER)
       .body(VALID_RULE.toString())
       .when()
@@ -374,9 +412,7 @@ public class ValidatorRegistryTest {
 
   @Test
   public void shouldReturnBadRequestOnPutWhenNoRulePassedInBody(final TestContext context) {
-    RestAssured.given()
-      .port(port)
-      .contentType(MediaType.APPLICATION_JSON)
+    requestSpecification()
       .header(TENANT_HEADER)
       .body(new JsonObject().toString())
       .when()
@@ -387,9 +423,7 @@ public class ValidatorRegistryTest {
 
   @Test
   public void shouldReturnBadRequestOnPutWhenNegativeOrderNumber(final TestContext context) {
-    RestAssured.given()
-      .port(port)
-      .contentType(MediaType.APPLICATION_JSON)
+    requestSpecification()
       .header(TENANT_HEADER)
       .body(INVALID_RULE_NEGATIVE_ORDER_NUMBER.toString())
       .when()
@@ -400,9 +434,7 @@ public class ValidatorRegistryTest {
 
   @Test
   public void shouldReturnBadRequestOnPutWhenSoftValidationTypeForRegexpType(final TestContext context) {
-    RestAssured.given()
-      .port(port)
-      .contentType(MediaType.APPLICATION_JSON)
+    requestSpecification()
       .header(TENANT_HEADER)
       .body(INVALID_REGEXP_RULE_SOFT.toString())
       .when()
@@ -413,9 +445,7 @@ public class ValidatorRegistryTest {
 
   @Test
   public void shouldReturnBadRequestOnPutWhenNoImplementationReferenceSpecifiedForProgrammaticType(final TestContext context) {
-    RestAssured.given()
-      .port(port)
-      .contentType(MediaType.APPLICATION_JSON)
+    requestSpecification()
       .header(TENANT_HEADER)
       .body(buildProgrammaticRuleEnabled().put("implementationReference", "").toString())
       .when()
@@ -423,9 +453,7 @@ public class ValidatorRegistryTest {
       .then()
       .statusCode(HttpStatus.SC_BAD_REQUEST);
 
-    RestAssured.given()
-      .port(port)
-      .contentType(MediaType.APPLICATION_JSON)
+    requestSpecification()
       .header(TENANT_HEADER)
       .body(buildProgrammaticRuleEnabled().put("implementationReference", (String) null).toString())
       .when()
@@ -436,9 +464,7 @@ public class ValidatorRegistryTest {
 
   @Test
   public void shouldReturnNotFoundWhenRuleDoesNotExist(final TestContext context) {
-    RestAssured.given()
-      .port(port)
-      .contentType(MediaType.APPLICATION_JSON)
+    requestSpecification()
       .header(TENANT_HEADER)
       .body(REGEXP_RULE_ENABLED.toString())
       .when()
@@ -449,9 +475,7 @@ public class ValidatorRegistryTest {
 
   @Test
   public void shouldUpdateExistingRule(final TestContext context) {
-    Response response = RestAssured.given()
-      .port(port)
-      .contentType(MediaType.APPLICATION_JSON)
+    Response response = requestSpecification()
       .header(TENANT_HEADER)
       .body(PROGRAMMATIC_RULE_DISABLED.toString())
       .when()
@@ -463,9 +487,7 @@ public class ValidatorRegistryTest {
       .put(RULE_ID, createdRule.getRuleId())
       .put("state", Rule.State.ENABLED.toString());
 
-    RestAssured.given()
-      .port(port)
-      .contentType(MediaType.APPLICATION_JSON)
+    requestSpecification()
       .header(TENANT_HEADER)
       .body(ruleToUpdate.toString())
       .when()
@@ -477,9 +499,7 @@ public class ValidatorRegistryTest {
 
   @Test
   public void shouldReturnNotFoundOnGetRuleByIdWhenRuleDoesNotExist(final TestContext context) {
-    RestAssured.given()
-      .port(port)
-      .contentType(MediaType.APPLICATION_JSON)
+    requestSpecification()
       .header(TENANT_HEADER)
       .pathParam("ruleId", "nonexistent_rule_id")
       .when()
@@ -490,9 +510,7 @@ public class ValidatorRegistryTest {
 
   @Test
   public void shouldReturnRuleById(final TestContext context) {
-    Response response = RestAssured.given()
-      .port(port)
-      .contentType(MediaType.APPLICATION_JSON)
+    Response response = requestSpecification()
       .header(TENANT_HEADER)
       .body(PROGRAMMATIC_RULE_DISABLED.toString())
       .when()
@@ -500,9 +518,7 @@ public class ValidatorRegistryTest {
     Assert.assertThat(response.statusCode(), is(HttpStatus.SC_CREATED));
     Rule createdRule = response.body().as(Rule.class);
 
-    RestAssured.given()
-      .port(port)
-      .contentType(MediaType.APPLICATION_JSON)
+    requestSpecification()
       .header(TENANT_HEADER)
       .pathParam("ruleId", createdRule.getRuleId())
       .when()
@@ -510,6 +526,12 @@ public class ValidatorRegistryTest {
       .then()
       .statusCode(HttpStatus.SC_OK)
       .body("ruleId", is(createdRule.getRuleId()));
+  }
+
+  private RequestSpecification requestSpecification() {
+    return RestAssured.given()
+      .port(port)
+      .contentType(MediaType.APPLICATION_JSON);
   }
 
   private void clearRulesTable(TestContext context) {

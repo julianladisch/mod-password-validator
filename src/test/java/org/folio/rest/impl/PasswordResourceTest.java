@@ -1,11 +1,13 @@
 package org.folio.rest.impl;
 
+import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.common.ConsoleNotifier;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import io.restassured.RestAssured;
 import io.restassured.http.Header;
+import io.restassured.specification.RequestSpecification;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
@@ -45,7 +47,7 @@ public class PasswordResourceTest {
 
   private static final String OKAPI_URL_HEADER = "x-okapi-url";
   private static final String TENANT = "diku";
-  public static final String ADMIN_ID = "3b47c4ad-a588-461f-a8e3-c0bdae547f77";
+  private static final String ADMIN_ID = "3b47c4ad-a588-461f-a8e3-c0bdae547f77";
 
   private static final Header TENANT_HEADER = new Header(RestVerticle.OKAPI_HEADER_TENANT, TENANT);
   private static final Header TOKEN_HEADER = new Header(OKAPI_HEADER_TOKEN, "token");
@@ -58,6 +60,8 @@ public class PasswordResourceTest {
   private static final String PASSWORD_VALIDATION_MESSAGES_JSON_PATH = "messages";
 
   private static final String VALIDATION_RULES_TABLE_NAME = "validation_rules";
+  private static final String USERS_KEY = "users";
+  private static final String TOTAL_RECORDS_KEY = "totalRecords";
 
   private static Vertx vertx;
   private static int port;
@@ -138,9 +142,7 @@ public class PasswordResourceTest {
   @Test
   public void shouldReturnBadRequestStatusWhenPasswordIsAbsentInBody(TestContext context) {
     JsonObject emptyJsonObject = new JsonObject();
-    RestAssured.given()
-      .port(port)
-      .contentType(MediaType.APPLICATION_JSON)
+    requestSpecification()
       .header(TENANT_HEADER)
       .header(USER_ID_HEADER)
       .header(TOKEN_HEADER)
@@ -154,9 +156,7 @@ public class PasswordResourceTest {
 
   @Test
   public void shouldReturnSuccessfulValidationWhenPasswordPassesAllRules(final TestContext context) {
-    RestAssured.given()
-      .port(port)
-      .contentType(MediaType.APPLICATION_JSON)
+    requestSpecification()
       .header(TENANT_HEADER)
       .body(buildRegexpRuleOneLetterOneNumber().withOrderNo(0).withState(Rule.State.ENABLED))
       .when()
@@ -164,9 +164,7 @@ public class PasswordResourceTest {
       .then()
       .statusCode(HttpStatus.SC_CREATED);
 
-    RestAssured.given()
-      .port(port)
-      .contentType(MediaType.APPLICATION_JSON)
+    requestSpecification()
       .header(TENANT_HEADER)
       .body(buildRegexpRuleMinLength8().withOrderNo(1).withState(Rule.State.ENABLED))
       .when()
@@ -176,9 +174,7 @@ public class PasswordResourceTest {
 
     mockUserService();
     Password passwordToValidate = new Password().withPassword("P@sword12");
-    RestAssured.given()
-      .port(port)
-      .contentType(MediaType.APPLICATION_JSON)
+    requestSpecification()
       .header(TENANT_HEADER)
       .header(USER_ID_HEADER)
       .header(TOKEN_HEADER)
@@ -192,10 +188,85 @@ public class PasswordResourceTest {
   }
 
   @Test
+  public void shouldReturnFailedValidationResultWhenUserNotFound() {
+    ResponseDefinitionBuilder mockDefinition = WireMock.okJson(new JsonObject()
+      .put(USERS_KEY, new JsonArray())
+      .put(TOTAL_RECORDS_KEY, 0).toString());
+    initMockUserService(mockDefinition);
+
+    Password passwordToValidate = new Password().withPassword("P@sword12");
+    requestSpecification()
+      .header(TENANT_HEADER)
+      .header(USER_ID_HEADER)
+      .header(TOKEN_HEADER)
+      .header(userMockUrlHeader)
+      .body(passwordToValidate)
+      .when()
+      .post(VALIDATE_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+  }
+
+  @Test
+  public void shouldReturnFailedValidationResultWhenUserApiReturnBadRequest() {
+    ResponseDefinitionBuilder mockDefinition = WireMock.badRequest();
+    initMockUserService(mockDefinition);
+
+    Password passwordToValidate = new Password().withPassword("P@sword12");
+    requestSpecification()
+      .header(TENANT_HEADER)
+      .header(USER_ID_HEADER)
+      .header(TOKEN_HEADER)
+      .header(userMockUrlHeader)
+      .body(passwordToValidate)
+      .when()
+      .post(VALIDATE_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+  }
+
+  @Test
+  public void shouldReturnFailedValidationResultWhenUserReturnIncorrectRequest() {
+    ResponseDefinitionBuilder mockDefinition = WireMock.okJson(new JsonObject()
+      .put(TOTAL_RECORDS_KEY, 0).toString());
+    initMockUserService(mockDefinition);
+
+    Password passwordToValidate = new Password().withPassword("P@sword12");
+    requestSpecification()
+      .header(TENANT_HEADER)
+      .header(USER_ID_HEADER)
+      .header(TOKEN_HEADER)
+      .header(userMockUrlHeader)
+      .body(passwordToValidate)
+      .when()
+      .post(VALIDATE_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+  }
+
+  @Test
+  public void shouldReturnFailedValidationResultWhenUserReturnIncorrectTotalRecords() {
+    ResponseDefinitionBuilder mockDefinition = WireMock.okJson(new JsonObject()
+      .put(USERS_KEY, new JsonArray())
+      .put(TOTAL_RECORDS_KEY, 2).toString());
+    initMockUserService(mockDefinition);
+
+    Password passwordToValidate = new Password().withPassword("P@sword12");
+    requestSpecification()
+      .header(TENANT_HEADER)
+      .header(USER_ID_HEADER)
+      .header(TOKEN_HEADER)
+      .header(userMockUrlHeader)
+      .body(passwordToValidate)
+      .when()
+      .post(VALIDATE_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+  }
+
+  @Test
   public void shouldReturnFailedValidationResultWithMessageWhenPasswordDidNotPassRule(final TestContext context) {
-    RestAssured.given()
-      .port(port)
-      .contentType(MediaType.APPLICATION_JSON)
+    requestSpecification()
       .header(TENANT_HEADER)
       .body(buildRegexpRuleOneLetterOneNumber().withOrderNo(0).withState(Rule.State.ENABLED))
       .when()
@@ -203,9 +274,7 @@ public class PasswordResourceTest {
       .then()
       .statusCode(HttpStatus.SC_CREATED);
 
-    RestAssured.given()
-      .port(port)
-      .contentType(MediaType.APPLICATION_JSON)
+    requestSpecification()
       .header(TENANT_HEADER)
       .body(buildRegexpRuleMinLength8().withOrderNo(1).withState(Rule.State.ENABLED))
       .when()
@@ -215,9 +284,7 @@ public class PasswordResourceTest {
 
     mockUserService();
     Password passwordToValidate = new Password().withPassword("badPassword");
-    RestAssured.given()
-      .port(port)
-      .contentType(MediaType.APPLICATION_JSON)
+    requestSpecification()
       .header(TENANT_HEADER)
       .header(USER_ID_HEADER)
       .header(TOKEN_HEADER)
@@ -231,6 +298,11 @@ public class PasswordResourceTest {
       .body(PASSWORD_VALIDATION_MESSAGES_JSON_PATH, contains(buildRegexpRuleOneLetterOneNumber().getErrMessageId()));
   }
 
+  private RequestSpecification requestSpecification() {
+    return RestAssured.given()
+      .port(port)
+      .contentType(MediaType.APPLICATION_JSON);
+  }
 
   private Rule buildRegexpRuleOneLetterOneNumber() {
     return new Rule()
@@ -255,9 +327,13 @@ public class PasswordResourceTest {
   }
 
   private void mockUserService() {
+    ResponseDefinitionBuilder mockDefinition = WireMock.okJson(buildUserMockResponse().toString());
+    initMockUserService(mockDefinition);
+  }
+
+  private void initMockUserService(ResponseDefinitionBuilder mockDefinition) {
     WireMock.stubFor(WireMock.get("/users?query=id==" + ADMIN_ID)
-      .willReturn(WireMock.okJson(buildUserMockResponse().toString())
-      ));
+      .willReturn(mockDefinition));
   }
 
   private JsonObject buildUserMockResponse() {
@@ -267,9 +343,9 @@ public class PasswordResourceTest {
       .put("active", true);
 
     return new JsonObject()
-      .put("users", new JsonArray()
+      .put(USERS_KEY, new JsonArray()
         .add(admin))
-      .put("totalRecords", 1);
+      .put(TOTAL_RECORDS_KEY, 1);
   }
 
   private void clearRulesTable(TestContext context) {
