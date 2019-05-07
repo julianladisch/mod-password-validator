@@ -1,3 +1,6 @@
+## 2019-05-07 v1.2.0
+ * Increase test coverage for mod-password-validator (MODPWD-16)
+
 ## 2019-03-14 v1.1.0
  * Update to RAML 1.0 and RMB23 (MODPWD-8)
  * Fix security vulnerabilities reported in jackson-databind (MODPWD-14)
