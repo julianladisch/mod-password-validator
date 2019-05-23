@@ -1,6 +1,6 @@
 # mod-password-validator
 
-Copyright (C) 2018 The Open Library Foundation
+Copyright (C) 2018-2019 The Open Library Foundation
 
 This software is distributed under the terms of the Apache License,
 Version 2.0. See the file "[LICENSE](LICENSE)" for more information.
@@ -11,6 +11,7 @@ Version 2.0. See the file "[LICENSE](LICENSE)" for more information.
 * [Docker](#docker)
 * [Installing the module](#installing-the-module)
 * [Deploying the module](#deploying-the-module)
+* [Additional information](#additional-information)
 
 ## Introduction
 
@@ -116,7 +117,15 @@ curl -w '\n' -X POST -D -   \
     http://localhost:9130/_/proxy/tenants/<tenant_name>/modules
 ```
 
+## Additional information
+
 ### Issue tracker
 
 See project [MODPWD](https://issues.folio.org/browse/MODPWD)
 at the [FOLIO issue tracker](https://dev.folio.org/guidelines/issue-tracker/).
+
+### ModuleDescriptor
+
+See the built `target/ModuleDescriptor.json` for the interfaces that this module
+requires and provides, the permissions, and the additional module metadata.
+
