@@ -47,7 +47,7 @@ public class ValidateDefaultRulesUnitTest {
 
   private static final String OKAPI_HEADER_TENANT_VALUE = "tenant";
   private static final String OKAPI_HEADER_TOKEN_VALUE = "token";
-  private static final String OKAPI_USERID_HEADER_VALUE = "db6ffb67-3160-43bf-8e2f-ecf9a420288b";
+  private static final String USER_ID_VALUE = "db6ffb67-3160-43bf-8e2f-ecf9a420288b";
 
   private static final String OKAPI_URL_HEADER = "x-okapi-url";
 
@@ -190,7 +190,6 @@ public class ValidateDefaultRulesUnitTest {
     requestHeaders = new HashMap<>();
     requestHeaders.put(RestVerticle.OKAPI_HEADER_TENANT, OKAPI_HEADER_TENANT_VALUE);
     requestHeaders.put(RestVerticle.OKAPI_HEADER_TOKEN, OKAPI_HEADER_TOKEN_VALUE);
-    requestHeaders.put(RestVerticle.OKAPI_USERID_HEADER, OKAPI_USERID_HEADER_VALUE);
     requestHeaders.put(OKAPI_URL_HEADER, "http://localhost:" + userMockServer.port());
     mockUserModule(HttpStatus.SC_OK, USER_SERVICE_MOCK_RESPONSE);
   }
@@ -225,7 +224,7 @@ public class ValidateDefaultRulesUnitTest {
     });
 
     //when
-    validationEngineService.validatePassword(password, requestHeaders, checkingHandler);
+    validationEngineService.validatePassword(USER_ID_VALUE, password, requestHeaders, checkingHandler);
   }
 
   @Test
@@ -234,16 +233,16 @@ public class ValidateDefaultRulesUnitTest {
     String password = "P@sw0rd";
     mockRegistryServiceResponse(JsonObject.mapFrom(regExpRuleCollection));
 
-   //expect
+    //expect
     Handler<AsyncResult<JsonObject>> checkingHandler = testContext.asyncAssertSuccess(response -> {
       String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
       Assert.assertThat(validationResult, Matchers.is(VALIDATION_INVALID_RESULT));
       JsonArray errorMessages = response.getJsonArray(RESPONSE_ERROR_MESSAGES_KEY);
       Assert.assertThat(errorMessages, Matchers.contains(REG_MINIMUM_LENGTH_RULE.getErrMessageId()));
     });
-    
+
     //when
-    validationEngineService.validatePassword(password, requestHeaders, checkingHandler);
+    validationEngineService.validatePassword(USER_ID_VALUE, password, requestHeaders, checkingHandler);
   }
 
   @Test
@@ -252,7 +251,7 @@ public class ValidateDefaultRulesUnitTest {
     String password = "p@sw0rds";
     mockRegistryServiceResponse(JsonObject.mapFrom(regExpRuleCollection));
 
-   //expect
+    //expect
     Handler<AsyncResult<JsonObject>> checkingHandler = testContext.asyncAssertSuccess(response -> {
       String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
       Assert.assertThat(validationResult, Matchers.is(VALIDATION_INVALID_RESULT));
@@ -261,7 +260,7 @@ public class ValidateDefaultRulesUnitTest {
     });
 
     //when
-    validationEngineService.validatePassword(password, requestHeaders, checkingHandler);
+    validationEngineService.validatePassword(USER_ID_VALUE, password, requestHeaders, checkingHandler);
   }
 
   @Test
@@ -270,7 +269,7 @@ public class ValidateDefaultRulesUnitTest {
     String password = "P@SW0RDS";
     mockRegistryServiceResponse(JsonObject.mapFrom(regExpRuleCollection));
 
-   //expect
+    //expect
     Handler<AsyncResult<JsonObject>> checkingHandler = testContext.asyncAssertSuccess(response -> {
       String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
       Assert.assertThat(validationResult, Matchers.is(VALIDATION_INVALID_RESULT));
@@ -279,7 +278,7 @@ public class ValidateDefaultRulesUnitTest {
     });
 
     //when
-    validationEngineService.validatePassword(password, requestHeaders, checkingHandler);
+    validationEngineService.validatePassword(USER_ID_VALUE, password, requestHeaders, checkingHandler);
 
   }
 
@@ -289,7 +288,7 @@ public class ValidateDefaultRulesUnitTest {
     String password = "p@sWords";
     mockRegistryServiceResponse(JsonObject.mapFrom(regExpRuleCollection));
 
-   //expect
+    //expect
     Handler<AsyncResult<JsonObject>> checkingHandler = testContext.asyncAssertSuccess(response -> {
       String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
       Assert.assertThat(validationResult, Matchers.is(VALIDATION_INVALID_RESULT));
@@ -299,7 +298,7 @@ public class ValidateDefaultRulesUnitTest {
     });
 
     //when
-    validationEngineService.validatePassword(password, requestHeaders, checkingHandler);
+    validationEngineService.validatePassword(USER_ID_VALUE, password, requestHeaders, checkingHandler);
   }
 
   @Test
@@ -308,7 +307,7 @@ public class ValidateDefaultRulesUnitTest {
     String password = "pasW0rds";
     mockRegistryServiceResponse(JsonObject.mapFrom(regExpRuleCollection));
 
-   //expect
+    //expect
     Handler<AsyncResult<JsonObject>> checkingHandler = testContext.asyncAssertSuccess(response -> {
       String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
       Assert.assertThat(validationResult, Matchers.is(VALIDATION_INVALID_RESULT));
@@ -317,7 +316,7 @@ public class ValidateDefaultRulesUnitTest {
     });
 
     //when
-    validationEngineService.validatePassword(password, requestHeaders, checkingHandler);
+    validationEngineService.validatePassword(USER_ID_VALUE, password, requestHeaders, checkingHandler);
   }
 
   @Test
@@ -326,7 +325,7 @@ public class ValidateDefaultRulesUnitTest {
     String password = "P@swadmin0rd1";
     mockRegistryServiceResponse(JsonObject.mapFrom(regExpRuleCollection));
 
-   //expect
+    //expect
     Handler<AsyncResult<JsonObject>> checkingHandler = testContext.asyncAssertSuccess(response -> {
       String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
       Assert.assertThat(validationResult, Matchers.is(VALIDATION_INVALID_RESULT));
@@ -335,7 +334,7 @@ public class ValidateDefaultRulesUnitTest {
     });
 
     //when
-    validationEngineService.validatePassword(password, requestHeaders, checkingHandler);
+    validationEngineService.validatePassword(USER_ID_VALUE, password, requestHeaders, checkingHandler);
   }
 
   @Test
@@ -344,7 +343,7 @@ public class ValidateDefaultRulesUnitTest {
     String password = "p@sw0qwertyrD";
     mockRegistryServiceResponse(JsonObject.mapFrom(regExpRuleCollection));
 
-   //expect
+    //expect
     Handler<AsyncResult<JsonObject>> checkingHandler = testContext.asyncAssertSuccess(response -> {
       String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
       Assert.assertThat(validationResult, Matchers.is(VALIDATION_INVALID_RESULT));
@@ -353,7 +352,7 @@ public class ValidateDefaultRulesUnitTest {
     });
 
     //when
-    validationEngineService.validatePassword(password, requestHeaders, checkingHandler);
+    validationEngineService.validatePassword(USER_ID_VALUE, password, requestHeaders, checkingHandler);
   }
 
   @Test
@@ -362,7 +361,7 @@ public class ValidateDefaultRulesUnitTest {
     String password = "p@ssw0rD";
     mockRegistryServiceResponse(JsonObject.mapFrom(regExpRuleCollection));
 
-   //expect
+    //expect
     Handler<AsyncResult<JsonObject>> checkingHandler = testContext.asyncAssertSuccess(response -> {
       String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
       Assert.assertThat(validationResult, Matchers.is(VALIDATION_INVALID_RESULT));
@@ -371,7 +370,7 @@ public class ValidateDefaultRulesUnitTest {
     });
 
     //when
-    validationEngineService.validatePassword(password, requestHeaders, checkingHandler);
+    validationEngineService.validatePassword(USER_ID_VALUE, password, requestHeaders, checkingHandler);
   }
 
   @Test
@@ -389,11 +388,11 @@ public class ValidateDefaultRulesUnitTest {
     });
 
     //when
-    validationEngineService.validatePassword(password, requestHeaders, checkingHandler);
+    validationEngineService.validatePassword(USER_ID_VALUE, password, requestHeaders, checkingHandler);
   }
 
   private void mockUserModule(int status, JsonObject response) {
-    WireMock.stubFor(WireMock.get("/users?query=id==" + OKAPI_USERID_HEADER_VALUE)
+    WireMock.stubFor(WireMock.get("/users?query=id==" + USER_ID_VALUE)
       .willReturn(WireMock.okJson(response.toString())
       ));
   }

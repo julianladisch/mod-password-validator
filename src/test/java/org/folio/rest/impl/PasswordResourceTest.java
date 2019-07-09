@@ -51,7 +51,6 @@ public class PasswordResourceTest {
 
   private static final Header TENANT_HEADER = new Header(RestVerticle.OKAPI_HEADER_TENANT, TENANT);
   private static final Header TOKEN_HEADER = new Header(OKAPI_HEADER_TOKEN, "token");
-  private static final Header USER_ID_HEADER = new Header(OKAPI_USERID_HEADER, ADMIN_ID);
 
   private static final String VALIDATE_PATH = "/password/validate";
   private static final String TENANT_RULES_PATH = "/tenant/rules";
@@ -144,7 +143,6 @@ public class PasswordResourceTest {
     JsonObject emptyJsonObject = new JsonObject();
     requestSpecification()
       .header(TENANT_HEADER)
-      .header(USER_ID_HEADER)
       .header(TOKEN_HEADER)
       .header(userMockUrlHeader)
       .body(emptyJsonObject)
@@ -173,10 +171,12 @@ public class PasswordResourceTest {
       .statusCode(HttpStatus.SC_CREATED);
 
     mockUserService();
-    Password passwordToValidate = new Password().withPassword("P@sword12");
+    Password passwordToValidate = new Password()
+      .withPassword("P@sword12")
+      .withUserId(ADMIN_ID);
+
     requestSpecification()
       .header(TENANT_HEADER)
-      .header(USER_ID_HEADER)
       .header(TOKEN_HEADER)
       .header(userMockUrlHeader)
       .body(passwordToValidate)
@@ -194,10 +194,12 @@ public class PasswordResourceTest {
       .put(TOTAL_RECORDS_KEY, 0).toString());
     initMockUserService(mockDefinition);
 
-    Password passwordToValidate = new Password().withPassword("P@sword12");
+    Password passwordToValidate = new Password()
+      .withPassword("P@sword12")
+      .withUserId(ADMIN_ID);
+
     requestSpecification()
       .header(TENANT_HEADER)
-      .header(USER_ID_HEADER)
       .header(TOKEN_HEADER)
       .header(userMockUrlHeader)
       .body(passwordToValidate)
@@ -212,10 +214,12 @@ public class PasswordResourceTest {
     ResponseDefinitionBuilder mockDefinition = WireMock.badRequest();
     initMockUserService(mockDefinition);
 
-    Password passwordToValidate = new Password().withPassword("P@sword12");
+    Password passwordToValidate = new Password()
+      .withPassword("P@sword12")
+      .withUserId(ADMIN_ID);
+
     requestSpecification()
       .header(TENANT_HEADER)
-      .header(USER_ID_HEADER)
       .header(TOKEN_HEADER)
       .header(userMockUrlHeader)
       .body(passwordToValidate)
@@ -231,10 +235,12 @@ public class PasswordResourceTest {
       .put(TOTAL_RECORDS_KEY, 0).toString());
     initMockUserService(mockDefinition);
 
-    Password passwordToValidate = new Password().withPassword("P@sword12");
+    Password passwordToValidate = new Password()
+      .withPassword("P@sword12")
+      .withUserId(ADMIN_ID);
+
     requestSpecification()
       .header(TENANT_HEADER)
-      .header(USER_ID_HEADER)
       .header(TOKEN_HEADER)
       .header(userMockUrlHeader)
       .body(passwordToValidate)
@@ -251,10 +257,12 @@ public class PasswordResourceTest {
       .put(TOTAL_RECORDS_KEY, 2).toString());
     initMockUserService(mockDefinition);
 
-    Password passwordToValidate = new Password().withPassword("P@sword12");
+    Password passwordToValidate = new Password()
+      .withPassword("P@sword12")
+      .withUserId(ADMIN_ID);
+
     requestSpecification()
       .header(TENANT_HEADER)
-      .header(USER_ID_HEADER)
       .header(TOKEN_HEADER)
       .header(userMockUrlHeader)
       .body(passwordToValidate)
@@ -283,10 +291,12 @@ public class PasswordResourceTest {
       .statusCode(HttpStatus.SC_CREATED);
 
     mockUserService();
-    Password passwordToValidate = new Password().withPassword("badPassword");
+    Password passwordToValidate = new Password()
+      .withPassword("badPassword")
+      .withUserId(ADMIN_ID);
+
     requestSpecification()
       .header(TENANT_HEADER)
-      .header(USER_ID_HEADER)
       .header(TOKEN_HEADER)
       .header(userMockUrlHeader)
       .body(passwordToValidate)

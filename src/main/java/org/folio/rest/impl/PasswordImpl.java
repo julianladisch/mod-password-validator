@@ -26,7 +26,7 @@ public class PasswordImpl implements Password {
     try {
       ValidationEngineService validationEngineProxy =
         ValidationEngineService.createProxy(vertxContext.owner(), ValidatorHelper.VALIDATOR_ENGINE_ADDRESS);
-      validationEngineProxy.validatePassword(entity.getPassword(), okapiHeaders, result -> {
+      validationEngineProxy.validatePassword(entity.getUserId(), entity.getPassword(), okapiHeaders, result -> {
         Response response;
         if (result.succeeded()) {
           response = PostPasswordValidateResponse.respond200WithApplicationJson(result.result().mapTo(ValidationTemplate.class));

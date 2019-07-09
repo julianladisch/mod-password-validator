@@ -86,7 +86,8 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
    */
 
   @Override
-  public void validatePassword(final String password,
+  public void validatePassword(final String userId,
+                               final String password,
                                final Map<String, String> requestHeaders,
                                final Handler<AsyncResult<JsonObject>> resultHandler) {
     MultiMap caseInsensitiveHeaders = new CaseInsensitiveHeaders().addAll(requestHeaders);
@@ -96,7 +97,7 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
         resultHandler.handle(Future.failedFuture(rulesResponse.cause().getMessage()));
         return;
       }
-      lookupUser(caseInsensitiveHeaders).setHandler(lookupUserHandler -> {
+      lookupUser(userId, caseInsensitiveHeaders).setHandler(lookupUserHandler -> {
         if (lookupUserHandler.failed()) {
           resultHandler.handle(Future.failedFuture(lookupUserHandler.cause().getMessage()));
           return;
@@ -161,9 +162,8 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
     }
   }
 
-  private Future<JsonObject> lookupUser(MultiMap headers) {
+  private Future<JsonObject> lookupUser(String userId, MultiMap headers) {
     Future<JsonObject> future = Future.future();
-    String userId = headers.get(OKAPI_USERID_HEADER);
     String okapiUrl = headers.get(OKAPI_URL_HEADER);
     String userNameRequestUrl = String.format("%s/users?query=id==%s", okapiUrl, userId);
     HttpClientRequest request = httpClient.getAbs(userNameRequestUrl);
