@@ -31,7 +31,6 @@ import java.util.stream.Collectors;
 import static org.folio.rest.RestVerticle.MODULE_SPECIFIC_ARGS;
 import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
 import static org.folio.rest.RestVerticle.OKAPI_HEADER_TOKEN;
-import static org.folio.rest.RestVerticle.OKAPI_USERID_HEADER;
 
 /**
  * Implementation of the ValidationEngineService;
@@ -86,7 +85,8 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
    */
 
   @Override
-  public void validatePassword(final String password,
+  public void validatePassword(final String userId,
+                               final String password,
                                final Map<String, String> requestHeaders,
                                final Handler<AsyncResult<JsonObject>> resultHandler) {
     MultiMap caseInsensitiveHeaders = new CaseInsensitiveHeaders().addAll(requestHeaders);
@@ -96,14 +96,14 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
         resultHandler.handle(Future.failedFuture(rulesResponse.cause().getMessage()));
         return;
       }
-      lookupUser(caseInsensitiveHeaders).setHandler(lookupUserHandler -> {
+      lookupUser(userId, caseInsensitiveHeaders).setHandler(lookupUserHandler -> {
         if (lookupUserHandler.failed()) {
           resultHandler.handle(Future.failedFuture(lookupUserHandler.cause().getMessage()));
           return;
         }
         List<Rule> rules = rulesResponse.result().mapTo(RuleCollection.class).getRules();
         prepareRulesBeforeValidation(rules, lookupUserHandler);
-        Future<List<String>> errorMessagesFuture = validatePasswordByRules(rules, password, caseInsensitiveHeaders);
+        Future<List<String>> errorMessagesFuture = validatePasswordByRules(rules, userId, password, caseInsensitiveHeaders);
         errorMessagesFuture.setHandler(asyncResult -> {
           if (asyncResult.failed()) {
             resultHandler.handle(Future.failedFuture(asyncResult.cause()));
@@ -127,6 +127,7 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
   }
 
   private Future<List<String>> validatePasswordByRules(final List<Rule> rules,
+                                                       final String userId,
                                                        final String password,
                                                        final MultiMap headers) {
     List<String> errorMessages = new ArrayList<>(rules.size());
@@ -138,7 +139,8 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
       if (Rule.Type.REG_EXP.equals(rule.getType())) {
         validatePasswordByRexExpRule(password, rule, errorMessages);
       } else if (Rule.Type.PROGRAMMATIC.equals(rule.getType())) {
-        programmaticRulesFutures.add(getValidatePasswordByProgrammaticRuleFuture(password, rule, errorMessages, headers));
+        programmaticRulesFutures
+          .add(getValidatePasswordByProgrammaticRuleFuture(userId, password, rule, errorMessages, headers));
       }
     }
     // Notify external method future handler when all programmatic rule futures complete
@@ -161,9 +163,8 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
     }
   }
 
-  private Future<JsonObject> lookupUser(MultiMap headers) {
+  private Future<JsonObject> lookupUser(String userId, MultiMap headers) {
     Future<JsonObject> future = Future.future();
-    String userId = headers.get(OKAPI_USERID_HEADER);
     String okapiUrl = headers.get(OKAPI_URL_HEADER);
     String userNameRequestUrl = String.format("%s/users?query=id==%s", okapiUrl, userId);
     HttpClientRequest request = httpClient.getAbs(userNameRequestUrl);
@@ -207,7 +208,8 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
     return future;
   }
 
-  private Future<String> getValidatePasswordByProgrammaticRuleFuture(final String password,
+  private Future<String> getValidatePasswordByProgrammaticRuleFuture(final String userId,
+                                                                     final String password,
                                                                      final Rule rule,
                                                                      final List<String> errorMessages,
                                                                      final MultiMap headers) {
@@ -255,8 +257,15 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
       .putHeader(OKAPI_HEADER_TENANT, headers.get(OKAPI_HEADER_TENANT))
       .putHeader(HttpHeaders.CONTENT_TYPE.toString(), MediaType.APPLICATION_JSON)
       .putHeader(HttpHeaders.ACCEPT.toString(), MediaType.APPLICATION_JSON)
-      .end(new JsonObject().put(ValidatorHelper.REQUEST_PARAM_KEY, password).toString());
+      .end(buildResetPasswordAction(userId, password));
     return future;
+  }
+
+  private String buildResetPasswordAction(final String userId, final String password) {
+    JsonObject resetPasswordAction = new JsonObject()
+      .put(ValidatorHelper.REQUEST_PARAM_KEY, password)
+      .put(ValidatorHelper.REQUEST_USER_ID_KEY, userId);
+    return resetPasswordAction.toString();
   }
 
   private void prepareResponse(final List<String> errorMessages,

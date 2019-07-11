@@ -43,7 +43,6 @@ import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
 import static org.folio.rest.RestVerticle.OKAPI_HEADER_TOKEN;
-import static org.folio.rest.RestVerticle.OKAPI_USERID_HEADER;
 import static org.folio.services.validator.util.ValidatorHelper.RESPONSE_ERROR_MESSAGES_KEY;
 import static org.folio.services.validator.util.ValidatorHelper.RESPONSE_VALIDATION_RESULT_KEY;
 import static org.folio.services.validator.util.ValidatorHelper.VALIDATION_INVALID_RESULT;
@@ -58,7 +57,7 @@ public class ProgrammaticRulesProcessingTest {
 
   private static final String OKAPI_HEADER_TENANT_VALUE = "tenant";
   private static final String OKAPI_HEADER_TOKEN_VALUE = "token";
-  private static final String OKAPI_USERID_HEADER_VALUE = "db6ffb67-3160-43bf-8e2f-ecf9a420288b";
+  private static final String USER_ID_VALUE = "db6ffb67-3160-43bf-8e2f-ecf9a420288b";
 
   private static final String OKAPI_URL_HEADER = "x-okapi-url";
 
@@ -116,7 +115,6 @@ public class ProgrammaticRulesProcessingTest {
     requestHeaders = new HashMap<>();
     requestHeaders.put(OKAPI_HEADER_TENANT, OKAPI_HEADER_TENANT_VALUE);
     requestHeaders.put(OKAPI_HEADER_TOKEN, OKAPI_HEADER_TOKEN_VALUE);
-    requestHeaders.put(OKAPI_USERID_HEADER, OKAPI_USERID_HEADER_VALUE);
     requestHeaders.put(OKAPI_URL_HEADER, "http://localhost:" + userMockServer.port());
     mockUserModule(HttpStatus.SC_OK, USER_SERVICE_MOCK_RESPONSE);
   }
@@ -152,7 +150,7 @@ public class ProgrammaticRulesProcessingTest {
 
     //when
     String givenPassword = "password";
-    validationEngineService.validatePassword(givenPassword, requestHeaders, checkingHandler);
+    validationEngineService.validatePassword(USER_ID_VALUE, givenPassword, requestHeaders, checkingHandler);
   }
 
   /**
@@ -186,7 +184,7 @@ public class ProgrammaticRulesProcessingTest {
 
     //when
     String givenPassword = "password";
-    validationEngineService.validatePassword(givenPassword, requestHeaders, checkingHandler);
+    validationEngineService.validatePassword(USER_ID_VALUE, givenPassword, requestHeaders, checkingHandler);
   }
 
   /**
@@ -219,7 +217,7 @@ public class ProgrammaticRulesProcessingTest {
 
     //when
     String givenPassword = "password";
-    validationEngineService.validatePassword(givenPassword, requestHeaders, checkingHandler);
+    validationEngineService.validatePassword(USER_ID_VALUE, givenPassword, requestHeaders, checkingHandler);
   }
 
   /**
@@ -244,7 +242,7 @@ public class ProgrammaticRulesProcessingTest {
 
     //when
     String givenPassword = "password";
-    validationEngineService.validatePassword(givenPassword, requestHeaders, checkingHandler);
+    validationEngineService.validatePassword(USER_ID_VALUE, givenPassword, requestHeaders, checkingHandler);
   }
 
 
@@ -257,7 +255,7 @@ public class ProgrammaticRulesProcessingTest {
   }
 
   private void mockUserModule(int status, JsonObject response) {
-    WireMock.stubFor(WireMock.get("/users?query=id==" + OKAPI_USERID_HEADER_VALUE)
+    WireMock.stubFor(WireMock.get("/users?query=id==" + USER_ID_VALUE)
       .willReturn(WireMock.okJson(response.toString())
       ));
   }
