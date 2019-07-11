@@ -31,7 +31,6 @@ import java.util.stream.Collectors;
 import static org.folio.rest.RestVerticle.MODULE_SPECIFIC_ARGS;
 import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
 import static org.folio.rest.RestVerticle.OKAPI_HEADER_TOKEN;
-import static org.folio.rest.RestVerticle.OKAPI_USERID_HEADER;
 
 /**
  * Implementation of the ValidationEngineService;
@@ -258,14 +257,15 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
       .putHeader(OKAPI_HEADER_TENANT, headers.get(OKAPI_HEADER_TENANT))
       .putHeader(HttpHeaders.CONTENT_TYPE.toString(), MediaType.APPLICATION_JSON)
       .putHeader(HttpHeaders.ACCEPT.toString(), MediaType.APPLICATION_JSON)
-      .end(createResetPasswordAction(userId, password).toString());
+      .end(buildResetPasswordAction(userId, password));
     return future;
   }
 
-  private JsonObject createResetPasswordAction(final String userId, final String password) {
-    return new JsonObject()
+  private String buildResetPasswordAction(final String userId, final String password) {
+    JsonObject resetPasswordAction = new JsonObject()
       .put(ValidatorHelper.REQUEST_PARAM_KEY, password)
       .put(ValidatorHelper.REQUEST_USER_ID_KEY, userId);
+    return resetPasswordAction.toString();
   }
 
   private void prepareResponse(final List<String> errorMessages,
