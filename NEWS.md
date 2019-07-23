@@ -1,3 +1,7 @@
+## 2019-07-23 v1.4.0
+ * Change user password validation implementation (MODPWD-20)
+ * Fix security vulnerabilities reported in jackson-databind
+
 ## 2019-06-11 v1.3.0
  * Add links to README additional info (FOLIO-473)
  * Fix security vulnerabilities reported in jackson-databind
