@@ -1,4 +1,4 @@
-INSERT INTO validation_rules (_id, jsonb) VALUES
+INSERT INTO validation_rules (id, jsonb) VALUES
 ('5105b55a-b9a3-4f76-9402-a5243ea63c95', '{
       "ruleId": "5105b55a-b9a3-4f76-9402-a5243ea63c95",
       "name": "password_length",

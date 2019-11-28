@@ -3,6 +3,10 @@
   "description": "Rule Schema",
   "type": "object",
   "properties": {
+    "id": {
+      "description": "Rule id",
+      "type": "string"
+    },
     "ruleId": {
       "description": "Rule id",
       "type": "string"

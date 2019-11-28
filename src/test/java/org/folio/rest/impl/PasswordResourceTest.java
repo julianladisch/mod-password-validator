@@ -12,6 +12,8 @@ import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
@@ -20,6 +22,7 @@ import org.folio.rest.RestVerticle;
 import org.folio.rest.client.TenantClient;
 import org.folio.rest.jaxrs.model.Password;
 import org.folio.rest.jaxrs.model.Rule;
+import org.folio.rest.jaxrs.model.TenantAttributes;
 import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.NetworkUtils;
@@ -34,13 +37,13 @@ import org.junit.runner.RunWith;
 import javax.ws.rs.core.MediaType;
 
 import static org.folio.rest.RestVerticle.OKAPI_HEADER_TOKEN;
-import static org.folio.rest.RestVerticle.OKAPI_USERID_HEADER;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 
 
 @RunWith(VertxUnitRunner.class)
 public class PasswordResourceTest {
+  private static final Logger logger = LoggerFactory.getLogger(PasswordResourceTest.class);
 
   private static final String HOST = "http://localhost:";
   private static final String HTTP_PORT = "http.port";
@@ -64,7 +67,6 @@ public class PasswordResourceTest {
 
   private static Vertx vertx;
   private static int port;
-  private static String useExternalDatabase;
 
 
   @org.junit.Rule
@@ -83,40 +85,18 @@ public class PasswordResourceTest {
     vertx = Vertx.vertx();
     port = NetworkUtils.nextFreePort();
 
-    useExternalDatabase = System.getProperty(
-      "org.folio.password.validator.test.database",
-      "embedded");
+    PostgresClient.getInstance(vertx).startEmbeddedPostgres();
 
-    switch (useExternalDatabase) {
-      case "environment":
-        System.out.println("Using environment settings");
-        break;
-      case "external":
-        String postgresConfigPath = System.getProperty(
-          "org.folio.password.validator.test.config",
-          "/postgres-conf-local.json");
-        PostgresClient.setConfigFilePath(postgresConfigPath);
-        break;
-      case "embedded":
-        PostgresClient.setIsEmbedded(true);
-        PostgresClient.getInstance(vertx).startEmbeddedPostgres();
-        break;
-      default:
-        String message = "No understood database choice made." +
-          "Please set org.folio.password.validator.test.database" +
-          "to 'external', 'environment' or 'embedded'";
-        throw new Exception(message);
-    }
-
-    TenantClient tenantClient = new TenantClient("localhost", port, TENANT, TENANT);
-    DeploymentOptions restVerticleDeploymentOptions = new DeploymentOptions().setConfig(new JsonObject().put(HTTP_PORT, port));
-    vertx.deployVerticle(RestVerticle.class.getName(), restVerticleDeploymentOptions, res -> {
+    TenantClient tenantClient = new TenantClient(HOST + port, TENANT, TENANT);
+    DeploymentOptions options = new DeploymentOptions().setConfig(new JsonObject().put(HTTP_PORT, port));
+    vertx.deployVerticle(RestVerticle.class.getName(), options, res -> {
       try {
-        tenantClient.postTenant(null, res2 -> {
+        TenantAttributes t = new TenantAttributes().withModuleTo("mod-password-validator-1.0.0");
+        tenantClient.postTenant(t, res2 -> {
           async.complete();
         });
       } catch (Exception e) {
-        e.printStackTrace();
+        logger.error(e.getMessage());
       }
     });
   }
@@ -131,9 +111,7 @@ public class PasswordResourceTest {
   public static void tearDownClass(final TestContext context) {
     Async async = context.async();
     vertx.close(context.asyncAssertSuccess(res -> {
-      if (useExternalDatabase.equals("embedded")) {
-        PostgresClient.stopEmbeddedPostgres();
-      }
+      PostgresClient.stopEmbeddedPostgres();
       async.complete();
     }));
   }

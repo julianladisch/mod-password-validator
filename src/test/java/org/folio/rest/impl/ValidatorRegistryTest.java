@@ -7,6 +7,8 @@ import io.restassured.specification.RequestSpecification;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
@@ -14,6 +16,7 @@ import org.apache.http.HttpStatus;
 import org.folio.rest.RestVerticle;
 import org.folio.rest.client.TenantClient;
 import org.folio.rest.jaxrs.model.Rule;
+import org.folio.rest.jaxrs.model.TenantAttributes;
 import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.PostgresClient;
 import org.folio.rest.tools.utils.NetworkUtils;
@@ -38,6 +41,8 @@ import static org.hamcrest.Matchers.not;
 
 @RunWith(VertxUnitRunner.class)
 public class ValidatorRegistryTest {
+
+  private static final Logger logger = LoggerFactory.getLogger(ValidatorRegistryTest.class);
 
   private static final JsonObject PROGRAMMATIC_RULE_DISABLED = new JsonObject()
     .put("name", "programmatic rule disabled")
@@ -124,13 +129,13 @@ public class ValidatorRegistryTest {
   private static final String TENANT = "diku";
   private static final String INCORRECT_TENANT = "test";
   private static final String RULE_ID = "ruleId";
+  private static final String ID = "id";
   private static final String VALIDATION_RULES_TABLE_NAME = "validation_rules";
 
   private static final Header TENANT_HEADER = new Header(RestVerticle.OKAPI_HEADER_TENANT, TENANT);
 
   private static Vertx vertx;
   private static int port;
-  private static String useExternalDatabase;
 
   @org.junit.Rule
   public Timeout timeout = Timeout.seconds(180);
@@ -141,41 +146,19 @@ public class ValidatorRegistryTest {
     vertx = Vertx.vertx();
     port = NetworkUtils.nextFreePort();
 
-    useExternalDatabase = System.getProperty(
-      "org.folio.password.validator.test.database",
-      "embedded");
+    PostgresClient.getInstance(vertx).startEmbeddedPostgres();
 
-    switch (useExternalDatabase) {
-      case "environment":
-        System.out.println("Using environment settings");
-        break;
-      case "external":
-        String postgresConfigPath = System.getProperty(
-          "org.folio.password.validator.test.config",
-          "/postgres-conf-local.json");
-        PostgresClient.setConfigFilePath(postgresConfigPath);
-        break;
-      case "embedded":
-        PostgresClient.setIsEmbedded(true);
-        PostgresClient.getInstance(vertx).startEmbeddedPostgres();
-        break;
-      default:
-        String message = "No understood database choice made." +
-          "Please set org.folio.password.validator.test.config" +
-          "to 'external', 'environment' or 'embedded'";
-        throw new Exception(message);
-    }
-
-    TenantClient tenantClient = new TenantClient("http://localhost:" + port, "diku", "diku", false);
+    TenantClient tenantClient = new TenantClient(HOST + port, "diku", null);
 
     final DeploymentOptions options = new DeploymentOptions().setConfig(new JsonObject().put(HTTP_PORT, port));
     vertx.deployVerticle(RestVerticle.class.getName(), options, res -> {
       try {
-        tenantClient.postTenant(null, res2 -> {
+        TenantAttributes t = new TenantAttributes().withModuleTo("mod-password-validator-1.0.0");
+        tenantClient.postTenant(t, res2 -> {
           async.complete();
         });
       } catch (Exception e) {
-        e.printStackTrace();
+        logger.error(e.getMessage());
       }
     });
   }
@@ -184,15 +167,13 @@ public class ValidatorRegistryTest {
   public static void tearDownClass(final TestContext context) {
     Async async = context.async();
     vertx.close(context.asyncAssertSuccess(res -> {
-      if (useExternalDatabase.equals("embedded")) {
-        PostgresClient.stopEmbeddedPostgres();
-      }
+      PostgresClient.stopEmbeddedPostgres();
       async.complete();
     }));
   }
 
   @Before
-  public void setUp(TestContext context) throws Exception {
+  public void setUp(TestContext context) {
     clearRulesTable(context);
   }
 
@@ -309,7 +290,7 @@ public class ValidatorRegistryTest {
       .when()
       .put(TENANT_RULES_PATH)
       .then()
-      .statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+      .statusCode(HttpStatus.SC_BAD_REQUEST);
   }
 
   @Test
@@ -466,7 +447,7 @@ public class ValidatorRegistryTest {
   public void shouldReturnNotFoundWhenRuleDoesNotExist(final TestContext context) {
     requestSpecification()
       .header(TENANT_HEADER)
-      .body(REGEXP_RULE_ENABLED.toString())
+      .body(REGEXP_RULE_ENABLED.put(ID, UUID.randomUUID().toString()).toString())
       .when()
       .put(TENANT_RULES_PATH)
       .then()
@@ -474,7 +455,7 @@ public class ValidatorRegistryTest {
   }
 
   @Test
-  public void shouldUpdateExistingRule(final TestContext context) {
+  public void testUpdateExistingRuleCases(final TestContext context) {
     Response response = requestSpecification()
       .header(TENANT_HEADER)
       .body(PROGRAMMATIC_RULE_DISABLED.toString())
@@ -483,8 +464,76 @@ public class ValidatorRegistryTest {
 
     Assert.assertThat(response.statusCode(), is(HttpStatus.SC_CREATED));
     Rule createdRule = response.body().as(Rule.class);
+
+    /* no id and no ruleId → 400 */
+    requestSpecification()
+      .header(TENANT_HEADER)
+      .body(createdRule.toString())
+      .when()
+      .put(TENANT_RULES_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_BAD_REQUEST);
+
+    /* no id only → 200 */
     JsonObject ruleToUpdate = buildProgrammaticRuleDisabled()
       .put(RULE_ID, createdRule.getRuleId())
+      .put("state", Rule.State.ENABLED.toString());
+
+    requestSpecification()
+      .header(TENANT_HEADER)
+      .body(ruleToUpdate.toString())
+      .when()
+      .put(TENANT_RULES_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_OK)
+      .body("state", is(Rule.State.ENABLED.toString()));
+
+    /* no ruleId only → 200 */
+    ruleToUpdate = buildProgrammaticRuleDisabled()
+      .put(ID, createdRule.getRuleId())
+      .put("state", Rule.State.DISABLED.toString());
+
+    requestSpecification()
+      .header(TENANT_HEADER)
+      .body(ruleToUpdate.toString())
+      .when()
+      .put(TENANT_RULES_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_OK)
+      .body("state", is(Rule.State.DISABLED.toString()));
+
+    /* different id and ruleId → 400 */
+    ruleToUpdate = buildProgrammaticRuleDisabled()
+      .put(ID, createdRule.getRuleId())
+      .put(RULE_ID, UUID.randomUUID().toString());
+
+    requestSpecification()
+      .header(TENANT_HEADER)
+      .body(ruleToUpdate.toString())
+      .when()
+      .put(TENANT_RULES_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_BAD_REQUEST);
+
+    /* id and ruleId do not exist → 404 */
+    String randomId = UUID.randomUUID().toString();
+    ruleToUpdate = buildProgrammaticRuleDisabled()
+      .put(ID, randomId)
+      .put(RULE_ID, randomId)
+      .put("state", Rule.State.ENABLED.toString());
+
+    requestSpecification()
+      .header(TENANT_HEADER)
+      .body(ruleToUpdate.toString())
+      .when()
+      .put(TENANT_RULES_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_NOT_FOUND);
+
+    /* should be updated */
+    ruleToUpdate = buildProgrammaticRuleDisabled()
+      .put(RULE_ID, createdRule.getRuleId())
+      .put(ID, createdRule.getRuleId())
       .put("state", Rule.State.ENABLED.toString());
 
     requestSpecification()
@@ -501,7 +550,7 @@ public class ValidatorRegistryTest {
   public void shouldReturnNotFoundOnGetRuleByIdWhenRuleDoesNotExist(final TestContext context) {
     requestSpecification()
       .header(TENANT_HEADER)
-      .pathParam("ruleId", "nonexistent_rule_id")
+      .pathParam("ruleId", UUID.randomUUID().toString())
       .when()
       .get(TENANT_RULES_PATH + "/{ruleId}")
       .then()

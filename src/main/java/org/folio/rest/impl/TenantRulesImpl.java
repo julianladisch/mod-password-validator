@@ -8,6 +8,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import org.apache.commons.lang.StringUtils;
 import org.folio.rest.jaxrs.model.Rule;
 import org.folio.rest.jaxrs.model.RuleCollection;
 import org.folio.rest.jaxrs.resource.TenantRules;
@@ -22,6 +23,8 @@ public class TenantRulesImpl implements TenantRules {
   private final Logger logger = LoggerFactory.getLogger(TenantRulesImpl.class);
 
   private static final String ORDER_NUMBER_ERROR = "Order number cannot be negative";
+  private static final String RULE_ID_EMPTY_ERROR = "Entity id and ruleId cannot be null or empty";
+  private static final String RULE_ID_MATCH_ERROR = "Entity id and ruleId cannot be different";
   private static final String VALIDATION_TYPE_ERROR = "In case of RegExp rule Validation Type can only be Strong";
   private static final String IMPLEMENTATION_REFERENCE_REQUIRED_ERROR = "In case of Programmatic rule Implementation reference should be provided";
 
@@ -92,7 +95,7 @@ public class TenantRulesImpl implements TenantRules {
                              final Handler<AsyncResult<Response>> asyncResultHandler,
                              final Context vertxContext) {
     try {
-      String errorMessage = validateRule(entity);
+      String errorMessage = validateRuleOnPut(entity);
       if (errorMessage != null) {
         asyncResultHandler.handle(
           Future.succeededFuture(PutTenantRulesResponse.respond400WithTextPlain(errorMessage)));
@@ -176,6 +179,21 @@ public class TenantRulesImpl implements TenantRules {
       errorMessage = IMPLEMENTATION_REFERENCE_REQUIRED_ERROR;
     }
     return errorMessage;
+  }
+
+  private String validateRuleOnPut(Rule entity) {
+    if (StringUtils.isEmpty(entity.getId()) && StringUtils.isEmpty(entity.getRuleId())) {
+      logger.debug("Rule id cannot be null or empty");
+      return RULE_ID_EMPTY_ERROR;
+    } else if (StringUtils.isEmpty(entity.getId()) && !StringUtils.isEmpty(entity.getRuleId())) {
+      entity.setId(entity.getRuleId());
+    } else if (!StringUtils.isEmpty(entity.getId()) && StringUtils.isEmpty(entity.getRuleId())) {
+      entity.setRuleId(entity.getId());
+    } else if (!entity.getId().equals(entity.getRuleId())) {
+      logger.debug("Rule id and ruleId are different");
+      return RULE_ID_MATCH_ERROR;
+    }
+    return validateRule(entity);
   }
 
 }
