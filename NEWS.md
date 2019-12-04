@@ -1,3 +1,12 @@
+## 2019-04-12 v1.5.0
+ * Update RMB version (MODPWD-28)
+ * Use JVM features to manage container memory (MODPWD-27)
+ * Fix security vulnerabilities reported in jackson-databind (MODPWD-26)
+ * mod-password-validator does not purge tenant data (MODPWD-24)
+ * Remove old MD metadata (FOLIO-2321)
+ * Add LaunchDescriptor settings (FOLIO-2234)
+ * Enable kube-deploy pipeline for platform-core modules (FOLIO-2256)
+
 ## 2019-09-10 v1.4.1
  * Fix security vulnerabilities reported in jackson-databind (MODPWD-22)
 
