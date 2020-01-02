@@ -1,15 +1,14 @@
 package org.folio.services.validator.engine;
 
 import io.vertx.core.*;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.CaseInsensitiveHeaders;
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.http.HttpClientOptions;
-import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
-import org.apache.http.HttpStatus;
+import io.vertx.ext.web.client.*;
+import org.folio.HttpStatus;
 import org.folio.rest.jaxrs.model.Rule;
 import org.folio.rest.jaxrs.model.RuleCollection;
 import org.folio.services.validator.registry.ValidatorRegistryService;
@@ -50,7 +49,7 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
   // Repository component to validation obtain rules
   private ValidatorRegistryService validatorRegistryProxy;
   // Http client to call programmatic rules as internal OKAPI endpoints
-  private HttpClient httpClient;
+  private WebClient webClient;
 
   public ValidationEngineServiceImpl() {
   }
@@ -58,14 +57,12 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
   public ValidationEngineServiceImpl(final Vertx vertx) {
     this.validatorRegistryProxy = ValidatorRegistryService
       .createProxy(vertx, ValidatorHelper.REGISTRY_SERVICE_ADDRESS);
-    initHttpClient(vertx);
+    initWebClient(vertx);
   }
 
-  private void initHttpClient(final Vertx vertx) {
-    HttpClientOptions options = new HttpClientOptions();
-    options.setConnectTimeout(lookupTimeout);
-    options.setIdleTimeout(lookupTimeout);
-    this.httpClient = vertx.createHttpClient(options);
+  private void initWebClient(final Vertx vertx) {
+    this.webClient = WebClient.create(vertx,
+      new WebClientOptions().setConnectTimeout(lookupTimeout).setIdleTimeout(lookupTimeout));
   }
 
   /**
@@ -162,44 +159,41 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
     Promise<JsonObject> promise = Promise.promise();
     String okapiUrl = headers.get(OKAPI_URL_HEADER);
     String userNameRequestUrl = String.format("%s/users?query=id==%s", okapiUrl, userId);
-    HttpClientRequest request = httpClient.getAbs(userNameRequestUrl);
+    HttpRequest<Buffer> request = webClient.getAbs(userNameRequestUrl);
     request
       .putHeader(OKAPI_HEADER_TOKEN, headers.get(OKAPI_HEADER_TOKEN))
       .putHeader(OKAPI_HEADER_TENANT, headers.get(OKAPI_HEADER_TENANT))
       .putHeader(HttpHeaders.CONTENT_TYPE.toString(), MediaType.APPLICATION_JSON)
       .putHeader(HttpHeaders.ACCEPT.toString(), MediaType.APPLICATION_JSON)
-      .handler(response -> {
-        if (response.statusCode() != 200) {
-          response.bodyHandler(buf -> {
-            String message = "Error looking up user at url '" + userNameRequestUrl
-              + "' Expected status code 200, got '" + response.statusCode() +
-              "' :" + buf.toString();
-            promise.fail(message);
-          });
+      .send(ar -> {
+        if (ar.failed()) {
+          promise.fail(ar.cause().getMessage());
+          return;
+        }
+        HttpResponse<Buffer> response = ar.result();
+        if (response.statusCode() != HttpStatus.HTTP_OK.toInt()) {
+          promise.fail("Error getting user by user id : " + userId);
+          return;
+        }
+        JsonObject resultObject = response.bodyAsJsonObject();
+        if (!resultObject.containsKey("totalRecords") || !resultObject.containsKey("users")) {
+          promise.fail("Error, missing field(s) 'totalRecords' and/or 'users' in user response object");
         } else {
-          response.bodyHandler(buf -> {
-            JsonObject resultObject = buf.toJsonObject();
-            if (!resultObject.containsKey("totalRecords") || !resultObject.containsKey("users")) {
-              promise.fail("Error, missing field(s) 'totalRecords' and/or 'users' in user response object");
-            } else {
-              int recordCount = resultObject.getInteger("totalRecords");
-              if (recordCount > 1) {
-                String errorMessage = "Bad results from username";
-                logger.error(errorMessage);
-                promise.fail(errorMessage);
-              } else if (recordCount == 0) {
-                String errorMessage = "No user found by user id :" + userId;
-                logger.error(errorMessage);
-                promise.fail(errorMessage);
-              } else {
-                JsonObject resultUser = resultObject.getJsonArray("users").getJsonObject(0);
-                promise.complete(resultUser);
-              }
-            }
-          });
+          int recordCount = resultObject.getInteger("totalRecords");
+          if (recordCount > 1) {
+            String errorMessage = "Bad results from username";
+            logger.error(errorMessage);
+            promise.fail(errorMessage);
+          } else if (recordCount == 0) {
+            String errorMessage = "No user found by user id : " + userId;
+            logger.error(errorMessage);
+            promise.fail(errorMessage);
+          } else {
+            JsonObject resultUser = resultObject.getJsonArray("users").getJsonObject(0);
+            promise.complete(resultUser);
+          }
         }
       });
-    request.end();
     return promise.future();
   }
 
@@ -212,55 +206,55 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
     String remoteModuleUrl = okapiURL + rule.getImplementationReference();
 
     Promise<String> promise = Promise.promise();
-    HttpClientRequest passwordValidationRequest = httpClient.postAbs(remoteModuleUrl, validationResponse -> {
-      if (validationResponse.statusCode() == HttpStatus.SC_OK) {
-        validationResponse.bodyHandler(body -> {
-          String validationResult = body.toJsonObject().getString(ValidatorHelper.RESPONSE_VALIDATION_RESULT_KEY);
-          if (ValidatorHelper.VALIDATION_INVALID_RESULT.equals(validationResult)) {
-            errorMessages.add(rule.getErrMessageId());
-          }
-          promise.complete();
-        });
-      } else {
-        // TODO Inform administrator that remote module is down
-        logger.error("FOLIO module by the address " + remoteModuleUrl + " is not available.");
-        String errorMessage;
-        switch (rule.getValidationType()) {
-          case STRONG:
-            errorMessage = new StringBuilder()
-              .append("Programmatic rule ")
-              .append(rule.getName())
-              .append(" returns status code ")
-              .append(validationResponse.statusCode())
-              .toString();
-            logger.error(errorMessage);
-            promise.fail(errorMessage);
-            break;
-          case SOFT:
-            promise.complete();
-            break;
-          default:
-            errorMessage = "Please add an action for the new added " +
-              "rule type when internal FOLIO module is not available";
-            logger.error(errorMessage);
-            promise.fail(errorMessage);
-        }
-      }
-    });
+    HttpRequest<Buffer> passwordValidationRequest = webClient.postAbs(remoteModuleUrl);
     passwordValidationRequest
       .putHeader(OKAPI_HEADER_TOKEN, headers.get(OKAPI_HEADER_TOKEN))
       .putHeader(OKAPI_HEADER_TENANT, headers.get(OKAPI_HEADER_TENANT))
       .putHeader(HttpHeaders.CONTENT_TYPE.toString(), MediaType.APPLICATION_JSON)
       .putHeader(HttpHeaders.ACCEPT.toString(), MediaType.APPLICATION_JSON)
-      .end(buildResetPasswordAction(userId, password));
+      .sendJsonObject(buildResetPasswordAction(userId, password), ar -> {
+        if (ar.failed()) {
+          promise.fail(ar.cause().getMessage());
+          return;
+        }
+        HttpResponse<Buffer> validationResponse = ar.result();
+        if (validationResponse.statusCode() == HttpStatus.HTTP_OK.toInt()) {
+            String validationResult = validationResponse.bodyAsJsonObject().getString(ValidatorHelper.RESPONSE_VALIDATION_RESULT_KEY);
+            if (ValidatorHelper.VALIDATION_INVALID_RESULT.equals(validationResult)) {
+              errorMessages.add(rule.getErrMessageId());
+            }
+            promise.complete();
+        } else {
+          // TODO Inform administrator that remote module is down
+          logger.error("FOLIO module by the address " + remoteModuleUrl + " is not available.");
+          String errorMessage;
+          switch (rule.getValidationType()) {
+            case STRONG:
+              errorMessage = "Programmatic rule " +
+                rule.getName() +
+                " returns status code " +
+                validationResponse.statusCode();
+              logger.error(errorMessage);
+              promise.fail(errorMessage);
+              break;
+            case SOFT:
+              promise.complete();
+              break;
+            default:
+              errorMessage = "Please add an action for the new added " +
+                "rule type when internal FOLIO module is not available";
+              logger.error(errorMessage);
+              promise.fail(errorMessage);
+          }
+        }
+      });
     return promise.future();
   }
 
-  private String buildResetPasswordAction(final String userId, final String password) {
-    JsonObject resetPasswordAction = new JsonObject()
+  private JsonObject buildResetPasswordAction(final String userId, final String password) {
+    return new JsonObject()
       .put(ValidatorHelper.REQUEST_PARAM_KEY, password)
       .put(ValidatorHelper.REQUEST_USER_ID_KEY, userId);
-    return resetPasswordAction.toString();
   }
 
   private void prepareResponse(final List<String> errorMessages,
@@ -273,9 +267,5 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
     }
     validationResult.put(ValidatorHelper.RESPONSE_ERROR_MESSAGES_KEY, errorMessages);
     resultHandler.handle(Future.succeededFuture(validationResult));
-  }
-
-  public void setValidatorRegistryProxy(ValidatorRegistryService validatorRegistryProxy) {
-    this.validatorRegistryProxy = validatorRegistryProxy;
   }
 }

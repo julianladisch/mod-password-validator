@@ -8,11 +8,11 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.ext.web.client.WebClient;
 import org.apache.http.HttpStatus;
 import org.folio.rest.RestVerticle;
 import org.folio.rest.impl.GenericHandlerAnswer;
@@ -32,10 +32,7 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.folio.services.validator.util.ValidatorHelper.RESPONSE_ERROR_MESSAGES_KEY;
 import static org.folio.services.validator.util.ValidatorHelper.RESPONSE_VALIDATION_RESULT_KEY;
@@ -71,7 +68,6 @@ public class ValidateDefaultRulesUnitTest {
     .withOrderNo(0)
     .withErrMessageId("password.length.invalid");
 
-
   private static final Rule REG_ALPHABETICAL_LETTERS_RULE = new Rule()
     .withRuleId("dc653de8-f0df-48ab-9630-13aacfe8e8f4")
     .withName("alphabetical_letters")
@@ -83,7 +79,6 @@ public class ValidateDefaultRulesUnitTest {
     .withDescription("The password must contain both upper and lower case letters")
     .withOrderNo(1)
     .withErrMessageId("password.alphabetical.invalid");
-
 
   private static final Rule REG_NUMERIC_SYMBOL_RULE = new Rule()
     .withRuleId("3e3c53ae-73c2-4eba-9f09-f2c9a892c7a2")
@@ -97,7 +92,6 @@ public class ValidateDefaultRulesUnitTest {
     .withOrderNo(2)
     .withErrMessageId("password.number.invalid");
 
-
   private static final Rule REG_SPECIAL_CHARACTER_RULE = new Rule()
     .withRuleId("2e82f890-49e8-46fc-923d-644f33dc5c3f")
     .withName("special_character")
@@ -109,7 +103,6 @@ public class ValidateDefaultRulesUnitTest {
     .withDescription("The password must contain at least one special character")
     .withOrderNo(3)
     .withErrMessageId("password.specialCharacter.invalid");
-
 
   private static final Rule REG_USER_NAME_RULE = new Rule()
     .withRuleId("2f390fa6-a2f8-4027-abaf-ee61952668bc")
@@ -123,7 +116,6 @@ public class ValidateDefaultRulesUnitTest {
     .withOrderNo(4)
     .withErrMessageId("password.usernameDuplicate.invalid");
 
-
   private static final Rule REG_SEQUENCE_RULE = new Rule()
     .withRuleId("8d4a2124-8a54-4c49-84c8-36a8f7fc01a8")
     .withName("keyboard_sequence")
@@ -136,7 +128,6 @@ public class ValidateDefaultRulesUnitTest {
     .withOrderNo(5)
     .withErrMessageId("password.keyboardSequence.invalid");
 
-
   private static final Rule REG_REPEATING_SYMBOLS_RULE = new Rule()
     .withRuleId("98b961b4-16b8-4e62-a359-abf3805e16b0")
     .withName("repeating_characters")
@@ -148,7 +139,6 @@ public class ValidateDefaultRulesUnitTest {
     .withDescription("The password must not contain repeating symbols")
     .withOrderNo(6)
     .withErrMessageId("password.repeatingSymbols.invalid");
-
 
   private static final Rule REG_WHITE_SPACE_RULE = new Rule()
     .withRuleId("51e201ba-95d3-44e5-b4ec-f0059f11afcb")
@@ -173,7 +163,7 @@ public class ValidateDefaultRulesUnitTest {
   @Mock
   private ValidatorRegistryService validatorRegistryService;
   @Spy
-  private HttpClient httpClient = Vertx.vertx().createHttpClient();
+  private WebClient webClient = WebClient.create(Vertx.vertx());
 
   @InjectMocks
   private ValidationEngineService validationEngineService = new ValidationEngineServiceImpl();
@@ -207,6 +197,55 @@ public class ValidateDefaultRulesUnitTest {
     rulesList.add(REG_REPEATING_SYMBOLS_RULE);
     rulesList.add(REG_WHITE_SPACE_RULE);
     regExpRuleCollection.setRules(rulesList);
+  }
+
+  @Test
+  public void shouldFailWhenUserResponseIncorrectFormat(TestContext testContext) {
+    //given
+    mockRegistryServiceResponse(JsonObject.mapFrom(regExpRuleCollection));
+
+    //expect
+    Handler<AsyncResult<JsonObject>> checkingHandler = testContext.asyncAssertFailure(response -> {
+      String validationResult = response.getMessage();
+      Assert.assertThat(validationResult, Matchers.is("Error, missing field(s) 'totalRecords' and/or 'users' in user response object"));
+    });
+
+    // case 1 - no "users" in response
+    JsonObject userResponse = new JsonObject()
+      .put("user", new JsonArray())
+      .put("totalRecords", 1);
+
+    mockUserModule(HttpStatus.SC_OK, userResponse);
+
+    //when
+    validationEngineService.validatePassword(USER_ID_VALUE, "P@sw0rd1", requestHeaders, checkingHandler);
+
+    // case 2 - no "totalRecords" in response
+    JsonObject userResponse1 = new JsonObject()
+      .put("users", new JsonArray())
+      .put("total", 1);
+
+    mockUserModule(HttpStatus.SC_OK, userResponse1);
+
+    //when
+    validationEngineService.validatePassword(USER_ID_VALUE, "P@sw0rd1", requestHeaders, checkingHandler);
+  }
+
+  @Test
+  public void shouldFailWhenUserResponseFailed(TestContext testContext) {
+    //given
+    mockRegistryServiceResponse(JsonObject.mapFrom(regExpRuleCollection));
+
+    mockUserModule(HttpStatus.SC_BAD_REQUEST, new JsonObject());
+
+    //expect
+    Handler<AsyncResult<JsonObject>> checkingHandlerBadRequest = testContext.asyncAssertFailure(response -> {
+      String validationResult = response.getMessage();
+      Assert.assertThat(validationResult, Matchers.is("Error getting user by user id : " + USER_ID_VALUE));
+    });
+
+    //when
+    validationEngineService.validatePassword(USER_ID_VALUE, "P@sw0rd1", requestHeaders, checkingHandlerBadRequest);
   }
 
   @Test
@@ -393,7 +432,7 @@ public class ValidateDefaultRulesUnitTest {
 
   private void mockUserModule(int status, JsonObject response) {
     WireMock.stubFor(WireMock.get("/users?query=id==" + USER_ID_VALUE)
-      .willReturn(WireMock.okJson(response.toString())
+      .willReturn(WireMock.status(status).withBody(response.toString())
       ));
   }
 

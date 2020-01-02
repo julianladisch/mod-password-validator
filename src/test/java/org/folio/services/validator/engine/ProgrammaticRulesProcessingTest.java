@@ -9,11 +9,11 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.ext.web.client.WebClient;
 import org.apache.http.HttpStatus;
 import org.folio.rest.impl.GenericHandlerAnswer;
 import org.folio.rest.jaxrs.model.Rule;
@@ -97,7 +97,7 @@ public class ProgrammaticRulesProcessingTest {
   @Mock
   private ValidatorRegistryService validatorRegistryService;
   @Spy
-  private HttpClient httpClient = Vertx.vertx().createHttpClient();
+  private WebClient webClient = WebClient.create(Vertx.vertx());
   @InjectMocks
   private ValidationEngineService validationEngineService = new ValidationEngineServiceImpl();
 
@@ -133,10 +133,10 @@ public class ProgrammaticRulesProcessingTest {
     //given
     mockRegistryService(Collections.singletonList(STRONG_PROGRAMMATIC_RULE));
 
-    JsonObject httpClientMockResponse = new JsonObject()
+    JsonObject webClientMockResponse = new JsonObject()
       .put(RESPONSE_VALIDATION_RESULT_KEY, VALIDATION_VALID_RESULT);
     mockProgrammaticRuleClient(STRONG_PROGRAMMATIC_RULE.getImplementationReference(),
-      HttpStatus.SC_OK, httpClientMockResponse);
+      HttpStatus.SC_OK, webClientMockResponse);
 
     //expect
     JsonObject expectedResult = new JsonObject()
@@ -167,10 +167,10 @@ public class ProgrammaticRulesProcessingTest {
     //given
     mockRegistryService(Collections.singletonList(STRONG_PROGRAMMATIC_RULE));
 
-    JsonObject httpClientMockResponse = new JsonObject()
+    JsonObject webClientMockResponse = new JsonObject()
       .put(RESPONSE_VALIDATION_RESULT_KEY, VALIDATION_INVALID_RESULT);
     mockProgrammaticRuleClient(STRONG_PROGRAMMATIC_RULE.getImplementationReference(),
-      HttpStatus.SC_OK, httpClientMockResponse);
+      HttpStatus.SC_OK, webClientMockResponse);
 
     //expect
     JsonObject expectedResult = new JsonObject()
@@ -200,10 +200,10 @@ public class ProgrammaticRulesProcessingTest {
     //given
     mockRegistryService(Collections.singletonList(SOFT_PROGRAMMATIC_RULE));
 
-    JsonObject httpClientMockResponse = new JsonObject()
+    JsonObject webClientMockResponse = new JsonObject()
       .put(RESPONSE_VALIDATION_RESULT_KEY, VALIDATION_VALID_RESULT);
     mockProgrammaticRuleClient(SOFT_PROGRAMMATIC_RULE.getImplementationReference(),
-      HttpStatus.SC_INTERNAL_SERVER_ERROR, httpClientMockResponse);
+      HttpStatus.SC_INTERNAL_SERVER_ERROR, webClientMockResponse);
 
     //expect
     JsonObject expectedResult = new JsonObject()
@@ -229,10 +229,10 @@ public class ProgrammaticRulesProcessingTest {
     //given
     mockRegistryService(Collections.singletonList(STRONG_PROGRAMMATIC_RULE));
 
-    JsonObject httpClientMockResponse = new JsonObject()
+    JsonObject webClientMockResponse = new JsonObject()
       .put(RESPONSE_VALIDATION_RESULT_KEY, VALIDATION_VALID_RESULT);
     mockProgrammaticRuleClient(STRONG_PROGRAMMATIC_RULE.getImplementationReference(),
-      HttpStatus.SC_INTERNAL_SERVER_ERROR, httpClientMockResponse);
+      HttpStatus.SC_INTERNAL_SERVER_ERROR, webClientMockResponse);
 
     //expect
     Handler<AsyncResult<JsonObject>> checkingHandler = testContext.asyncAssertFailure(exception -> {

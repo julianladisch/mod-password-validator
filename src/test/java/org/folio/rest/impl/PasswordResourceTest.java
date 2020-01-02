@@ -25,6 +25,7 @@ import org.folio.rest.jaxrs.model.Rule;
 import org.folio.rest.jaxrs.model.TenantAttributes;
 import org.folio.rest.persist.Criteria.Criterion;
 import org.folio.rest.persist.PostgresClient;
+import org.folio.rest.tools.PomReader;
 import org.folio.rest.tools.utils.NetworkUtils;
 import org.folio.services.validator.util.ValidatorHelper;
 import org.junit.AfterClass;
@@ -91,7 +92,8 @@ public class PasswordResourceTest {
     DeploymentOptions options = new DeploymentOptions().setConfig(new JsonObject().put(HTTP_PORT, port));
     vertx.deployVerticle(RestVerticle.class.getName(), options, res -> {
       try {
-        TenantAttributes t = new TenantAttributes().withModuleTo("mod-password-validator-1.0.0");
+        TenantAttributes t = new TenantAttributes()
+          .withModuleTo(String.format("mod-password-validator-%s", PomReader.INSTANCE.getVersion()));
         tenantClient.postTenant(t, res2 -> {
           async.complete();
         });

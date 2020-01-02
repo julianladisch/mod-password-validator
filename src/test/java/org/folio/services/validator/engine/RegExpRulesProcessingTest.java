@@ -1,6 +1,5 @@
 package org.folio.services.validator.engine;
 
-
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.common.ConsoleNotifier;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
@@ -9,11 +8,11 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.ext.web.client.WebClient;
 import org.apache.http.HttpStatus;
 import org.folio.rest.RestVerticle;
 import org.folio.rest.impl.GenericHandlerAnswer;
@@ -94,7 +93,7 @@ public class RegExpRulesProcessingTest {
   @Mock
   private ValidatorRegistryService validatorRegistryService;
   @Spy
-  private HttpClient httpClient = Vertx.vertx().createHttpClient();
+  private WebClient webClient = WebClient.create(Vertx.vertx());
 
   private Map<String, String> requestHeaders;
 
