@@ -146,8 +146,6 @@ public class ValidatorRegistryTest {
     vertx = Vertx.vertx();
     port = NetworkUtils.nextFreePort();
 
-    PostgresClient.getInstance(vertx).startEmbeddedPostgres();
-
     TenantClient tenantClient = new TenantClient(HOST + port, "diku", null);
 
     final DeploymentOptions options = new DeploymentOptions().setConfig(new JsonObject().put(HTTP_PORT, port));

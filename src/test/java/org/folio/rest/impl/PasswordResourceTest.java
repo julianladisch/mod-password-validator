@@ -86,8 +86,6 @@ public class PasswordResourceTest {
     vertx = Vertx.vertx();
     port = NetworkUtils.nextFreePort();
 
-    PostgresClient.getInstance(vertx).startEmbeddedPostgres();
-
     TenantClient tenantClient = new TenantClient(HOST + port, TENANT, TENANT);
     DeploymentOptions options = new DeploymentOptions().setConfig(new JsonObject().put(HTTP_PORT, port));
     vertx.deployVerticle(RestVerticle.class.getName(), options, res -> {
