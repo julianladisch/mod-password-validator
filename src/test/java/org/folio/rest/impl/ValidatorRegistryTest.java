@@ -33,7 +33,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
-import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.is;
@@ -213,7 +213,7 @@ public class ValidatorRegistryTest {
       .then()
       .statusCode(HttpStatus.SC_OK)
       .body("totalRecords", is(rulesToPost.size()))
-      .body("rules*.name", contains(ruleNames));
+      .body("rules*.name", containsInAnyOrder(ruleNames));
   }
 
   @Test

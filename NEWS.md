@@ -1,3 +1,6 @@
+## 2020-12-03 v1.6.0
+ * Replace deprecated HttpClient with WebClient (MODPWD-29)
+
 ## 2019-04-12 v1.5.0
  * Update RMB version (MODPWD-28)
  * Use JVM features to manage container memory (MODPWD-27)
