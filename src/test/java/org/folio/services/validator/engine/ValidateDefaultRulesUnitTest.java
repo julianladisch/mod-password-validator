@@ -33,6 +33,7 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 import static org.folio.services.validator.util.ValidatorHelper.RESPONSE_ERROR_MESSAGES_KEY;
 import static org.folio.services.validator.util.ValidatorHelper.RESPONSE_VALIDATION_RESULT_KEY;
@@ -41,11 +42,10 @@ import static org.folio.services.validator.util.ValidatorHelper.VALIDATION_VALID
 
 @RunWith(VertxUnitRunner.class)
 public class ValidateDefaultRulesUnitTest {
-
+  public static final String MOD_PASSWORD_VALIDATOR = "mod-password-validator";
   private static final String OKAPI_HEADER_TENANT_VALUE = "tenant";
   private static final String OKAPI_HEADER_TOKEN_VALUE = "token";
   private static final String USER_ID_VALUE = "db6ffb67-3160-43bf-8e2f-ecf9a420288b";
-
   private static final String OKAPI_URL_HEADER = "x-okapi-url";
 
   private static final JsonObject USER_SERVICE_MOCK_RESPONSE = new JsonObject()
@@ -62,7 +62,7 @@ public class ValidateDefaultRulesUnitTest {
     .withType(Rule.Type.REG_EXP)
     .withValidationType(Rule.ValidationType.STRONG)
     .withState(Rule.State.ENABLED)
-    .withModuleName("mod-password-validator")
+    .withModuleName(MOD_PASSWORD_VALIDATOR)
     .withExpression("^.{8,}$")
     .withDescription("The password length must be minimum 8 digits")
     .withOrderNo(0)
@@ -74,7 +74,7 @@ public class ValidateDefaultRulesUnitTest {
     .withType(Rule.Type.REG_EXP)
     .withValidationType(Rule.ValidationType.STRONG)
     .withState(Rule.State.ENABLED)
-    .withModuleName("mod-password-validator")
+    .withModuleName(MOD_PASSWORD_VALIDATOR)
     .withExpression("(?=.*[a-z])(?=.*[A-Z]).+")
     .withDescription("The password must contain both upper and lower case letters")
     .withOrderNo(1)
@@ -86,7 +86,7 @@ public class ValidateDefaultRulesUnitTest {
     .withType(Rule.Type.REG_EXP)
     .withValidationType(Rule.ValidationType.STRONG)
     .withState(Rule.State.ENABLED)
-    .withModuleName("mod-password-validator")
+    .withModuleName(MOD_PASSWORD_VALIDATOR)
     .withExpression("(?=.*\\d).+")
     .withDescription("The password must contain at least one numeric character")
     .withOrderNo(2)
@@ -98,7 +98,7 @@ public class ValidateDefaultRulesUnitTest {
     .withType(Rule.Type.REG_EXP)
     .withValidationType(Rule.ValidationType.STRONG)
     .withState(Rule.State.ENABLED)
-    .withModuleName("mod-password-validator")
+    .withModuleName(MOD_PASSWORD_VALIDATOR)
     .withExpression("(?=.*[!\"#$%&'()*+,-./:;<=>?@\\[\\]^_`{|}~]).+")
     .withDescription("The password must contain at least one special character")
     .withOrderNo(3)
@@ -110,47 +110,23 @@ public class ValidateDefaultRulesUnitTest {
     .withType(Rule.Type.REG_EXP)
     .withValidationType(Rule.ValidationType.STRONG)
     .withState(Rule.State.ENABLED)
-    .withModuleName("mod-password-validator")
+    .withModuleName(MOD_PASSWORD_VALIDATOR)
     .withExpression("^(?:(?!<USER_NAME>).)+$")
     .withDescription("The password must not contain your username")
     .withOrderNo(4)
     .withErrMessageId("password.usernameDuplicate.invalid");
 
-  private static final Rule REG_SEQUENCE_RULE = new Rule()
-    .withRuleId("8d4a2124-8a54-4c49-84c8-36a8f7fc01a8")
-    .withName("keyboard_sequence")
+  private static final Rule REG_CONSECUTIVE_WHITESPACES_RULE = new Rule()
+    .withRuleId("093f090f-543e-4a04-8b0f-9bde947a390d")
+    .withName("no_consecutive_whitespaces")
     .withType(Rule.Type.REG_EXP)
     .withValidationType(Rule.ValidationType.STRONG)
     .withState(Rule.State.ENABLED)
-    .withModuleName("mod-password-validator")
-    .withExpression("^(?:(?!qwe)(?!asd)(?!zxc)(?!qaz)(?!zaq)(?!xsw)(?!wsx)(?!edc)(?!cde)(?!rfv)(?!vfr)(?!tgb)(?!bgt)(?!yhn)(?!nhy)(?!ujm)(?!mju)(?!ik,)(?!,ki)(?!ol.)(?!.lo)(?!p;/)(?!/;p)(?!123).)+$")
-    .withDescription("The password must contain at least one special character")
-    .withOrderNo(5)
-    .withErrMessageId("password.keyboardSequence.invalid");
-
-  private static final Rule REG_REPEATING_SYMBOLS_RULE = new Rule()
-    .withRuleId("98b961b4-16b8-4e62-a359-abf3805e16b0")
-    .withName("repeating_characters")
-    .withType(Rule.Type.REG_EXP)
-    .withValidationType(Rule.ValidationType.STRONG)
-    .withState(Rule.State.ENABLED)
-    .withModuleName("mod-password-validator")
-    .withExpression("^(?:(.)(?!\\1))*$")
-    .withDescription("The password must not contain repeating symbols")
-    .withOrderNo(6)
-    .withErrMessageId("password.repeatingSymbols.invalid");
-
-  private static final Rule REG_WHITE_SPACE_RULE = new Rule()
-    .withRuleId("51e201ba-95d3-44e5-b4ec-f0059f11afcb")
-    .withName("no_white_space_character")
-    .withType(Rule.Type.REG_EXP)
-    .withValidationType(Rule.ValidationType.STRONG)
-    .withState(Rule.State.ENABLED)
-    .withModuleName("mod-password-validator")
-    .withExpression("^[^\\s]+$")
-    .withDescription("The password must not contain a white space")
-    .withOrderNo(7)
-    .withErrMessageId("password.whiteSpace.invalid");
+    .withModuleName(MOD_PASSWORD_VALIDATOR)
+    .withExpression("^(?:(?!\\s{2,}).)+$")
+    .withDescription("The password must not contain multiple consecutive whitespaces")
+    .withOrderNo(9)
+    .withErrMessageId("password.consecutiveWhitespaces.invalid");
 
   private static RuleCollection regExpRuleCollection;
 
@@ -193,9 +169,7 @@ public class ValidateDefaultRulesUnitTest {
     rulesList.add(REG_NUMERIC_SYMBOL_RULE);
     rulesList.add(REG_SPECIAL_CHARACTER_RULE);
     rulesList.add(REG_USER_NAME_RULE);
-    rulesList.add(REG_SEQUENCE_RULE);
-    rulesList.add(REG_REPEATING_SYMBOLS_RULE);
-    rulesList.add(REG_WHITE_SPACE_RULE);
+    rulesList.add(REG_CONSECUTIVE_WHITESPACES_RULE);
     regExpRuleCollection.setRules(rulesList);
   }
 
@@ -377,7 +351,7 @@ public class ValidateDefaultRulesUnitTest {
   }
 
   @Test
-  public void shouldFailWhenPasswordContainsSequence(TestContext testContext) {
+  public void shouldNotFailWhenPasswordContainsSequence(TestContext testContext) {
     // given
     String password = "p@sw0qwertyrD";
     mockRegistryServiceResponse(JsonObject.mapFrom(regExpRuleCollection));
@@ -385,9 +359,9 @@ public class ValidateDefaultRulesUnitTest {
     //expect
     Handler<AsyncResult<JsonObject>> checkingHandler = testContext.asyncAssertSuccess(response -> {
       String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
-      Assert.assertThat(validationResult, Matchers.is(VALIDATION_INVALID_RESULT));
+      Assert.assertThat(validationResult, Matchers.is(VALIDATION_VALID_RESULT));
       JsonArray errorMessages = response.getJsonArray(RESPONSE_ERROR_MESSAGES_KEY);
-      Assert.assertThat(errorMessages, Matchers.contains(REG_SEQUENCE_RULE.getErrMessageId()));
+      Assert.assertThat(errorMessages, Matchers.emptyIterable());
     });
 
     //when
@@ -395,7 +369,7 @@ public class ValidateDefaultRulesUnitTest {
   }
 
   @Test
-  public void shouldFailWhenHaveRepeatingSymbols(TestContext testContext) {
+  public void shouldNotFailWhenHaveRepeatingSymbols(TestContext testContext) {
     // given
     String password = "p@ssw0rD";
     mockRegistryServiceResponse(JsonObject.mapFrom(regExpRuleCollection));
@@ -403,9 +377,9 @@ public class ValidateDefaultRulesUnitTest {
     //expect
     Handler<AsyncResult<JsonObject>> checkingHandler = testContext.asyncAssertSuccess(response -> {
       String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
-      Assert.assertThat(validationResult, Matchers.is(VALIDATION_INVALID_RESULT));
+      Assert.assertThat(validationResult, Matchers.is(VALIDATION_VALID_RESULT));
       JsonArray errorMessages = response.getJsonArray(RESPONSE_ERROR_MESSAGES_KEY);
-      Assert.assertThat(errorMessages, Matchers.contains(REG_REPEATING_SYMBOLS_RULE.getErrMessageId()));
+      Assert.assertThat(errorMessages, Matchers.emptyIterable());
     });
 
     //when
@@ -413,21 +387,38 @@ public class ValidateDefaultRulesUnitTest {
   }
 
   @Test
-  public void shouldFailWhenHaveWhiteSpace(TestContext testContext) {
+  public void shouldNotFailWhenPasswordContainsSingleWhitespaces(TestContext testContext) {
     //given
-    String password = "P@s w0rd1";
+    String password = " P@ss w0rd ";
     mockRegistryServiceResponse(JsonObject.mapFrom(regExpRuleCollection));
 
     //expect
     Handler<AsyncResult<JsonObject>> checkingHandler = testContext.asyncAssertSuccess(response -> {
       String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
-      Assert.assertThat(validationResult, Matchers.is(VALIDATION_INVALID_RESULT));
+      Assert.assertThat(validationResult, Matchers.is(VALIDATION_VALID_RESULT));
       JsonArray errorMessages = response.getJsonArray(RESPONSE_ERROR_MESSAGES_KEY);
-      Assert.assertThat(errorMessages, Matchers.contains(REG_WHITE_SPACE_RULE.getErrMessageId()));
+      Assert.assertThat(errorMessages, Matchers.emptyIterable());
     });
 
     //when
     validationEngineService.validatePassword(USER_ID_VALUE, password, requestHeaders, checkingHandler);
+  }
+
+  @Test
+  public void shouldFailWhenPasswordContainsConsecutiveWhitespaces(TestContext testContext) {
+    mockRegistryServiceResponse(JsonObject.mapFrom(regExpRuleCollection));
+
+    Handler<AsyncResult<JsonObject>> checkingHandler = testContext.asyncAssertSuccess(response -> {
+      String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
+      Assert.assertThat(validationResult, Matchers.is(VALIDATION_INVALID_RESULT));
+      JsonArray errorMessages = response.getJsonArray(RESPONSE_ERROR_MESSAGES_KEY);
+      Assert.assertThat(errorMessages,
+        Matchers.contains(REG_CONSECUTIVE_WHITESPACES_RULE.getErrMessageId()));
+    });
+
+    Stream.of("  P@ssw0rd", "   P@ssw0rd", "P@ss  w0rd", "P@ss   w0rd", "P@ssw0rd  ", "P@ssw0rd   ")
+      .forEach(password -> validationEngineService.validatePassword(USER_ID_VALUE, password,
+        requestHeaders, checkingHandler));
   }
 
   private void mockUserModule(int status, JsonObject response) {

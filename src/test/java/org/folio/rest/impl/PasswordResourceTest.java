@@ -81,7 +81,7 @@ public class PasswordResourceTest {
   private Header userMockUrlHeader;
 
   @BeforeClass
-  public static void setUpClass(final TestContext context) throws Exception {
+  public static void setUpClass(final TestContext context) {
     Async async = context.async();
     vertx = Vertx.vertx();
     port = NetworkUtils.nextFreePort();
@@ -92,9 +92,7 @@ public class PasswordResourceTest {
       try {
         TenantAttributes t = new TenantAttributes()
           .withModuleTo(String.format("mod-password-validator-%s", PomReader.INSTANCE.getVersion()));
-        tenantClient.postTenant(t, res2 -> {
-          async.complete();
-        });
+        tenantClient.postTenant(t, res2 -> async.complete());
       } catch (Exception e) {
         logger.error(e.getMessage());
       }
@@ -284,6 +282,41 @@ public class PasswordResourceTest {
       .statusCode(HttpStatus.SC_OK)
       .body(PASSWORD_VALIDATION_RESULT_JSON_PATH, is(ValidatorHelper.VALIDATION_INVALID_RESULT))
       .body(PASSWORD_VALIDATION_MESSAGES_JSON_PATH, contains(buildRegexpRuleOneLetterOneNumber().getErrMessageId()));
+  }
+
+  @Test
+  public void shouldNotValidatePasswordAgainstDisabledRules(final TestContext context) {
+    requestSpecification()
+      .header(TENANT_HEADER)
+      .body(buildRegexpRuleOneLetterOneNumber().withOrderNo(0).withState(Rule.State.ENABLED))
+      .when()
+      .post(TENANT_RULES_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_CREATED);
+
+    requestSpecification()
+      .header(TENANT_HEADER)
+      .body(buildRegexpRuleMinLength8().withOrderNo(1).withState(Rule.State.DISABLED))
+      .when()
+      .post(TENANT_RULES_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_CREATED);
+
+    mockUserService();
+    Password passwordToValidate = new Password()
+      .withPassword("1a")
+      .withUserId(ADMIN_ID);
+
+    requestSpecification()
+      .header(TENANT_HEADER)
+      .header(TOKEN_HEADER)
+      .header(userMockUrlHeader)
+      .body(passwordToValidate)
+      .when()
+      .post(VALIDATE_PATH)
+      .then()
+      .statusCode(HttpStatus.SC_OK)
+      .body(PASSWORD_VALIDATION_RESULT_JSON_PATH, is(ValidatorHelper.VALIDATION_VALID_RESULT));
   }
 
   private RequestSpecification requestSpecification() {
