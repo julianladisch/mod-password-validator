@@ -3,7 +3,7 @@
   "tables": [
     {
       "tableName": "validation_rules",
-      "fromModuleVersion": "1.0",
+      "fromModuleVersion": "1.7.0",
       "withMetadata": true,
       "index": [
         {

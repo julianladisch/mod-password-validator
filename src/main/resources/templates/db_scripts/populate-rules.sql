@@ -64,7 +64,7 @@ INSERT INTO validation_rules (id, jsonb) VALUES
       "name": "keyboard_sequence",
       "type": "RegExp",
       "validationType": "Strong",
-      "state": "Enabled",
+      "state": "Disabled",
       "moduleName": "mod-password-validator",
       "expression": "^(?:(?!qwe)(?!asd)(?!zxc)(?!qaz)(?!zaq)(?!xsw)(?!wsx)(?!edc)(?!cde)(?!rfv)(?!vfr)(?!tgb)(?!bgt)(?!yhn)(?!nhy)(?!ujm)(?!mju)(?!ik,)(?!,ki)(?!ol.)(?!.lo)(?!p;/)(?!/;p)(?!123).)+$",
       "description": "The password must not contain a keyboard sequence",
@@ -76,7 +76,7 @@ INSERT INTO validation_rules (id, jsonb) VALUES
       "name": "repeating_characters",
       "type": "RegExp",
       "validationType": "Strong",
-      "state": "Enabled",
+      "state": "Disabled",
       "moduleName": "mod-password-validator",
       "expression": "^(?:(.)(?!\\1))*$",
       "description": "The password must not contain repeating symbols",
@@ -88,7 +88,7 @@ INSERT INTO validation_rules (id, jsonb) VALUES
       "name": "no_white_space_character",
       "type": "RegExp",
       "validationType": "Strong",
-      "state": "Enabled",
+      "state": "Disabled",
       "moduleName": "mod-password-validator",
       "expression": "[^\\s]+",
       "description": "The password must not contain a white space",
@@ -106,4 +106,16 @@ INSERT INTO validation_rules (id, jsonb) VALUES
       "description": "The password must not be previously used",
       "orderNo": 8,
       "errMessageId": "password.lastTenPasswords.invalid"
-    }') ON CONFLICT DO NOTHING;
+    }'),
+('093f090f-543e-4a04-8b0f-9bde947a390d', '{
+      "ruleId": "093f090f-543e-4a04-8b0f-9bde947a390d",
+      "name": "no_consecutive_whitespaces",
+      "type": "RegExp",
+      "validationType": "Strong",
+      "state": "Enabled",
+      "moduleName": "mod-password-validator",
+      "expression": "^(?:(?!\\s{2,}).)+$",
+      "description": "The password must not contain multiple consecutive whitespaces",
+      "orderNo": 9,
+      "errMessageId": "password.consecutiveWhitespaces.invalid"
+    }') ON CONFLICT (id) DO UPDATE SET jsonb = EXCLUDED.jsonb;
