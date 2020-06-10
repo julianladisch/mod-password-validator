@@ -111,7 +111,7 @@ public class ValidatorRegistryServiceImpl implements ValidatorRegistryService {
         if (putReply.failed()) {
           logger.error("Error while updating the rule " + id + " in the db", putReply.cause());
           asyncResultHandler.handle(Future.failedFuture(putReply.cause()));
-        } else if (putReply.result().getUpdated() == 0) {
+        } else if (putReply.result().rowCount() == 0) {
           logger.debug("Rule " + id + " was not found in the db");
           asyncResultHandler.handle(Future.succeededFuture(null));
         } else {
