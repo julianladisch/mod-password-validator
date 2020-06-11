@@ -1,3 +1,7 @@
+## 2020-06-11 v1.7.0
+ * Update password complexity requirements (MODPWD-35)
+ * Update RMB to v30.0.2 and Vertx to 3.9.1 (MODPWD-37)
+
 ## 2020-12-03 v1.6.0
  * Replace deprecated HttpClient with WebClient (MODPWD-29)
 
