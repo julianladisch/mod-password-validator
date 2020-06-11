@@ -1,20 +1,9 @@
 package org.folio.services.validator.engine;
 
-import io.vertx.core.*;
-import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.CaseInsensitiveHeaders;
-import io.vertx.core.http.HttpHeaders;
-import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
-import io.vertx.ext.web.client.*;
-import org.folio.HttpStatus;
-import org.folio.rest.jaxrs.model.Rule;
-import org.folio.rest.jaxrs.model.RuleCollection;
-import org.folio.services.validator.registry.ValidatorRegistryService;
-import org.folio.services.validator.util.ValidatorHelper;
+import static org.folio.rest.RestVerticle.MODULE_SPECIFIC_ARGS;
+import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
+import static org.folio.rest.RestVerticle.OKAPI_HEADER_TOKEN;
 
-import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -22,9 +11,30 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static org.folio.rest.RestVerticle.MODULE_SPECIFIC_ARGS;
-import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
-import static org.folio.rest.RestVerticle.OKAPI_HEADER_TOKEN;
+import javax.ws.rs.core.MediaType;
+
+import org.folio.HttpStatus;
+import org.folio.rest.jaxrs.model.Rule;
+import org.folio.rest.jaxrs.model.RuleCollection;
+import org.folio.services.validator.registry.ValidatorRegistryService;
+import org.folio.services.validator.util.ValidatorHelper;
+
+import io.vertx.core.AsyncResult;
+import io.vertx.core.CompositeFuture;
+import io.vertx.core.Future;
+import io.vertx.core.Handler;
+import io.vertx.core.MultiMap;
+import io.vertx.core.Promise;
+import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.HttpHeaders;
+import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
+import io.vertx.ext.web.client.HttpRequest;
+import io.vertx.ext.web.client.HttpResponse;
+import io.vertx.ext.web.client.WebClient;
+import io.vertx.ext.web.client.WebClientOptions;
 
 /**
  * Implementation of the ValidationEngineService;
@@ -81,14 +91,14 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
                                final String password,
                                final Map<String, String> requestHeaders,
                                final Handler<AsyncResult<JsonObject>> resultHandler) {
-    MultiMap caseInsensitiveHeaders = new CaseInsensitiveHeaders().addAll(requestHeaders);
+    MultiMap caseInsensitiveHeaders = MultiMap.caseInsensitiveMultiMap().addAll(requestHeaders);
     String tenantId = caseInsensitiveHeaders.get(OKAPI_HEADER_TENANT);
     validatorRegistryProxy.getAllTenantRules(tenantId, 500, 0, "query=state=Enabled", rulesResponse -> {
       if (rulesResponse.failed()) {
         resultHandler.handle(Future.failedFuture(rulesResponse.cause().getMessage()));
         return;
       }
-      lookupUser(userId, caseInsensitiveHeaders).setHandler(lookupUserHandler -> {
+      lookupUser(userId, caseInsensitiveHeaders).onComplete(lookupUserHandler -> {
         if (lookupUserHandler.failed()) {
           resultHandler.handle(Future.failedFuture(lookupUserHandler.cause().getMessage()));
           return;
@@ -96,7 +106,7 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
         List<Rule> rules = rulesResponse.result().mapTo(RuleCollection.class).getRules();
         prepareRulesBeforeValidation(rules, lookupUserHandler);
         Future<List<String>> errorMessagesFuture = validatePasswordByRules(rules, userId, password, caseInsensitiveHeaders);
-        errorMessagesFuture.setHandler(asyncResult -> {
+        errorMessagesFuture.onComplete(asyncResult -> {
           if (asyncResult.failed()) {
             resultHandler.handle(Future.failedFuture(asyncResult.cause()));
             return;
@@ -136,7 +146,7 @@ public class ValidationEngineServiceImpl implements ValidationEngineService {
       }
     }
     // Notify external method future handler when all programmatic rule futures complete
-    CompositeFuture.all(programmaticRulesFutures).setHandler(compositeFutureAsyncResult -> {
+    CompositeFuture.all(programmaticRulesFutures).onComplete(compositeFutureAsyncResult -> {
       if (compositeFutureAsyncResult.succeeded()) {
         promise.complete(errorMessages);
       } else {
