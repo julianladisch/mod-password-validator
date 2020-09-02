@@ -1,5 +1,7 @@
 package org.folio.services.validator.engine;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.common.ConsoleNotifier;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
@@ -13,6 +15,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.ext.web.client.WebClient;
+import io.vertx.ext.web.client.WebClientOptions;
 import org.apache.http.HttpStatus;
 import org.folio.rest.RestVerticle;
 import org.folio.rest.impl.GenericHandlerAnswer;
@@ -151,8 +154,8 @@ public class ValidateDefaultRulesUnitTest {
   }
 
   @Before
-  public void setUp() {
-    MockitoAnnotations.initMocks(this);
+  public void setUp() throws Exception {
+    MockitoAnnotations.openMocks(this).close();
     requestHeaders = new HashMap<>();
     requestHeaders.put(RestVerticle.OKAPI_HEADER_TENANT, OKAPI_HEADER_TENANT_VALUE);
     requestHeaders.put(RestVerticle.OKAPI_HEADER_TOKEN, OKAPI_HEADER_TOKEN_VALUE);
@@ -181,7 +184,7 @@ public class ValidateDefaultRulesUnitTest {
     //expect
     Handler<AsyncResult<JsonObject>> checkingHandler = testContext.asyncAssertFailure(response -> {
       String validationResult = response.getMessage();
-      Assert.assertThat(validationResult, Matchers.is("Error, missing field(s) 'totalRecords' and/or 'users' in user response object"));
+      assertThat(validationResult, Matchers.is("Error, missing field(s) 'totalRecords' and/or 'users' in user response object"));
     });
 
     // case 1 - no "users" in response
@@ -215,7 +218,7 @@ public class ValidateDefaultRulesUnitTest {
     //expect
     Handler<AsyncResult<JsonObject>> checkingHandlerBadRequest = testContext.asyncAssertFailure(response -> {
       String validationResult = response.getMessage();
-      Assert.assertThat(validationResult, Matchers.is("Error getting user by user id : " + USER_ID_VALUE));
+      assertThat(validationResult, Matchers.is("Error getting user by user id : " + USER_ID_VALUE));
     });
 
     //when
@@ -231,9 +234,9 @@ public class ValidateDefaultRulesUnitTest {
     //expect
     Handler<AsyncResult<JsonObject>> checkingHandler = testContext.asyncAssertSuccess(response -> {
       String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
-      Assert.assertThat(validationResult, Matchers.is(VALIDATION_VALID_RESULT));
+      assertThat(validationResult, Matchers.is(VALIDATION_VALID_RESULT));
       JsonArray errorMessages = response.getJsonArray(RESPONSE_ERROR_MESSAGES_KEY);
-      Assert.assertThat(errorMessages, Matchers.emptyIterable());
+      assertThat(errorMessages, Matchers.emptyIterable());
     });
 
     //when
@@ -249,9 +252,9 @@ public class ValidateDefaultRulesUnitTest {
     //expect
     Handler<AsyncResult<JsonObject>> checkingHandler = testContext.asyncAssertSuccess(response -> {
       String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
-      Assert.assertThat(validationResult, Matchers.is(VALIDATION_INVALID_RESULT));
+      assertThat(validationResult, Matchers.is(VALIDATION_INVALID_RESULT));
       JsonArray errorMessages = response.getJsonArray(RESPONSE_ERROR_MESSAGES_KEY);
-      Assert.assertThat(errorMessages, Matchers.contains(REG_MINIMUM_LENGTH_RULE.getErrMessageId()));
+      assertThat(errorMessages, Matchers.contains(REG_MINIMUM_LENGTH_RULE.getErrMessageId()));
     });
 
     //when
@@ -267,9 +270,9 @@ public class ValidateDefaultRulesUnitTest {
     //expect
     Handler<AsyncResult<JsonObject>> checkingHandler = testContext.asyncAssertSuccess(response -> {
       String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
-      Assert.assertThat(validationResult, Matchers.is(VALIDATION_INVALID_RESULT));
+      assertThat(validationResult, Matchers.is(VALIDATION_INVALID_RESULT));
       JsonArray errorMessages = response.getJsonArray(RESPONSE_ERROR_MESSAGES_KEY);
-      Assert.assertThat(errorMessages, Matchers.contains(REG_ALPHABETICAL_LETTERS_RULE.getErrMessageId()));
+      assertThat(errorMessages, Matchers.contains(REG_ALPHABETICAL_LETTERS_RULE.getErrMessageId()));
     });
 
     //when
@@ -285,9 +288,9 @@ public class ValidateDefaultRulesUnitTest {
     //expect
     Handler<AsyncResult<JsonObject>> checkingHandler = testContext.asyncAssertSuccess(response -> {
       String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
-      Assert.assertThat(validationResult, Matchers.is(VALIDATION_INVALID_RESULT));
+      assertThat(validationResult, Matchers.is(VALIDATION_INVALID_RESULT));
       JsonArray errorMessages = response.getJsonArray(RESPONSE_ERROR_MESSAGES_KEY);
-      Assert.assertThat(errorMessages, Matchers.contains(REG_ALPHABETICAL_LETTERS_RULE.getErrMessageId()));
+      assertThat(errorMessages, Matchers.contains(REG_ALPHABETICAL_LETTERS_RULE.getErrMessageId()));
     });
 
     //when
@@ -304,10 +307,10 @@ public class ValidateDefaultRulesUnitTest {
     //expect
     Handler<AsyncResult<JsonObject>> checkingHandler = testContext.asyncAssertSuccess(response -> {
       String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
-      Assert.assertThat(validationResult, Matchers.is(VALIDATION_INVALID_RESULT));
+      assertThat(validationResult, Matchers.is(VALIDATION_INVALID_RESULT));
       JsonArray errorMessages = response.getJsonArray(RESPONSE_ERROR_MESSAGES_KEY);
       Assert.assertEquals(1, errorMessages.getList().size());
-      Assert.assertThat(errorMessages, Matchers.contains(REG_NUMERIC_SYMBOL_RULE.getErrMessageId()));
+      assertThat(errorMessages, Matchers.contains(REG_NUMERIC_SYMBOL_RULE.getErrMessageId()));
     });
 
     //when
@@ -323,9 +326,9 @@ public class ValidateDefaultRulesUnitTest {
     //expect
     Handler<AsyncResult<JsonObject>> checkingHandler = testContext.asyncAssertSuccess(response -> {
       String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
-      Assert.assertThat(validationResult, Matchers.is(VALIDATION_INVALID_RESULT));
+      assertThat(validationResult, Matchers.is(VALIDATION_INVALID_RESULT));
       JsonArray errorMessages = response.getJsonArray(RESPONSE_ERROR_MESSAGES_KEY);
-      Assert.assertThat(errorMessages, Matchers.contains(REG_SPECIAL_CHARACTER_RULE.getErrMessageId()));
+      assertThat(errorMessages, Matchers.contains(REG_SPECIAL_CHARACTER_RULE.getErrMessageId()));
     });
 
     //when
@@ -341,9 +344,9 @@ public class ValidateDefaultRulesUnitTest {
     //expect
     Handler<AsyncResult<JsonObject>> checkingHandler = testContext.asyncAssertSuccess(response -> {
       String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
-      Assert.assertThat(validationResult, Matchers.is(VALIDATION_INVALID_RESULT));
+      assertThat(validationResult, Matchers.is(VALIDATION_INVALID_RESULT));
       JsonArray errorMessages = response.getJsonArray(RESPONSE_ERROR_MESSAGES_KEY);
-      Assert.assertThat(errorMessages, Matchers.contains(REG_USER_NAME_RULE.getErrMessageId()));
+      assertThat(errorMessages, Matchers.contains(REG_USER_NAME_RULE.getErrMessageId()));
     });
 
     //when
@@ -359,9 +362,9 @@ public class ValidateDefaultRulesUnitTest {
     //expect
     Handler<AsyncResult<JsonObject>> checkingHandler = testContext.asyncAssertSuccess(response -> {
       String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
-      Assert.assertThat(validationResult, Matchers.is(VALIDATION_VALID_RESULT));
+      assertThat(validationResult, Matchers.is(VALIDATION_VALID_RESULT));
       JsonArray errorMessages = response.getJsonArray(RESPONSE_ERROR_MESSAGES_KEY);
-      Assert.assertThat(errorMessages, Matchers.emptyIterable());
+      assertThat(errorMessages, Matchers.emptyIterable());
     });
 
     //when
@@ -377,9 +380,9 @@ public class ValidateDefaultRulesUnitTest {
     //expect
     Handler<AsyncResult<JsonObject>> checkingHandler = testContext.asyncAssertSuccess(response -> {
       String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
-      Assert.assertThat(validationResult, Matchers.is(VALIDATION_VALID_RESULT));
+      assertThat(validationResult, Matchers.is(VALIDATION_VALID_RESULT));
       JsonArray errorMessages = response.getJsonArray(RESPONSE_ERROR_MESSAGES_KEY);
-      Assert.assertThat(errorMessages, Matchers.emptyIterable());
+      assertThat(errorMessages, Matchers.emptyIterable());
     });
 
     //when
@@ -395,9 +398,9 @@ public class ValidateDefaultRulesUnitTest {
     //expect
     Handler<AsyncResult<JsonObject>> checkingHandler = testContext.asyncAssertSuccess(response -> {
       String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
-      Assert.assertThat(validationResult, Matchers.is(VALIDATION_VALID_RESULT));
+      assertThat(validationResult, Matchers.is(VALIDATION_VALID_RESULT));
       JsonArray errorMessages = response.getJsonArray(RESPONSE_ERROR_MESSAGES_KEY);
-      Assert.assertThat(errorMessages, Matchers.emptyIterable());
+      assertThat(errorMessages, Matchers.emptyIterable());
     });
 
     //when
@@ -410,9 +413,9 @@ public class ValidateDefaultRulesUnitTest {
 
     Handler<AsyncResult<JsonObject>> checkingHandler = testContext.asyncAssertSuccess(response -> {
       String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
-      Assert.assertThat(validationResult, Matchers.is(VALIDATION_INVALID_RESULT));
+      assertThat(validationResult, Matchers.is(VALIDATION_INVALID_RESULT));
       JsonArray errorMessages = response.getJsonArray(RESPONSE_ERROR_MESSAGES_KEY);
-      Assert.assertThat(errorMessages,
+      assertThat(errorMessages,
         Matchers.contains(REG_CONSECUTIVE_WHITESPACES_RULE.getErrMessageId()));
     });
 
