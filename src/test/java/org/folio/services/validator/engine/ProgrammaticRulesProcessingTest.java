@@ -41,6 +41,8 @@ import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static org.hamcrest.MatcherAssert.assertThat;
+
 import static org.folio.rest.RestVerticle.OKAPI_HEADER_TENANT;
 import static org.folio.rest.RestVerticle.OKAPI_HEADER_TOKEN;
 import static org.folio.services.validator.util.ValidatorHelper.RESPONSE_ERROR_MESSAGES_KEY;
@@ -111,7 +113,7 @@ public class ProgrammaticRulesProcessingTest {
 
   @Before
   public void setUp() throws Exception {
-    MockitoAnnotations.initMocks(this);
+    MockitoAnnotations.openMocks(this).close();
     requestHeaders = new HashMap<>();
     requestHeaders.put(OKAPI_HEADER_TENANT, OKAPI_HEADER_TENANT_VALUE);
     requestHeaders.put(OKAPI_HEADER_TOKEN, OKAPI_HEADER_TOKEN_VALUE);
@@ -143,7 +145,7 @@ public class ProgrammaticRulesProcessingTest {
       .put(RESPONSE_VALIDATION_RESULT_KEY, VALIDATION_VALID_RESULT)
       .put(RESPONSE_ERROR_MESSAGES_KEY, new JsonArray());
     Handler<AsyncResult<JsonObject>> checkingHandler = testContext.asyncAssertSuccess(response -> {
-      Assert.assertThat(response, Matchers.is(expectedResult));
+      assertThat(response, Matchers.is(expectedResult));
       Mockito.verify(validatorRegistryService).getAllTenantRules(ArgumentMatchers.any(),
         ArgumentMatchers.anyInt(), ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any());
     });
@@ -177,7 +179,7 @@ public class ProgrammaticRulesProcessingTest {
       .put(RESPONSE_VALIDATION_RESULT_KEY, VALIDATION_INVALID_RESULT)
       .put(ValidatorHelper.RESPONSE_ERROR_MESSAGES_KEY, new JsonArray().add(STRONG_PROGRAMMATIC_RULE.getErrMessageId()));
     Handler<AsyncResult<JsonObject>> checkingHandler = testContext.asyncAssertSuccess(response -> {
-      Assert.assertThat(response, Matchers.is(expectedResult));
+      assertThat(response, Matchers.is(expectedResult));
       Mockito.verify(validatorRegistryService).getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(),
         ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any());
     });
@@ -210,7 +212,7 @@ public class ProgrammaticRulesProcessingTest {
       .put(RESPONSE_VALIDATION_RESULT_KEY, VALIDATION_VALID_RESULT)
       .put(RESPONSE_ERROR_MESSAGES_KEY, new JsonArray());
     Handler<AsyncResult<JsonObject>> checkingHandler = testContext.asyncAssertSuccess(response -> {
-      Assert.assertThat(response, Matchers.is(expectedResult));
+      assertThat(response, Matchers.is(expectedResult));
       Mockito.verify(validatorRegistryService).getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(),
         ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any());
     });

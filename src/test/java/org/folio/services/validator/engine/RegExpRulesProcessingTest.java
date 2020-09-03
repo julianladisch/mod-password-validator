@@ -1,5 +1,7 @@
 package org.folio.services.validator.engine;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.common.ConsoleNotifier;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
@@ -20,7 +22,6 @@ import org.folio.rest.jaxrs.model.Rule;
 import org.folio.rest.jaxrs.model.RuleCollection;
 import org.folio.services.validator.registry.ValidatorRegistryService;
 import org.hamcrest.Matchers;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -110,7 +111,7 @@ public class RegExpRulesProcessingTest {
 
   @Before
   public void setUp() throws Exception {
-    MockitoAnnotations.initMocks(this);
+    MockitoAnnotations.openMocks(this).close();
     requestHeaders = new HashMap<>();
     requestHeaders.put(RestVerticle.OKAPI_HEADER_TENANT, OKAPI_HEADER_TENANT_VALUE);
     requestHeaders.put(RestVerticle.OKAPI_HEADER_TOKEN, OKAPI_HEADER_TOKEN_VALUE);
@@ -138,8 +139,8 @@ public class RegExpRulesProcessingTest {
     Handler<AsyncResult<JsonObject>> checkingHandler = testContext.asyncAssertSuccess(response -> {
       String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
       JsonArray errorMessages = (JsonArray) response.getValue(RESPONSE_ERROR_MESSAGES_KEY);
-      Assert.assertThat(validationResult, Matchers.is(VALIDATION_VALID_RESULT));
-      Assert.assertThat(errorMessages, Matchers.emptyIterable());
+      assertThat(validationResult, Matchers.is(VALIDATION_VALID_RESULT));
+      assertThat(errorMessages, Matchers.emptyIterable());
       Mockito.verify(validatorRegistryService).getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(),
         ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any());
     });
@@ -167,8 +168,8 @@ public class RegExpRulesProcessingTest {
     Handler<AsyncResult<JsonObject>> checkingHandler = testContext.asyncAssertSuccess(response -> {
       String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
       JsonArray errorMessages = (JsonArray) response.getValue(RESPONSE_ERROR_MESSAGES_KEY);
-      Assert.assertThat(validationResult, Matchers.is(VALIDATION_INVALID_RESULT));
-      Assert.assertThat(errorMessages, Matchers.contains(REGEXP_LIMITED_LENGTH_RULE.getErrMessageId()));
+      assertThat(validationResult, Matchers.is(VALIDATION_INVALID_RESULT));
+      assertThat(errorMessages, Matchers.contains(REGEXP_LIMITED_LENGTH_RULE.getErrMessageId()));
       Mockito.verify(validatorRegistryService).getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(),
         ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any());
     });
@@ -196,8 +197,8 @@ public class RegExpRulesProcessingTest {
     Handler<AsyncResult<JsonObject>> checkingHandler = testContext.asyncAssertSuccess(response -> {
       String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
       JsonArray errorMessages = (JsonArray) response.getValue(RESPONSE_ERROR_MESSAGES_KEY);
-      Assert.assertThat(validationResult, Matchers.is(VALIDATION_INVALID_RESULT));
-      Assert.assertThat(errorMessages, Matchers.contains(REGEXP_ONLY_ALPHABETICAL_RULE.getErrMessageId()));
+      assertThat(validationResult, Matchers.is(VALIDATION_INVALID_RESULT));
+      assertThat(errorMessages, Matchers.contains(REGEXP_ONLY_ALPHABETICAL_RULE.getErrMessageId()));
       Mockito.verify(validatorRegistryService).getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(),
         ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any());
     });
@@ -226,8 +227,8 @@ public class RegExpRulesProcessingTest {
     Handler<AsyncResult<JsonObject>> checkingHandler = testContext.asyncAssertSuccess(response -> {
       String validationResult = response.getString(RESPONSE_VALIDATION_RESULT_KEY);
       JsonArray errorMessages = (JsonArray) response.getValue(RESPONSE_ERROR_MESSAGES_KEY);
-      Assert.assertThat(validationResult, Matchers.is(VALIDATION_INVALID_RESULT));
-      Assert.assertThat(errorMessages, Matchers.containsInAnyOrder(
+      assertThat(validationResult, Matchers.is(VALIDATION_INVALID_RESULT));
+      assertThat(errorMessages, Matchers.containsInAnyOrder(
         regExpRuleCollection.getRules().stream().map(Rule::getErrMessageId).toArray()));
       Mockito.verify(validatorRegistryService).getAllTenantRules(ArgumentMatchers.any(), ArgumentMatchers.anyInt(),
         ArgumentMatchers.anyInt(), ArgumentMatchers.any(), ArgumentMatchers.any());

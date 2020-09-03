@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.everyItem;
@@ -460,7 +461,7 @@ public class ValidatorRegistryTest {
       .when()
       .post(TENANT_RULES_PATH);
 
-    Assert.assertThat(response.statusCode(), is(HttpStatus.SC_CREATED));
+    assertThat(response.statusCode(), is(HttpStatus.SC_CREATED));
     Rule createdRule = response.body().as(Rule.class);
 
     /* no id and no ruleId → 400 */
@@ -562,7 +563,7 @@ public class ValidatorRegistryTest {
       .body(PROGRAMMATIC_RULE_DISABLED.toString())
       .when()
       .post(TENANT_RULES_PATH);
-    Assert.assertThat(response.statusCode(), is(HttpStatus.SC_CREATED));
+    assertThat(response.statusCode(), is(HttpStatus.SC_CREATED));
     Rule createdRule = response.body().as(Rule.class);
 
     requestSpecification()
