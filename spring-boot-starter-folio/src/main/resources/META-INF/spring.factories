@@ -1,2 +1,3 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-  org.folio.spring.config.SpringConfiguration
+  org.folio.spring.config.FolioSpringConfiguration,\
+  org.folio.spring.liquibase.FolioLiquibaseConfiguration

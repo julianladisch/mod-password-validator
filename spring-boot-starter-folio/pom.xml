@@ -1,17 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>2.2.4.RELEASE</version>
+    <version>2.3.4.RELEASE</version>
     <relativePath/> <!-- lookup parent from repository -->
   </parent>
   <groupId>org.folio</groupId>
   <artifactId>spring-boot-starter-folio</artifactId>
   <version>0.0.1</version>
   <name>spring-boot-starter-folio</name>
+  <description>Folio Spring adaptation</description>
+
+  <properties>
+    <java.version>11</java.version>
+    <spring-cloud-starter-openfeign.version>2.2.5.RELEASE</spring-cloud-starter-openfeign.version>
+    <commons-lang3.version>3.5</commons-lang3.version>
+    <springfox-boot-starter.version>3.0.0</springfox-boot-starter.version>
+    <swagger-codegen-maven-plugin.version>2.4.15</swagger-codegen-maven-plugin.version>
+    <openapi-generator.version>4.3.1</openapi-generator.version>
+    <jackson-databind-nullable.version>0.1.0</jackson-databind-nullable.version>
+
+    <!-- -->
+    <tenant.json.file>${project.basedir}/src/main/resources/swagger.api/tenant.yaml</tenant.json.file>
+
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -24,27 +40,103 @@
     <dependency>
       <groupId>org.springframework.cloud</groupId>
       <artifactId>spring-cloud-starter-openfeign</artifactId>
-      <version>2.2.1.RELEASE</version>
+      <version>${spring-cloud-starter-openfeign.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-lang3</artifactId>
-      <version>3.5</version>
+      <version>${commons-lang3.version}</version>
     </dependency>
     <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
       <optional>true</optional>
-      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.liquibase</groupId>
+      <artifactId>liquibase-core</artifactId>
     </dependency>
 
+    <!-- OAS generation -->
+    <dependency>
+      <groupId>io.springfox</groupId>
+      <artifactId>springfox-boot-starter</artifactId>
+      <version>${springfox-boot-starter.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.openapitools</groupId>
+      <artifactId>openapi-generator</artifactId>
+      <version>${openapi-generator.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.openapitools</groupId>
+      <artifactId>openapi-generator-maven-plugin</artifactId>
+      <version>${openapi-generator.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.openapitools</groupId>
+      <artifactId>jackson-databind-nullable</artifactId>
+      <version>${jackson-databind-nullable.version}</version>
+    </dependency>
   </dependencies>
 
-  <properties>
-    <java.version>1.8</java.version>
-  </properties>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>3.2.0</version>
+        <executions>
+          <execution>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>${project.build.directory}/generated-sources</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
 
-  <description>Folio Spring adaptation</description>
+      <plugin>
+        <groupId>org.openapitools</groupId>
+        <artifactId>openapi-generator-maven-plugin</artifactId>
+        <version>4.3.1</version>
+        <executions>
+          <execution>
+            <id>tenantApi</id>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <!--              <verbose>true</verbose>-->
+              <inputSpec>${tenant.json.file}</inputSpec>
+              <output>${project.build.directory}/generated-sources</output>
+              <generatorName>spring</generatorName>
+              <modelPackage>${project.groupId}.rest.dto</modelPackage>
+              <apiPackage>${project.groupId}.rest.resources</apiPackage>
+              <generateApis>true</generateApis>
+              <generateApiTests>true</generateApiTests>
+              <generateApiDocumentation>true</generateApiDocumentation>
+              <generateModels>true</generateModels>
+              <generateModelTests>false</generateModelTests>
+              <generateModelDocumentation>true</generateModelDocumentation>
+              <!--              <configHelp>true</configHelp>-->
+              <configOptions>
+                <java8>true</java8>
+                <openFeign>true</openFeign>
+                <dateLibrary>java8</dateLibrary>
+                <interfaceOnly>true</interfaceOnly>
+              </configOptions>
 
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 
 </project>

@@ -18,28 +18,4 @@
     <module>spring-boot-starter-folio</module>
   </modules>
 
-  <properties>
-  </properties>
-
-  <repositories>
-  </repositories>
-
-  <dependencies>
-
-  </dependencies>
-
-  <build>
-    <resources>
-    </resources>
-
-    <plugins>
-    </plugins>
-  </build>
-
-  <distributionManagement>
-  </distributionManagement>
-
-  <scm>
-  </scm>
-
 </project>
