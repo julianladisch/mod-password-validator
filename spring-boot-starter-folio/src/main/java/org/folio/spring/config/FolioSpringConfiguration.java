@@ -1,12 +1,12 @@
 package org.folio.spring.config;
 
 import org.apache.logging.log4j.util.Strings;
-import org.folio.rest.resources.TenantApi;
 import org.folio.spring.FolioExecutionContextService;
 import org.folio.spring.FolioModuleMetadata;
 import org.folio.spring.controller.TenantController;
 import org.folio.spring.foliocontext.DefaultFolioExecutionContextService;
 import org.folio.spring.liquibase.FolioSpringLiquibase;
+import org.folio.tenant.rest.resources.TenantApi;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;

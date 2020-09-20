@@ -19,12 +19,11 @@
     <spring-cloud-starter-openfeign.version>2.2.5.RELEASE</spring-cloud-starter-openfeign.version>
     <commons-lang3.version>3.5</commons-lang3.version>
     <springfox-boot-starter.version>3.0.0</springfox-boot-starter.version>
-    <swagger-codegen-maven-plugin.version>2.4.15</swagger-codegen-maven-plugin.version>
     <openapi-generator.version>4.3.1</openapi-generator.version>
     <jackson-databind-nullable.version>0.1.0</jackson-databind-nullable.version>
 
     <!-- -->
-    <tenant.json.file>${project.basedir}/src/main/resources/swagger.api/tenant.yaml</tenant.json.file>
+    <tenant.yaml.file>${project.basedir}/src/main/resources/swagger.api/tenant.yaml</tenant.yaml.file>
 
   </properties>
 
@@ -104,7 +103,7 @@
       <plugin>
         <groupId>org.openapitools</groupId>
         <artifactId>openapi-generator-maven-plugin</artifactId>
-        <version>4.3.1</version>
+        <version>${openapi-generator.version}</version>
         <executions>
           <execution>
             <id>tenantApi</id>
@@ -113,21 +112,22 @@
             </goals>
             <configuration>
               <!--              <verbose>true</verbose>-->
-              <inputSpec>${tenant.json.file}</inputSpec>
+              <inputSpec>${tenant.yaml.file}</inputSpec>
               <output>${project.build.directory}/generated-sources</output>
               <generatorName>spring</generatorName>
-              <modelPackage>${project.groupId}.rest.dto</modelPackage>
-              <apiPackage>${project.groupId}.rest.resources</apiPackage>
+              <modelPackage>${project.groupId}.tenant.rest.dto</modelPackage>
+              <apiPackage>${project.groupId}.tenant.rest.resources</apiPackage>
               <generateApis>true</generateApis>
               <generateApiTests>true</generateApiTests>
               <generateApiDocumentation>true</generateApiDocumentation>
               <generateModels>true</generateModels>
+              <modelsToGenerate>error,errors,parameter,metadata,tenantAttributes</modelsToGenerate>
               <generateModelTests>false</generateModelTests>
               <generateModelDocumentation>true</generateModelDocumentation>
               <!--              <configHelp>true</configHelp>-->
               <configOptions>
                 <java8>true</java8>
-                <openFeign>true</openFeign>
+                <!--                <openFeign>true</openFeign>-->
                 <dateLibrary>java8</dateLibrary>
                 <interfaceOnly>true</interfaceOnly>
               </configOptions>

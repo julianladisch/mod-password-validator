@@ -115,6 +115,8 @@ components:
               value: examples/errors.sample
   schemas:
     tenantAttributes:
-      $ref: schemas/moduleInfo.schema
+      $ref: schemas/moduleInfo.json
     errors:
-      $ref: schemas/errors.schema
+      $ref: schemas/errors.json
+    metadata:
+      $ref: schemas/metadata.json

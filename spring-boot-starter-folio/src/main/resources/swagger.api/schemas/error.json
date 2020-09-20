@@ -18,7 +18,7 @@
     "parameters": {
       "type": "object",
       "description": "Error message parameters",
-      "$ref": "parameters.schema"
+      "$ref": "parameters.json"
     }
   },
   "additionalProperties": false,

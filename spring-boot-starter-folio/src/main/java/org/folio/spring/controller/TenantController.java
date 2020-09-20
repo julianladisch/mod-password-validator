@@ -2,10 +2,10 @@ package org.folio.spring.controller;
 
 import liquibase.exception.LiquibaseException;
 import lombok.extern.slf4j.Slf4j;
-import org.folio.rest.dto.TenantAttributes;
-import org.folio.rest.resources.TenantApi;
 import org.folio.spring.FolioExecutionContextService;
 import org.folio.spring.liquibase.FolioSpringLiquibase;
+import org.folio.tenant.rest.dto.TenantAttributes;
+import org.folio.tenant.rest.resources.TenantApi;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;

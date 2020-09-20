@@ -24,6 +24,12 @@
 
   <properties>
     <java.version>11</java.version>
+    <openapi-generator.version>4.3.1</openapi-generator.version>
+
+    <!-- -->
+    <validator-registry.yaml.file>${project.basedir}/src/main/resources/swagger.api/validator-registry.yaml</validator-registry.yaml.file>
+    <password-validator.yaml.file>${project.basedir}/src/main/resources/swagger.api/password-validator.yaml</password-validator.yaml.file>
+
   </properties>
 
   <dependencies>
@@ -70,6 +76,95 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
       </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>3.2.0</version>
+        <executions>
+          <execution>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>${project.build.directory}/generated-sources</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.openapitools</groupId>
+        <artifactId>openapi-generator-maven-plugin</artifactId>
+        <version>${openapi-generator.version}</version>
+        <executions>
+          <execution>
+            <id>validator-registry</id>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <!--              <verbose>true</verbose>-->
+              <inputSpec>${validator-registry.yaml.file}</inputSpec>
+              <output>${project.build.directory}/generated-sources</output>
+              <generatorName>spring</generatorName>
+              <modelPackage>${project.groupId}.pv.rest.dto</modelPackage>
+              <apiPackage>${project.groupId}.pv.rest.resources</apiPackage>
+              <generateApis>true</generateApis>
+              <generateApiTests>true</generateApiTests>
+              <generateApiDocumentation>true</generateApiDocumentation>
+              <generateModels>true</generateModels>
+              <modelsToGenerate>error,errors,parameter,metadata,validationRule,validationRuleCollection</modelsToGenerate>
+              <generateModelTests>false</generateModelTests>
+              <generateSupportingFiles>true</generateSupportingFiles>
+              <supportingFilesToGenerate>ApiUtil.java</supportingFilesToGenerate>
+              <generateModelDocumentation>true</generateModelDocumentation>
+              <!--              <configHelp>true</configHelp>-->
+              <configOptions>
+                <java8>true</java8>
+                <openFeign>true</openFeign>
+                <dateLibrary>java8</dateLibrary>
+                <interfaceOnly>true</interfaceOnly>
+              </configOptions>
+
+            </configuration>
+          </execution>
+          <execution>
+            <id>validator</id>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <!--              <verbose>true</verbose>-->
+              <inputSpec>${password-validator.yaml.file}</inputSpec>
+              <output>${project.build.directory}/generated-sources</output>
+              <generatorName>spring</generatorName>
+              <modelPackage>${project.groupId}.pv.rest.dto</modelPackage>
+              <apiPackage>${project.groupId}.pv.rest.resources</apiPackage>
+              <generateApis>true</generateApis>
+              <generateApiTests>true</generateApiTests>
+              <generateApiDocumentation>true</generateApiDocumentation>
+              <generateModels>true</generateModels>
+              <modelsToGenerate>password,validation_result</modelsToGenerate>
+              <generateModelTests>false</generateModelTests>
+              <generateSupportingFiles>false</generateSupportingFiles>
+              <generateModelDocumentation>true</generateModelDocumentation>
+              <!--              <configHelp>true</configHelp>-->
+              <configOptions>
+                <java8>true</java8>
+                <openFeign>true</openFeign>
+                <dateLibrary>java8</dateLibrary>
+                <interfaceOnly>true</interfaceOnly>
+              </configOptions>
+
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+
     </plugins>
   </build>
 
