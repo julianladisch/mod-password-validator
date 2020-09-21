@@ -7,37 +7,36 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Optional;
-import java.util.function.Function;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class RequestUtils {
 
-  public static final String OKAPI_HEADERS_PREFIX = "x-okapi";
-
   private RequestUtils() {
   }
 
-  public static Map<String, Collection<String>> getHeadersFromRequest() {
-    return getHeadersFromRequest(getHttpServletRequest());
-  }
-
   public static HttpServletRequest getHttpServletRequest() {
-    return Optional.ofNullable(RequestContextHolder.getRequestAttributes())
-      .map(e -> ((ServletRequestAttributes) e).getRequest())
-      .orElseThrow(() -> new IllegalStateException(
-        "getHeadersFromRequest is called in thread, that isn't aware about request."));
+    var requestAttributes = RequestContextHolder.getRequestAttributes();
+    return (requestAttributes instanceof ServletRequestAttributes) ? ((ServletRequestAttributes) requestAttributes).getRequest() : null;
   }
 
-  public static Map<String, Collection<String>> getHeadersFromRequest(HttpServletRequest request) {
-    return Collections
-      .list(request.getHeaderNames())
-      .stream()
-      .filter(h -> h.startsWith(OKAPI_HEADERS_PREFIX))
-      .collect(Collectors.toMap(
-        Function.identity(),
-        h -> Collections.list(request.getHeaders(h))
-      ));
+  public static Map<String, Collection<String>> getHttpHeadersFromRequest() {
+    return getHttpHeadersFromRequest(getHttpServletRequest());
+  }
+
+  public static Map<String, Collection<String>> getHttpHeadersFromRequest(HttpServletRequest request) {
+    return (Objects.nonNull(request)) ?
+      Collections
+        .list(request.getHeaderNames())
+        .stream()
+        .collect(Collectors.toMap(
+          String::toLowerCase,
+          h -> Collections.list(request.getHeaders(h)),
+          (a, b) -> {
+            a.addAll(b);
+            return a;
+          }
+        )) : null;
   }
 
 }
