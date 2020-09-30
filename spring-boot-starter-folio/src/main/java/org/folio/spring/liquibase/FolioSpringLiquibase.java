@@ -3,12 +3,14 @@ package org.folio.spring.liquibase;
 import liquibase.exception.LiquibaseException;
 import liquibase.integration.spring.SpringLiquibase;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.logging.log4j.util.Strings;
+import org.apache.commons.lang3.StringUtils;
 
 import java.sql.SQLException;
+import java.util.regex.Pattern;
 
 @Slf4j
 public class FolioSpringLiquibase extends SpringLiquibase {
+  private static final Pattern NON_WORD_CHARACTERS = Pattern.compile("[^a-zA-Z0-9_]");
 
   @Override
   public void afterPropertiesSet() {
@@ -17,9 +19,15 @@ public class FolioSpringLiquibase extends SpringLiquibase {
 
   public void performLiquibaseUpdate() throws LiquibaseException {
     var defaultSchema = getDefaultSchema();
-    if (Strings.isNotBlank(defaultSchema)) {
-      try (var c = getDataSource().getConnection()) {
-        c.createStatement().execute("create schema if not exists " + defaultSchema + ";");
+    if (StringUtils.isNotBlank(defaultSchema)) {
+      //DB schema name check to prevent SQL injection.
+      if (NON_WORD_CHARACTERS.matcher(defaultSchema).find()) {
+        throw new IllegalArgumentException("Invalid schema name: " + defaultSchema);
+      }
+      try (var connection = getDataSource().getConnection()) {
+        try (var statement = connection.createStatement()) {
+          statement.execute("create schema if not exists " + defaultSchema + ";");
+        }
       } catch (SQLException e) {
         e.printStackTrace();
         log.error("Default schema " + defaultSchema + " has not been created.", e);

@@ -61,6 +61,12 @@
       <groupId>io.springfox</groupId>
       <artifactId>springfox-boot-starter</artifactId>
       <version>${springfox-boot-starter.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.mapstruct</groupId>
+          <artifactId>mapstruct</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.openapitools</groupId>
@@ -111,11 +117,10 @@
               <goal>generate</goal>
             </goals>
             <configuration>
-              <!--              <verbose>true</verbose>-->
               <inputSpec>${tenant.yaml.file}</inputSpec>
               <output>${project.build.directory}/generated-sources</output>
               <generatorName>spring</generatorName>
-              <modelPackage>${project.groupId}.tenant.rest.dto</modelPackage>
+              <modelPackage>${project.groupId}.tenant.domain.dto</modelPackage>
               <apiPackage>${project.groupId}.tenant.rest.resources</apiPackage>
               <generateApis>true</generateApis>
               <generateApiTests>true</generateApiTests>
@@ -124,10 +129,8 @@
               <modelsToGenerate>error,errors,parameter,metadata,tenantAttributes</modelsToGenerate>
               <generateModelTests>false</generateModelTests>
               <generateModelDocumentation>true</generateModelDocumentation>
-              <!--              <configHelp>true</configHelp>-->
               <configOptions>
                 <java8>true</java8>
-                <!--                <openFeign>true</openFeign>-->
                 <dateLibrary>java8</dateLibrary>
                 <interfaceOnly>true</interfaceOnly>
               </configOptions>

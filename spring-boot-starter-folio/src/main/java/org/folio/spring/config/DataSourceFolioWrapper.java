@@ -1,32 +1,38 @@
 package org.folio.spring.config;
 
-import org.apache.logging.log4j.util.Strings;
-import org.folio.spring.FolioExecutionContextService;
+import org.apache.commons.lang3.StringUtils;
+import org.folio.spring.FolioExecutionContext;
 import org.springframework.jdbc.datasource.DelegatingDataSource;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.Objects;
+import java.util.regex.Pattern;
 
 public class DataSourceFolioWrapper extends DelegatingDataSource {
-  private final FolioExecutionContextService folioExecutionContextService;
+  private static final Pattern NON_WORD_CHARACTERS = Pattern.compile("[^a-zA-Z0-9_]");
 
-  public DataSourceFolioWrapper(DataSource targetDataSource, FolioExecutionContextService folioExecutionContextService) {
+  private final FolioExecutionContext folioExecutionContext;
+
+  public DataSourceFolioWrapper(DataSource targetDataSource, FolioExecutionContext folioExecutionContext) {
     super(targetDataSource);
-    this.folioExecutionContextService = folioExecutionContextService;
+    this.folioExecutionContext = folioExecutionContext;
   }
 
   private Connection prepareConnectionSafe(Connection connection) throws SQLException {
-    if (Objects.nonNull(connection)) {
-      var folioExecutionContext = folioExecutionContextService.getFolioExecutionContext();
+    if (connection != null) {
 
+      var schemaName = "public";
       var tenantId = folioExecutionContext.getTenantId();
-      connection.prepareStatement(
-        String.format(
-          "SET search_path = %s;",
-          Strings.isBlank(tenantId) ? "public" : folioExecutionContext.getFolioModuleMetadata().getDBSchemaName(tenantId) + ", public")
-      ).execute();
+      if (StringUtils.isNotBlank(tenantId)) {
+        if (NON_WORD_CHARACTERS.matcher(tenantId).find()) {
+          throw new IllegalArgumentException("Invalid tenant name: " + tenantId);
+        }
+        schemaName = folioExecutionContext.getFolioModuleMetadata().getDBSchemaName(tenantId) + ", public";
+      }
+      try (var statement = connection.prepareStatement(String.format("SET search_path = %s;", schemaName))) {
+        statement.execute();
+      }
 
       return connection;
     }

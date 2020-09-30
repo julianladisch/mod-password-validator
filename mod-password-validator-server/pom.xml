@@ -25,7 +25,7 @@
   <properties>
     <java.version>11</java.version>
     <openapi-generator.version>4.3.1</openapi-generator.version>
-
+    <mapstruct.version>1.3.1.Final</mapstruct.version>
     <!-- -->
     <validator-registry.yaml.file>${project.basedir}/src/main/resources/swagger.api/validator-registry.yaml</validator-registry.yaml.file>
     <password-validator.yaml.file>${project.basedir}/src/main/resources/swagger.api/password-validator.yaml</password-validator.yaml.file>
@@ -37,6 +37,11 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
     </dependency>
 
     <dependency>
@@ -63,6 +68,18 @@
     </dependency>
 
     <dependency>
+      <groupId>org.mapstruct</groupId>
+      <artifactId>mapstruct</artifactId>
+      <version>${mapstruct.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.mapstruct</groupId>
+      <artifactId>mapstruct-processor</artifactId>
+      <version>${mapstruct.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
       <groupId>org.folio</groupId>
       <artifactId>spring-boot-starter-folio</artifactId>
       <version>0.0.1</version>
@@ -72,10 +89,100 @@
 
   <build>
     <plugins>
+
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
+        <configuration>
+          <layers>
+            <enabled>true</enabled>
+          </layers>
+        </configuration>
       </plugin>
+
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>3.2.0</version>
+        <executions>
+          <!--<execution>
+            <id>copy-resources</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${basedir}/target/classes/apidocs/raml</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${ramlfiles_path}</directory>
+                  <filtering>true</filtering>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+          <execution>
+            <id>copy-resources-2</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${basedir}/target/classes/apidocs/raml-util</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${ramlfiles_util_path}</directory>
+                  <filtering>true</filtering>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>-->
+          <execution>
+            <id>filter-descriptor-inputs</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${basedir}/descriptors</directory>
+                  <include>*Descriptor*-template.json</include>
+                  <filtering>true</filtering>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>com.coderplus.maven.plugins</groupId>
+        <artifactId>copy-rename-maven-plugin</artifactId>
+        <version>1.0.1</version>
+        <executions>
+          <execution>
+            <id>rename-descriptor-outputs</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>rename</goal>
+            </goals>
+            <configuration>
+              <fileSets>
+                <fileSet>
+                  <sourceFile>${project.build.directory}/ModuleDescriptor-template.json</sourceFile>
+                  <destinationFile>${project.build.directory}/ModuleDescriptor.json</destinationFile>
+                </fileSet>
+                <fileSet>
+                  <sourceFile>${project.build.directory}/DeploymentDescriptor-template.json</sourceFile>
+                  <destinationFile>${project.build.directory}/DeploymentDescriptor.json</destinationFile>
+                </fileSet>
+              </fileSets>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
@@ -106,11 +213,10 @@
               <goal>generate</goal>
             </goals>
             <configuration>
-              <!--              <verbose>true</verbose>-->
               <inputSpec>${validator-registry.yaml.file}</inputSpec>
               <output>${project.build.directory}/generated-sources</output>
               <generatorName>spring</generatorName>
-              <modelPackage>${project.groupId}.pv.rest.dto</modelPackage>
+              <modelPackage>${project.groupId}.pv.domain.dto</modelPackage>
               <apiPackage>${project.groupId}.pv.rest.resources</apiPackage>
               <generateApis>true</generateApis>
               <generateApiTests>true</generateApiTests>
@@ -121,11 +227,9 @@
               <generateSupportingFiles>true</generateSupportingFiles>
               <supportingFilesToGenerate>ApiUtil.java</supportingFilesToGenerate>
               <generateModelDocumentation>true</generateModelDocumentation>
-              <!--              <configHelp>true</configHelp>-->
               <configOptions>
                 <java8>true</java8>
-                <openFeign>true</openFeign>
-                <dateLibrary>java8</dateLibrary>
+                <dateLibrary>java</dateLibrary>
                 <interfaceOnly>true</interfaceOnly>
               </configOptions>
 
@@ -137,11 +241,10 @@
               <goal>generate</goal>
             </goals>
             <configuration>
-              <!--              <verbose>true</verbose>-->
               <inputSpec>${password-validator.yaml.file}</inputSpec>
               <output>${project.build.directory}/generated-sources</output>
               <generatorName>spring</generatorName>
-              <modelPackage>${project.groupId}.pv.rest.dto</modelPackage>
+              <modelPackage>${project.groupId}.pv.domain.dto</modelPackage>
               <apiPackage>${project.groupId}.pv.rest.resources</apiPackage>
               <generateApis>true</generateApis>
               <generateApiTests>true</generateApiTests>
@@ -151,14 +254,11 @@
               <generateModelTests>false</generateModelTests>
               <generateSupportingFiles>false</generateSupportingFiles>
               <generateModelDocumentation>true</generateModelDocumentation>
-              <!--              <configHelp>true</configHelp>-->
               <configOptions>
                 <java8>true</java8>
-                <openFeign>true</openFeign>
-                <dateLibrary>java8</dateLibrary>
+                <dateLibrary>java</dateLibrary>
                 <interfaceOnly>true</interfaceOnly>
               </configOptions>
-
             </configuration>
           </execution>
         </executions>

@@ -1,21 +1,21 @@
 package org.folio.spring.config;
 
-import org.folio.spring.FolioExecutionContextService;
-import org.springframework.beans.BeansException;
+import org.folio.spring.FolioExecutionContext;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 
 import javax.sql.DataSource;
 
 public class DataSourceSchemaAdvisorBeanPostProcessor implements BeanPostProcessor {
-  private final FolioExecutionContextService folioExecutionContextService;
+  private final FolioExecutionContext folioExecutionContext;
 
-  public DataSourceSchemaAdvisorBeanPostProcessor(FolioExecutionContextService folioExecutionContextService) {
-    this.folioExecutionContextService = folioExecutionContextService;
+  public DataSourceSchemaAdvisorBeanPostProcessor(FolioExecutionContext folioExecutionContext) {
+    this.folioExecutionContext = folioExecutionContext;
   }
 
-  public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+  @Override
+  public Object postProcessAfterInitialization(Object bean, String beanName) {
     if ("dataSource".equals(beanName)) {
-      return new DataSourceFolioWrapper((DataSource) bean, folioExecutionContextService);
+      return new DataSourceFolioWrapper((DataSource) bean, folioExecutionContext);
     } else {
       return bean;
     }
