@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.liquibase.FolioSpringLiquibase;
 import org.folio.tenant.domain.dto.TenantAttributes;
-import org.folio.tenant.rest.resources.TenantApi;
+import org.folio.tenant.rest.resource.TenantApi;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.http.HttpStatus;

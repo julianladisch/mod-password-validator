@@ -3,7 +3,7 @@ package org.folio.pv.controller;
 import lombok.extern.slf4j.Slf4j;
 import org.folio.pv.domain.dto.Password;
 import org.folio.pv.domain.dto.ValidationResult;
-import org.folio.pv.rest.resources.PasswordApi;
+import org.folio.pv.rest.resource.PasswordApi;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;

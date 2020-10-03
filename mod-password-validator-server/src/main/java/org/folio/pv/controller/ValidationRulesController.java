@@ -3,7 +3,7 @@ package org.folio.pv.controller;
 import lombok.extern.slf4j.Slf4j;
 import org.folio.pv.domain.dto.ValidationRule;
 import org.folio.pv.domain.dto.ValidationRuleCollection;
-import org.folio.pv.rest.resources.RulesApi;
+import org.folio.pv.rest.resource.RulesApi;
 import org.folio.pv.service.ValidationRuleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

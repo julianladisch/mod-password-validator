@@ -1,7 +1,7 @@
 package org.folio.pv.controller;
 
 import lombok.extern.slf4j.Slf4j;
-import org.folio.tenant.rest.resources.TenantApi;
+import org.folio.tenant.rest.resource.TenantApi;
 
 // an example how to override tenant controller
 // tne name of the bean MUST be folioTenantController see org.folio.spring.controller.TenantController for details
