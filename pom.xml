@@ -16,6 +16,7 @@
   <modules>
     <module>mod-password-validator-server</module>
     <module>spring-boot-starter-folio</module>
+    <module>mod-password-validator-quarkus</module>
   </modules>
 
 </project>

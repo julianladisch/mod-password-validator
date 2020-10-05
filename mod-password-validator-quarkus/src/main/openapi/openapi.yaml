@@ -1,0 +1,494 @@
+openapi: 3.0.0
+info:
+  title: Validator Registry
+  version: v1
+servers:
+  - url: /tenant/
+paths:
+  /rules:
+    get:
+      description: Get a list of existing validation rules for a tenant
+      operationId: getTenantRules
+      parameters:
+        - description: Skip over a number of elements by specifying an offset value
+            for the query
+          explode: true
+          in: query
+          name: offset
+          required: false
+          schema:
+            default: 0
+            maximum: 2147483647
+            minimum: 0
+            type: integer
+          style: form
+        - description: Limit the number of elements returned in the response
+          explode: true
+          in: query
+          name: limit
+          required: false
+          schema:
+            default: 10
+            maximum: 2147483647
+            minimum: 0
+            type: integer
+          style: form
+        - description: A query string to filter rules based on matching criteria in
+            fields.
+          explode: true
+          in: query
+          name: query
+          required: false
+          schema:
+            type: string
+          style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/validationRuleCollection'
+        "500":
+          content:
+            text/plain:
+              schema:
+                example: Internal server error
+                type: string
+          description: Internal server error
+      x-accepts: application/json
+    post:
+      description: Add a rule to a tenant
+      operationId: postTenantRules
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/validationRule'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/validationRule'
+        "400":
+          content:
+            text/plain:
+              schema:
+                example: Bad request
+                type: string
+          description: Bad request
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+          description: Validation errors
+        "500":
+          content:
+            text/plain:
+              schema:
+                example: Internal server error
+                type: string
+          description: Internal server error
+      x-contentType: application/json
+      x-accepts: application/json
+    put:
+      description: Enable/disable/change the rule
+      operationId: putTenantRule
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/validationRule'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/validationRule'
+        "400":
+          content:
+            text/plain:
+              schema:
+                example: Bad request
+                type: string
+          description: Bad request
+        "404":
+          content:
+            text/plain:
+              schema:
+                example: Rule not found
+                type: string
+          description: Rule not found
+        "500":
+          content:
+            text/plain:
+              schema:
+                example: Internal server error
+                type: string
+          description: Internal server error
+      x-contentType: application/json
+      x-accepts: application/json
+  /rules/{ruleId}:
+    get:
+      operationId: getTenantRuleById
+      parameters:
+        - explode: false
+          in: path
+          name: ruleId
+          required: true
+          schema:
+            type: string
+          style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/validationRule'
+        "404":
+          content:
+            text/plain:
+              schema:
+                example: Rule not found
+                type: string
+          description: Rule not found
+        "500":
+          content:
+            text/plain:
+              schema:
+                example: Internal server error
+                type: string
+          description: Internal server error
+      x-accepts: application/json
+components:
+  parameters:
+    trait_queryable_query:
+      description: A query string to filter rules based on matching criteria in fields.
+      explode: true
+      in: query
+      name: query
+      required: false
+      schema:
+        type: string
+      style: form
+    trait_pageable_offset:
+      description: Skip over a number of elements by specifying an offset value for
+        the query
+      explode: true
+      in: query
+      name: offset
+      required: false
+      schema:
+        default: 0
+        maximum: 2147483647
+        minimum: 0
+        type: integer
+      style: form
+    trait_pageable_limit:
+      description: Limit the number of elements returned in the response
+      explode: true
+      in: query
+      name: limit
+      required: false
+      schema:
+        default: 10
+        maximum: 2147483647
+        minimum: 0
+        type: integer
+      style: form
+  responses:
+    trait_validate_422:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/errors'
+      description: Validation errors
+  schemas:
+    validationRuleCollection:
+      additionalProperties: false
+      description: Rules Collection
+      example:
+        totalRecords: 6
+        rules:
+          - implementationReference: implementationReference
+            errMessageId: errMessageId
+            metadata:
+              createdByUserId: createdByUserId
+              updatedByUsername: updatedByUsername
+              createdDate: 2000-01-23T04:56:07.000+00:00
+              createdByUsername: createdByUsername
+              updatedDate: 2000-01-23T04:56:07.000+00:00
+              updatedByUserId: updatedByUserId
+            expression: expression
+            orderNo: 0
+            validationType: Soft
+            moduleName: moduleName
+            description: description
+            type: RegExp
+            name: name
+            id: id
+            state: Enabled
+            ruleId: ruleId
+          - implementationReference: implementationReference
+            errMessageId: errMessageId
+            metadata:
+              createdByUserId: createdByUserId
+              updatedByUsername: updatedByUsername
+              createdDate: 2000-01-23T04:56:07.000+00:00
+              createdByUsername: createdByUsername
+              updatedDate: 2000-01-23T04:56:07.000+00:00
+              updatedByUserId: updatedByUserId
+            expression: expression
+            orderNo: 0
+            validationType: Soft
+            moduleName: moduleName
+            description: description
+            type: RegExp
+            name: name
+            id: id
+            state: Enabled
+            ruleId: ruleId
+      properties:
+        rules:
+          description: List of rules
+          items:
+            $ref: '#/components/schemas/validationRule'
+          type: array
+        totalRecords:
+          type: integer
+      required:
+        - rules
+        - totalRecords
+      type: object
+    validationRule:
+      additionalProperties: false
+      description: Rule Schema
+      example:
+        implementationReference: implementationReference
+        errMessageId: errMessageId
+        metadata:
+          createdByUserId: createdByUserId
+          updatedByUsername: updatedByUsername
+          createdDate: 2000-01-23T04:56:07.000+00:00
+          createdByUsername: createdByUsername
+          updatedDate: 2000-01-23T04:56:07.000+00:00
+          updatedByUserId: updatedByUserId
+        expression: expression
+        orderNo: 0
+        validationType: Soft
+        moduleName: moduleName
+        description: description
+        type: RegExp
+        name: name
+        id: id
+        state: Enabled
+        ruleId: ruleId
+      properties:
+        id:
+          description: Rule id
+          type: string
+        ruleId:
+          description: Rule id
+          type: string
+        name:
+          description: Rule name
+          type: string
+        type:
+          description: 'Rule type: RegExp or Programmatic'
+          enum:
+            - RegExp
+            - Programmatic
+          type: string
+        validationType:
+          description: 'Validation type: Strong or Soft. In case of soft rule validation
+            failure the password processing can be continued'
+          enum:
+            - Soft
+            - Strong
+          type: string
+        state:
+          description: 'Rule state: Enabled or Disabled'
+          enum:
+            - Enabled
+            - Disabled
+          type: string
+        moduleName:
+          description: Name of the module
+          type: string
+        implementationReference:
+          description: For Programmatic rules ImplementationReference reflects the
+            approach to call particular validation implementation whether it REST
+            endpoint or local service
+          type: string
+        expression:
+          description: For RegExp type contains the actual expression
+          type: string
+        description:
+          description: Validation rule description
+          type: string
+        orderNo:
+          description: Defines the order of rule processing
+          type: integer
+        errMessageId:
+          description: message identifier which should be returned to UI in case the
+            rule validation fails
+          type: string
+        metadata:
+          $ref: '#/components/schemas/metadata'
+      required:
+        - moduleName
+        - name
+        - orderNo
+        - state
+        - type
+        - validationType
+      type: object
+    errors:
+      additionalProperties: false
+      description: A set of errors
+      properties:
+        errors:
+          description: List of errors
+          items:
+            $ref: '#/components/schemas/error'
+          type: array
+        total_records:
+          description: Total number of errors
+          type: integer
+      type: object
+    validationRules:
+      additionalProperties: false
+      description: Rules Collection
+      example:
+        totalRecords: 6
+        rules:
+          - implementationReference: implementationReference
+            errMessageId: errMessageId
+            metadata:
+              createdByUserId: createdByUserId
+              updatedByUsername: updatedByUsername
+              createdDate: 2000-01-23T04:56:07.000+00:00
+              createdByUsername: createdByUsername
+              updatedDate: 2000-01-23T04:56:07.000+00:00
+              updatedByUserId: updatedByUserId
+            expression: expression
+            orderNo: 0
+            validationType: Soft
+            moduleName: moduleName
+            description: description
+            type: RegExp
+            name: name
+            id: id
+            state: Enabled
+            ruleId: ruleId
+          - implementationReference: implementationReference
+            errMessageId: errMessageId
+            metadata:
+              createdByUserId: createdByUserId
+              updatedByUsername: updatedByUsername
+              createdDate: 2000-01-23T04:56:07.000+00:00
+              createdByUsername: createdByUsername
+              updatedDate: 2000-01-23T04:56:07.000+00:00
+              updatedByUserId: updatedByUserId
+            expression: expression
+            orderNo: 0
+            validationType: Soft
+            moduleName: moduleName
+            description: description
+            type: RegExp
+            name: name
+            id: id
+            state: Enabled
+            ruleId: ruleId
+      properties:
+        rules:
+          description: List of rules
+          items:
+            $ref: '#/components/schemas/validationRule'
+          type: array
+        totalRecords:
+          type: integer
+      required:
+        - rules
+        - totalRecords
+      type: object
+    metadata:
+      additionalProperties: false
+      description: Metadata about creation and changes to records, provided by the
+        server (client should not provide)
+      example:
+        createdByUserId: createdByUserId
+        updatedByUsername: updatedByUsername
+        createdDate: 2000-01-23T04:56:07.000+00:00
+        createdByUsername: createdByUsername
+        updatedDate: 2000-01-23T04:56:07.000+00:00
+        updatedByUserId: updatedByUserId
+      properties:
+        createdDate:
+          description: Date and time when the record was created
+          format: date-time
+          type: string
+        createdByUserId:
+          description: ID of the user who created the record (when available)
+          pattern: ^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$
+          type: string
+        createdByUsername:
+          description: Username of the user who created the record (when available)
+          type: string
+        updatedDate:
+          description: Date and time when the record was last updated
+          format: date-time
+          type: string
+        updatedByUserId:
+          description: ID of the user who last updated the record (when available)
+          pattern: ^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$
+          type: string
+        updatedByUsername:
+          description: Username of the user who last updated the record (when available)
+          type: string
+      required:
+        - createdDate
+      title: Metadata Schema
+      type: object
+    error:
+      additionalProperties: false
+      description: An error
+      properties:
+        message:
+          description: Error message text
+          type: string
+        type:
+          description: Error message type
+          type: string
+        code:
+          description: Error message code
+          type: string
+        parameters:
+          additionalProperties: false
+          description: List of key/value parameters of an error
+          items:
+            $ref: '#/components/schemas/parameter'
+          type: array
+      required:
+        - message
+      type: object
+    parameters:
+      additionalProperties: false
+      description: List of key/value parameters of an error
+      items:
+        $ref: '#/components/schemas/parameter'
+      type: array
+    parameter:
+      additionalProperties: false
+      description: List of key/value parameters of an error
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+      required:
+        - key
+      type: object
