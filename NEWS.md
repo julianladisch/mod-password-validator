@@ -1,3 +1,6 @@
+## 2020-10-06 v1.8.0
+ * MODPWD-39 Migrate to JDK 11 and RMB 31.x
+
 ## 2020-06-11 v1.7.0
  * Update password complexity requirements (MODPWD-35)
  * Update RMB to v30.0.2 and Vertx to 3.9.1 (MODPWD-37)
