@@ -22,7 +22,7 @@
     <vertx-version>3.9.2</vertx-version>
     <rest-assured.version>4.3.1</rest-assured.version>
     <aspectj.version>1.9.6</aspectj.version>
-    <junit.version>4.13</junit.version>
+    <junit.version>4.13.1</junit.version>
     <JUnitParams.version>1.1.1</JUnitParams.version>
     <mockito.version>3.5.9</mockito.version>
   </properties>
