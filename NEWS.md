@@ -1,3 +1,7 @@
+## 2020-10-23 v1.8.1
+ * Fix logging issue
+ * Update RMB to v31.1.2 and Vertx to 3.9.3
+
 ## 2020-10-06 v1.8.0
  * MODPWD-39 Migrate to JDK 11 and RMB 31.x
 
