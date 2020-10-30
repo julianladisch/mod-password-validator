@@ -1,6 +1,6 @@
 package org.folio.spring.scope.filter;
 
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import org.folio.spring.DefaultFolioExecutionContext;
 import org.folio.spring.FolioModuleMetadata;
 import org.folio.spring.scope.FolioExecutionScopeExecutionContextManager;
@@ -15,7 +15,7 @@ import java.io.IOException;
 
 import static org.folio.spring.utils.RequestUtils.getHttpHeadersFromRequest;
 
-@Slf4j
+@Log4j2
 public class FolioExecutionScopeFilter extends GenericFilterBean {
   private final FolioModuleMetadata folioModuleMetadata;
 

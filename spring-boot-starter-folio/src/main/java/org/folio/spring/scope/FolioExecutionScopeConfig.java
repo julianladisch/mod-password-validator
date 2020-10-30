@@ -14,10 +14,21 @@ import static org.folio.spring.scope.FolioExecutionScopeExecutionContextManager.
 
 @Configuration
 public class FolioExecutionScopeConfig {
+  private final EmptyFolioExecutionContextHolder emptyFolioExecutionContextHolder;
+
+  @Autowired
+  public FolioExecutionScopeConfig(EmptyFolioExecutionContextHolder emptyFolioExecutionContextHolder) {
+    this.emptyFolioExecutionContextHolder = emptyFolioExecutionContextHolder;
+  }
 
   @Bean
-  public CustomScopeRegistryBeanFactoryPostProcessor customScopeRegistryBeanFactoryPostProcessor() {
+  public static CustomScopeRegistryBeanFactoryPostProcessor customScopeRegistryBeanFactoryPostProcessor() {
     return new CustomScopeRegistryBeanFactoryPostProcessor();
+  }
+
+  @Bean
+  public static EmptyFolioExecutionContextHolder emptyFolioExecutionContext(@Autowired FolioModuleMetadata folioModuleMetadata) {
+    return new EmptyFolioExecutionContextHolder(folioModuleMetadata);
   }
 
   @Bean
@@ -26,13 +37,8 @@ public class FolioExecutionScopeConfig {
   }
 
   @Bean
-  public EmptyFolioExecutionContextHolder emptyFolioExecutionContext(@Autowired FolioModuleMetadata folioModuleMetadata) {
-    return new EmptyFolioExecutionContextHolder(folioModuleMetadata);
-  }
-
-  @Bean
   @Scope(value = FOLIO_EXECUTION, proxyMode = ScopedProxyMode.INTERFACES)
-  public FolioExecutionContext folioExecutionContext(@Autowired EmptyFolioExecutionContextHolder emptyFolioExecutionContextHolder) {
+  public FolioExecutionContext folioExecutionContext() {
     var folioExecutionContext = getFolioExecutionContext();
     return folioExecutionContext != null ? folioExecutionContext : emptyFolioExecutionContextHolder.getEmptyFolioExecutionContext();
   }

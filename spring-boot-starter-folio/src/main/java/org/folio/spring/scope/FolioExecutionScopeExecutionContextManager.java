@@ -1,7 +1,7 @@
 package org.folio.spring.scope;
 
 import lombok.experimental.UtilityClass;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import org.folio.spring.FolioExecutionContext;
 import org.springframework.core.NamedInheritableThreadLocal;
 
@@ -10,7 +10,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 @UtilityClass
-@Slf4j
+@Log4j2
 public class FolioExecutionScopeExecutionContextManager {
   private static final String CONVERSATION_ID_KEY = "conversationId";
 

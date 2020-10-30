@@ -2,13 +2,13 @@ package org.folio.spring.liquibase;
 
 import liquibase.exception.LiquibaseException;
 import liquibase.integration.spring.SpringLiquibase;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 
 import java.sql.SQLException;
 import java.util.regex.Pattern;
 
-@Slf4j
+@Log4j2
 public class FolioSpringLiquibase extends SpringLiquibase {
   private static final Pattern NON_WORD_CHARACTERS = Pattern.compile("[^a-zA-Z0-9_]");
 
