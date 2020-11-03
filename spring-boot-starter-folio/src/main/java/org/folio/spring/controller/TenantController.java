@@ -1,7 +1,7 @@
 package org.folio.spring.controller;
 
 import liquibase.exception.LiquibaseException;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.liquibase.FolioSpringLiquibase;
 import org.folio.tenant.domain.dto.TenantAttributes;
@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
 
-@Slf4j
+@Log4j2
 @RestController("defaultTenantController")
 @RequestMapping(value = "/_/")
 @ConditionalOnMissingBean(name = "folioTenantController")

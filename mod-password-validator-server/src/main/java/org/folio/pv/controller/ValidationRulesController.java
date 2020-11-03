@@ -1,6 +1,6 @@
 package org.folio.pv.controller;
 
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import org.folio.pv.domain.dto.ValidationRule;
 import org.folio.pv.domain.dto.ValidationRuleCollection;
 import org.folio.pv.rest.resource.RulesApi;
@@ -15,7 +15,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 
-@Slf4j
+@Log4j2
 @RestController
 @RequestMapping(value = "/tenant/")
 public class ValidationRulesController implements RulesApi {

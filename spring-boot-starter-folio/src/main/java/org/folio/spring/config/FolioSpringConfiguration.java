@@ -1,8 +1,10 @@
 package org.folio.spring.config;
 
+import feign.Client;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.FolioModuleMetadata;
+import org.folio.spring.client.EnrichUrlAndHeadersClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,6 +42,12 @@ public class FolioSpringConfiguration {
         return tenantId.toLowerCase() + schemaSuffix;
       }
     };
+  }
+
+  @Bean
+  @ConditionalOnMissingBean
+  public Client enrichUrlAndHeadersClient(@Autowired FolioExecutionContext folioExecutionContext) {
+    return new EnrichUrlAndHeadersClient(folioExecutionContext);
   }
 
   @Bean
