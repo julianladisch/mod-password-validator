@@ -158,8 +158,4 @@ public class ValidationRuleService {
     }
   }
 
-  public void doUserTestCall() {
-    var userNameByUserId = getUserNameByUserId("963d44ec-f89f-4608-a998-ab53ec31c688");
-    System.out.println(userNameByUserId);
-  }
 }
