@@ -3,10 +3,12 @@ package org.folio.pv.client;
 import java.util.ArrayList;
 
 import feign.Client;
+import feign.RequestInterceptor;
 import feign.codec.Decoder;
 import feign.okhttp.OkHttpClient;
 import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.http.HttpMessageConverters;
 import org.springframework.cloud.openfeign.clientconfig.OkHttpFeignConfiguration;
 import org.springframework.cloud.openfeign.support.SpringDecoder;
@@ -36,6 +38,12 @@ public class PwnedClientConfiguration {
     var httpMessageConverters = new HttpMessageConverters(decoderConverters);
 
     return new SpringDecoder(() -> httpMessageConverters);
+  }
+
+  @Bean
+  public RequestInterceptor addPaddingInterceptor(
+      @Value("${pwned-passwords.padding.enabled}") boolean paddingEnabled) {
+    return new PwnedClientAddPaddingInterceptor(paddingEnabled);
   }
 
 }

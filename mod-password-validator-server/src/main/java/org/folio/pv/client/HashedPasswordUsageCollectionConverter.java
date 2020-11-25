@@ -33,12 +33,11 @@ public class HashedPasswordUsageCollectionConverter<T extends Collection<HashedP
 
   private static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
 
-  private Pattern usagePattern = Pattern.compile("\\s*([0-9a-fA-F]+)\\s*:\\s*(\\d+)\\s*");
+  private final Pattern usagePattern = Pattern.compile("\\s*([0-9a-fA-F]+)\\s*:\\s*(\\d+)\\s*");
 
 
-  @Override
-  protected boolean supports(Class<?> clazz) {
-    return false;
+  public HashedPasswordUsageCollectionConverter() {
+    super(MediaType.TEXT_PLAIN);
   }
 
   @Override
@@ -107,6 +106,23 @@ public class HashedPasswordUsageCollectionConverter<T extends Collection<HashedP
     return result;
   }
 
+  @Override
+  protected boolean supports(Class<?> clazz) {
+    return false;
+  }
+
+  @Override
+  protected void writeInternal(T hashedPasswordUsages, Type type,
+      HttpOutputMessage outputMessage) throws HttpMessageNotWritableException {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  protected T readInternal(Class<? extends T> clazz,
+      HttpInputMessage inputMessage) throws HttpMessageNotReadableException {
+    throw new UnsupportedOperationException();
+  }
+
   private HashedPasswordUsage parseUsage(String line, int lineNumber, HttpInputMessage inputMessage) {
     Matcher m = usagePattern.matcher(line);
 
@@ -147,18 +163,6 @@ public class HashedPasswordUsageCollectionConverter<T extends Collection<HashedP
     }
   }
   
-  @Override
-  protected void writeInternal(T hashedPasswordUsages, Type type,
-      HttpOutputMessage outputMessage) throws IOException, HttpMessageNotWritableException {
-    throw new UnsupportedOperationException(); 
-  }
-
-  @Override
-  protected T readInternal(Class<? extends T> clazz,
-      HttpInputMessage inputMessage) throws IOException, HttpMessageNotReadableException {
-    throw new UnsupportedOperationException();
-  }
-
   private static BufferedReader getReader(HttpInputMessage inputMessage) throws IOException {
     return new BufferedReader(new InputStreamReader(inputMessage.getBody(), getCharset(inputMessage.getHeaders())));
   }
