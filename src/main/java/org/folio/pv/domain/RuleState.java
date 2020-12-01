@@ -1,13 +1,13 @@
 package org.folio.pv.domain;
 
-public enum RuleType {
-  REGEXP("RegExp"),
-  PROGRAMMATIC("Programmatic"),
-  PWNEDPASSWORD("PwnedPassword");
+public enum RuleState {
+
+  ENABLED("Enabled"),
+  DISABLED("Disabled");
 
   private final String value;
 
-  RuleType(String value) {
+  RuleState(String value) {
     this.value = value;
   }
 
@@ -20,8 +20,8 @@ public enum RuleType {
     return String.valueOf(value);
   }
 
-  public static RuleType fromValue(String value) {
-    for (RuleType rt : RuleType.values()) {
+  public static RuleState fromValue(String value) {
+    for (RuleState rt : RuleState.values()) {
       if (rt.value.equals(value)) {
         return rt;
       }

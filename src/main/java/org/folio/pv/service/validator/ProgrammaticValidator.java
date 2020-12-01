@@ -6,6 +6,9 @@ import java.io.UnsupportedEncodingException;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -17,19 +20,14 @@ import org.folio.pv.domain.dto.ValidationResult;
 import org.folio.pv.domain.entity.PasswordValidationRule;
 import org.folio.spring.FolioExecutionContext;
 
-public class ProgrammaticValidator implements Validator {
+@RequiredArgsConstructor(access = AccessLevel.PACKAGE)
+@Log4j2
+class ProgrammaticValidator implements Validator {
 
   private final PasswordValidationRule rule;
   private final FolioExecutionContext folioExecutionContext;
   private final ObjectMapper jacksonObjectMapper;
 
-
-  public ProgrammaticValidator(PasswordValidationRule rule, FolioExecutionContext folioExecutionContext,
-      ObjectMapper jacksonObjectMapper) {
-    this.rule = rule;
-    this.folioExecutionContext = folioExecutionContext;
-    this.jacksonObjectMapper = jacksonObjectMapper;
-  }
 
   @Override
   public ValidationErrors validate(String password, UserData user) {
@@ -39,14 +37,16 @@ public class ProgrammaticValidator implements Validator {
       addHeaders(httpPost);
       addBody(httpPost, password, user);
 
+      log.info("Sending validation request to: {}", httpPost.getURI().toURL());
       var response = client.execute(httpPost);
 
       var buffer = new ByteArrayOutputStream();
       response.getEntity().writeTo(buffer);
 
-      String body = new String(buffer.toByteArray());
-
       var statusCode = response.getStatusLine().getStatusCode();
+      var body = new String(buffer.toByteArray());
+      log.info("Validation response: statusCode = {}, body = [{}]", statusCode, body);
+
       if (statusCode < 200 || statusCode > 202) {
         if (ValidationType.STRONG.getValue().equals(rule.getValidationType())) {
           throw new RuntimeException(body);
