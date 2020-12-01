@@ -92,7 +92,7 @@ public class ValidationRuleServiceImpl implements ValidationRuleService {
 
       var errors = validator.validate(password, userData);
 
-      log.info("Validation errors: {}", errors.hasErrors() ? "'None'" : errors.getErrorMessages());
+      log.info("Validation errors: {}", !errors.hasErrors() ? "'None'" : errors.getErrorMessages());
 
       validationMessages.addAll(errors.getErrorMessages());
 
