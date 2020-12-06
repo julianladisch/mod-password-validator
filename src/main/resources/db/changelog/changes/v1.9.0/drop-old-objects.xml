@@ -3,10 +3,5 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
-
-    <include file="changes/v1.9.0/create-old-validation-rules-table.xml"/>
-    <include file="changes/v1.9.0/create-rule-types.xml"/>
-    <include file="changes/v1.9.0/create-new-validation-rules-table.xml"/>
-    <include file="changes/v1.9.0/drop-old-objects.xml"/>
-    <!--<include file="changes/v1.9.0/initial_schema.xml"/>-->
+    <!-- TO DO -->
 </databaseChangeLog>
