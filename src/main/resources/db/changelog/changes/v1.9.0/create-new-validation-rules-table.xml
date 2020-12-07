@@ -5,8 +5,8 @@
                     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
 
     <changeSet id="MODLOGIN-34@@create-new-validation-rules-table" author="dmtkachenko">
-        <createTable tableName="ValidationRules">
-            <column name="id" type="" defaultValueComputed="gen_random_uuid()">
+        <createTable tableName="validationrules">
+            <column name="id" type="uuid" defaultValueComputed="gen_random_uuid()">
                 <constraints primaryKey="true" primaryKeyName="pk_validationrules"
                              nullable="false"/>
             </column>
@@ -46,11 +46,11 @@
 
     <changeSet id="MODLOGIN-34@@copy-data-from-old-validation-rules-table" author="dmtkachenko">
         <sql dbms="postgresql">
-            INSERT INTO ValidationRules (id, name, rule_type, rule_state, validation_type,
+            INSERT INTO validationrules (id, name, rule_type, rule_state, validation_type,
                                         order_no, rule_expression, implementation_reference,
                                         module_name, description, err_message_id,
                                         created_date, created_by_username)
-            SELECT (jsonb ->> 'id')::uuid                           id,
+            SELECT id,
                    jsonb ->> 'name'                    as           name,
                    (jsonb ->> 'type')::RuleType                     ruleType,
                    (jsonb ->> 'state')::RuleState                   ruleState,
@@ -68,7 +68,7 @@
     </changeSet>
 
     <changeSet id="MODLOGIN-34@@add-pwned-password-rule" author="dmtkachenko">
-        <insert tableName="ValidationRules">
+        <insert tableName="validationrules">
             <column name="id" type="uuid" valueComputed="gen_random_uuid()"/>
             <column name="name" value="not_compromised"/>
             <column name="rule_type" value="PwnedPassword"/>
