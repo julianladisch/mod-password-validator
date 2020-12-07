@@ -12,4 +12,4 @@ APP_OPTS="--spring.datasource.username=${DB_USERNAME} \
 #
 echo "APP_OPTS=${APP_OPTS}"
 #
-exec java org.springframework.boot.loader.JarLauncher ${APP_OPTS}
+exec java -jar application.jar ${APP_OPTS}
