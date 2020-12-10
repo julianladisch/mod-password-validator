@@ -10,7 +10,10 @@ ARG JAR_FILE=./target/*.jar
 # - copy
 COPY ${JAR_FILE} ${JAVA_APP_DIR}/${APP_FILE}
 
-ARG RUN_ENV_FILE=./run-env.sh
+ARG RUN_ENV_FILE=run-env.sh
+
+RUN ls -l
+
 COPY ${RUN_ENV_FILE} ${JAVA_APP_DIR}/
 RUN chmod 755 ${JAVA_APP_DIR}/${RUN_ENV_FILE}
 
