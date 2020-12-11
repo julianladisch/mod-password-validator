@@ -1,0 +1,85 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+    <changeSet id="MODLOGIN-34@@create-new-validation-rules-table" author="dmtkachenko">
+        <createTable tableName="validationrules">
+            <column name="id" type="uuid" defaultValueComputed="gen_random_uuid()">
+                <constraints primaryKey="true" primaryKeyName="pk_validationrules"
+                             nullable="false"/>
+            </column>
+
+            <column name="name" type="varchar(256)">
+                <constraints unique="true" uniqueConstraintName="unq_validationrules_name"
+                             nullable="false"/>
+            </column>
+
+            <column name="rule_type" type="RuleType">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rule_state" type="RuleState">
+                <constraints nullable="false"/>
+            </column>
+            <column name="validation_type" type="RuleValidationType">
+                <constraints nullable="false"/>
+            </column>
+            <column name="order_no" type="integer">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rule_expression" type="text"/>
+            <column name="implementation_reference" type="text"/>
+            <column name="module_name" type="varchar(128)"/>
+            <column name="description" type="text"/>
+            <column name="err_message_id" type="varchar(128)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_date" type="timestamp" defaultValueComputed="now()"/>
+            <column name="created_by_user_id" type="uuid"/>
+            <column name="created_by_username" type="varchar(100)"/>
+            <column name="updated_date" type="timestamp"/>
+            <column name="updated_by_user_id" type="uuid"/>
+            <column name="updated_by_username" type="varchar(100)"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="MODLOGIN-34@@copy-data-from-old-validation-rules-table" author="dmtkachenko">
+        <sql dbms="postgresql">
+            INSERT INTO validationrules (id, name, rule_type, rule_state, validation_type,
+                                        order_no, rule_expression, implementation_reference,
+                                        module_name, description, err_message_id,
+                                        created_date, created_by_username)
+            SELECT id,
+                   jsonb ->> 'name'                    as           name,
+                   (jsonb ->> 'type')::RuleType                     ruleType,
+                   (jsonb ->> 'state')::RuleState                   ruleState,
+                   (jsonb ->> 'validationType')::RuleValidationType validationType,
+                   (jsonb ->> 'orderNo')::INTEGER                   orderNo,
+                   jsonb ->> 'expression'              as           expression,
+                   jsonb ->> 'implementationReference' as           implementationReference,
+                   jsonb ->> 'moduleName'                           moduleName,
+                   jsonb ->> 'description'                          description,
+                   jsonb ->> 'errMessageId'                         errMessageId,
+                   creation_date,
+                   created_by
+            FROM validation_rules;
+        </sql>
+    </changeSet>
+
+    <changeSet id="MODLOGIN-34@@add-pwned-password-rule" author="dmtkachenko">
+        <insert tableName="validationrules">
+            <column name="id" type="uuid" valueComputed="gen_random_uuid()"/>
+            <column name="name" value="not_compromised"/>
+            <column name="rule_type" value="PwnedPassword"/>
+            <column name="rule_state" value="Enabled"/>
+            <column name="validation_type" value="Strong"/>
+            <column name="order_no" value="10"/>
+            <column name="module_name" value="mod-password-validator"/>
+            <column name="description" value="The password must not be commonly-used, expected or compromised"/>
+            <column name="err_message_id" value="password.compromised.invalid"/>
+            <column name="created_by_username" value="SYSTEM"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

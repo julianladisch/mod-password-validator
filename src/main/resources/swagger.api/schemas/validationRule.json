@@ -15,11 +15,12 @@
       "type": "string"
     },
     "type": {
-      "description": "Rule type: RegExp or Programmatic",
+      "description": "Rule type: RegExp or Programmatic or PwnedPassword",
       "type": "string",
       "enum": [
         "RegExp",
-        "Programmatic"
+        "Programmatic",
+        "PwnedPassword"
       ]
     },
     "validationType": {
