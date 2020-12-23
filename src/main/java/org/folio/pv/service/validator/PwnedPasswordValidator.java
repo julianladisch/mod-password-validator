@@ -6,7 +6,6 @@ import java.util.Optional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import org.folio.pv.client.PwnedClient;
@@ -27,16 +26,14 @@ class PwnedPasswordValidator implements Validator {
       return ValidationErrors.none();
     }
     
-    var hash = DigestUtils.sha1Hex(password).toUpperCase();
-    var hashPrefix = StringUtils.left(hash, 5);
-    var hashSuffix = hash.substring(5);
+    var hash = new PasswordHash(password);
 
-    log.debug("Checking password with prefix: {}", hashPrefix);
+    log.debug("Checking password with prefix: {}", hash.getPrefix());
 
-    List<HashedPasswordUsage> usages = pwnedClient.getPwdRange(hashPrefix);
+    List<HashedPasswordUsage> usages = pwnedClient.getPwdRange(hash.getPrefix());
 
     Optional<HashedPasswordUsage> knownHash = usages.stream()
-        .filter(usage -> usage.getSuffix().equals(hashSuffix) && usage.getUsageCount() > 0)
+        .filter(usage -> usage.getSuffix().equals(hash.getSuffix()) && usage.getUsageCount() > 0)
         .findFirst();
 
     log.info("Pwned Passwords validation: usageCount = {}",

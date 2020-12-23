@@ -44,7 +44,7 @@ class ProgrammaticValidator implements Validator {
       response.getEntity().writeTo(buffer);
 
       var statusCode = response.getStatusLine().getStatusCode();
-      var body = new String(buffer.toByteArray());
+      var body = buffer.toString();
       log.info("Validation response: statusCode = {}, body = [{}]", statusCode, body);
 
       if (statusCode < 200 || statusCode > 202) {
