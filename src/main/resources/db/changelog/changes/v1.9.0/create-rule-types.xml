@@ -1,0 +1,31 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+    <changeSet id="MODLOGIN-34@@create-pgcrypto-extension" author="dmtkachenko">
+        <sql dbms="postgresql">
+            CREATE EXTENSION IF NOT EXISTS pgcrypto SCHEMA public;
+        </sql>
+    </changeSet>
+
+    <changeSet id="MODLOGIN-34@@create-rule-type-enum" author="dmtkachenko">
+        <sql dbms="postgresql">
+            CREATE TYPE RuleType as ENUM ('RegExp', 'Programmatic', 'PwnedPassword');
+        </sql>
+    </changeSet>
+
+    <changeSet id="MODLOGIN-34@@create-rule-validation-type-enum" author="dmtkachenko">
+        <sql dbms="postgresql">
+            CREATE TYPE RuleValidationType as ENUM ('Soft', 'Strong');
+        </sql>
+    </changeSet>
+
+    <changeSet id="MODLOGIN-34@@create-rule-state-enum" author="dmtkachenko">
+        <sql dbms="postgresql">
+            CREATE TYPE RuleState as ENUM ('Enabled', 'Disabled');
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

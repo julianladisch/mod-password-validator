@@ -1,0 +1,169 @@
+openapi: 3.0.0
+info:
+  title: Validator Registry
+  version: v1
+servers:
+  - url: /tenant/
+paths:
+  /rules:
+    get:
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/validationRuleCollection"
+        '500':
+          description: Internal server error
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Internal server error
+      description: Get a list of existing validation rules for a tenant
+      operationId: getTenantRules
+      parameters:
+        - $ref: "#/components/parameters/trait_pageable_offset"
+        - $ref: "#/components/parameters/trait_pageable_limit"
+        - $ref: "#/components/parameters/trait_queryable_query"
+    post:
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/validationRule"
+        '400':
+          description: Bad request
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Bad request
+        '422':
+          $ref: "#/components/responses/trait_validate_422"
+        '500':
+          description: Internal server error
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Internal server error
+      description: Add a rule to a tenant
+      operationId: postTenantRules
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/validationRule"
+        required: true
+    put:
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/validationRule"
+        '400':
+          description: Bad request
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Bad request
+        '404':
+          description: Rule not found
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Rule not found
+        '500':
+          description: Internal server error
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Internal server error
+      description: Enable/disable/change the rule
+      operationId: putTenantRule
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/validationRule"
+        required: true
+  /rules/{ruleId}:
+    get:
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/validationRule"
+        '404':
+          description: Rule not found
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Rule not found
+        '500':
+          description: Internal server error
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Internal server error
+      operationId: getTenantRuleById
+    parameters:
+      - name: ruleId
+        in: path
+        required: true
+        schema:
+          type: string
+components:
+  responses:
+    trait_validate_422:
+      description: Validation errors
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/errors"
+  schemas:
+    validationRuleCollection:
+      $ref: schemas/validationRules.json
+    validationRule:
+      $ref: schemas/validationRule.json
+    errors:
+      $ref: schemas/errors.json
+  parameters:
+    trait_queryable_query:
+      name: query
+      in: query
+      description: A query string to filter rules based on matching criteria in fields.
+      schema:
+        type: string
+    trait_pageable_offset:
+      name: offset
+      in: query
+      description: Skip over a number of elements by specifying an offset value for
+        the query
+      schema:
+        default: 0
+        minimum: 0
+        maximum: 2147483647
+        type: integer
+    trait_pageable_limit:
+      name: limit
+      in: query
+      description: Limit the number of elements returned in the response
+      schema:
+        default: 10
+        minimum: 0
+        maximum: 2147483647
+        type: integer
