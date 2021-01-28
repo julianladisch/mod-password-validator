@@ -1,5 +1,5 @@
 {
-  "srvcId": "${artifactId}-${version}",
+  "srvcId": "@artifactId@-@version@",
   "nodeId": "localhost",
   "descriptor": {
     "exec": "java -Dport=%p -jar ../mod-password-validator/target/mod-password-validator-fat.jar -Dhttp.port=%p embed_postgres=true"
