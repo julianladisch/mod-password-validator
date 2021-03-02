@@ -47,6 +47,7 @@ import org.springframework.cloud.openfeign.FeignAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 import org.folio.pv.domain.RuleType;
@@ -96,6 +97,8 @@ class ProgrammaticValidatorTest {
 
     @MockBean
     private FolioSpringLiquibase liquibase;
+    @MockBean
+    private JdbcTemplate jdbcTemplate;
 
     @Bean
     public FolioExecutionContext folioExecutionContext(FolioModuleMetadata moduleMetadata) {
