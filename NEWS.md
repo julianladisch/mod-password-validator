@@ -1,3 +1,8 @@
+## 2021-03-02 v2.0.0
+ * MODPWD-54 Add personal data disclosure form
+ * Module implementation with Spring framework
+ * Use new api-lint FOLIO-2893
+
 ## 2020-11-04 v1.8.2
  * Update RMB to v31.1.5 and Vertx to 3.9.4
 
