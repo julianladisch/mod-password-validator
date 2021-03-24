@@ -1,15 +1,18 @@
 spring:
   application:
     name: mod-password-validator
-#  datasource:
-#    password: folio_admin
-#    url: jdbc:postgresql://localhost:5432/okapi_modules
-#    username: folio_admin
+  datasource:
+    # to boot up application despite of any DB connection issues
+    continue-on-error: true
+  #    password: folio_admin
+  #    url: jdbc:postgresql://localhost:5432/okapi_modules
+  #    username: folio_admin
   jpa:
     hibernate:
       ddl-auto: none
     properties:
       hibernate:
+        dialect: org.hibernate.dialect.PostgreSQL10Dialect
         format_sql: true
     show-sql: true
   liquibase:
@@ -36,6 +39,18 @@ management:
     web:
       exposure:
         include: info,health,env,httptrace,liquibase
+      base-path: /admin
+#  endpoint:
+#    health:
+#      show-details: always
+#      show-components: always
+###################################################
+# Disable all checks except for readiness
+###################################################
+  health:
+    defaults:
+      enabled: false
+    readinessstate:
+      enabled: true
 server:
   port: 8081
-
