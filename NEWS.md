@@ -1,3 +1,7 @@
+## 2021-03-25 v2.0.1
+ * FOLSPRINGB-2 Reinstate "USER folio" in Dockerfile
+ * MODPWD-59 Add admin health-check endpoint
+
 ## 2021-03-02 v2.0.0
  * MODPWD-54 Add personal data disclosure form
  * Module implementation with Spring framework
