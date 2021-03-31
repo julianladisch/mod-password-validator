@@ -1,4 +1,4 @@
-package org.folio.pv.service.validator;
+package org.folio.pv.domain.dto;
 
 import lombok.Value;
 

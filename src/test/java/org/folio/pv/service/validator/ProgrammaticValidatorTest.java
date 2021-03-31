@@ -53,6 +53,8 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import org.folio.pv.domain.RuleType;
 import org.folio.pv.domain.ValidationType;
 import org.folio.pv.domain.dto.Password;
+import org.folio.pv.domain.dto.UserData;
+import org.folio.pv.domain.dto.ValidationErrors;
 import org.folio.pv.domain.entity.PasswordValidationRule;
 import org.folio.spring.DefaultFolioExecutionContext;
 import org.folio.spring.FolioExecutionContext;

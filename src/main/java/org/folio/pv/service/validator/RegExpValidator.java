@@ -8,6 +8,8 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
+import org.folio.pv.domain.dto.UserData;
+import org.folio.pv.domain.dto.ValidationErrors;
 import org.folio.pv.domain.entity.PasswordValidationRule;
 
 @RequiredArgsConstructor(access = AccessLevel.PACKAGE)

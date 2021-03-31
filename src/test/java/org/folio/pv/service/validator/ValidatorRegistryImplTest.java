@@ -1,12 +1,12 @@
 package org.folio.pv.service.validator;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.github.glytching.junit.extension.exception.ExpectedException;
 import io.github.glytching.junit.extension.random.Random;
 import io.github.glytching.junit.extension.random.RandomBeansExtension;
 import org.junit.jupiter.api.Test;
@@ -34,24 +34,24 @@ class ValidatorRegistryImplTest {
   @Mock
   private ObjectMapper jacksonObjectMapper;
   @Mock
-  private PwnedClient pwnedClient; 
+  private PwnedClient pwnedClient;
 
   @InjectMocks
   private ValidatorRegistryImpl registry;
 
 
   @Test
-  @ExpectedException(type = NullPointerException.class, messageIs = "Validation rule is null")
   void shouldFailWithSpecificNPEIfRuleIsNull() {
-    registry.validatorByRule(null);
+    var exception = assertThrows(NullPointerException.class, () -> registry.validatorByRule(null));
+    assertThat(exception).hasMessage("Validation rule is null");
   }
 
   @Test
-  @ExpectedException(type = IllegalArgumentException.class, messageContains = "Unexpected value")
   void shouldFailIfRuleTypeIsInvalid(@Random String ruleType) {
     PasswordValidationRule rule = mockedRuleWithType(ruleType);
 
-    registry.validatorByRule(rule);
+    var exception = assertThrows(IllegalArgumentException.class, () -> registry.validatorByRule(rule));
+    assertThat(exception).hasMessageContaining("Unexpected value");
   }
 
   @ParameterizedTest

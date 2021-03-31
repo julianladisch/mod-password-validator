@@ -10,6 +10,9 @@ import org.apache.commons.lang3.StringUtils;
 
 import org.folio.pv.client.PwnedClient;
 import org.folio.pv.domain.dto.HashedPasswordUsage;
+import org.folio.pv.domain.dto.PasswordHash;
+import org.folio.pv.domain.dto.UserData;
+import org.folio.pv.domain.dto.ValidationErrors;
 import org.folio.pv.domain.entity.PasswordValidationRule;
 
 @RequiredArgsConstructor(access = AccessLevel.PACKAGE)

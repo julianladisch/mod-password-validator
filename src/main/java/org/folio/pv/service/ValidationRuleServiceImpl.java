@@ -23,7 +23,7 @@ import org.folio.pv.domain.dto.ValidationRuleCollection;
 import org.folio.pv.domain.entity.PasswordValidationRule;
 import org.folio.pv.mapper.ValidationRuleMapper;
 import org.folio.pv.repository.ValidationRuleRepository;
-import org.folio.pv.service.validator.UserData;
+import org.folio.pv.domain.dto.UserData;
 import org.folio.pv.service.validator.ValidatorRegistry;
 import org.folio.spring.data.OffsetRequest;
 

@@ -1,4 +1,4 @@
-package org.folio.pv.service.validator;
+package org.folio.pv.domain.dto;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.unmodifiableList;

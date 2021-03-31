@@ -17,6 +17,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 
 import org.folio.pv.domain.RuleType;
+import org.folio.pv.domain.dto.UserData;
+import org.folio.pv.domain.dto.ValidationErrors;
 import org.folio.pv.domain.entity.PasswordValidationRule;
 
 @ExtendWith(RandomBeansExtension.class)

@@ -16,6 +16,8 @@ import org.apache.http.impl.client.HttpClients;
 
 import org.folio.pv.domain.ValidationType;
 import org.folio.pv.domain.dto.Password;
+import org.folio.pv.domain.dto.UserData;
+import org.folio.pv.domain.dto.ValidationErrors;
 import org.folio.pv.domain.dto.ValidationResult;
 import org.folio.pv.domain.entity.PasswordValidationRule;
 import org.folio.spring.FolioExecutionContext;
