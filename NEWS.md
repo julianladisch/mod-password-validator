@@ -1,3 +1,6 @@
+## 2021-05-21 v2.0.2
+* MODPWD-65 Fix exposing env variables during startup
+
 ## 2021-03-25 v2.0.1
  * FOLSPRINGB-2 Reinstate "USER folio" in Dockerfile
  * MODPWD-59 Add admin health-check endpoint
