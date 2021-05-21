@@ -10,7 +10,7 @@
   <groupId>org.folio</groupId>
   <artifactId>mod-password-validator</artifactId>
   <name>mod-password-validator</name>
-  <version>2.0.2-SNAPSHOT</version>
+  <version>2.0.3-SNAPSHOT</version>
   <description>FOLIO mod-password-validator module (Spring based implementation)</description>
   <packaging>jar</packaging>
 
