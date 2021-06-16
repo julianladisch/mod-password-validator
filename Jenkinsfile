@@ -1,13 +1,13 @@
-
 buildMvn {
-  publishModDescriptor = 'yes'
-  mvnDeploy = 'yes'
+  publishModDescriptor = true
+  mvnDeploy = true
   doKubeDeploy = true
   buildNode = 'jenkins-agent-java11'
 
   doApiLint = true
-  apiTypes = 'RAML OAS'
-  apiDirectories = 'ramls src/main/resources/swagger.api'
+  doApiDoc = true
+  apiTypes = 'OAS'
+  apiDirectories = 'src/main/resources/swagger.api'
 
   doDocker = {
     buildDocker {
