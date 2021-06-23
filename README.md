@@ -1,6 +1,6 @@
 # mod-password-validator
 
-Copyright (C) 2018-2019 The Open Library Foundation
+Copyright (C) 2018-2021 The Open Library Foundation
 
 This software is distributed under the terms of the Apache License,
 Version 2.0. See the file "[LICENSE](LICENSE)" for more information.
@@ -18,20 +18,21 @@ Version 2.0. See the file "[LICENSE](LICENSE)" for more information.
 The module provides a default rule set for a tenant and functionality to manage them via REST API and
 also allows to use a validation flow for a user password.
 
- The module supports following rules for a password
+The module supports following rules for a password
 
-  The password MUST:
+The password MUST:
 
- |    Description                                 |  Invalid examples                 |
- |------------------------------------------------|-----------------------------------|
- | Contain minimum 8 characters                   | 'pasword'                         |
- | Contain both lowercase and uppercase letters   | 'password', 'PASSWORD'            |
- | Contain at least one numeric character         | 'password'                        |
- | Contain at least one special character         | 'password'                        |
- | NOT contain your username                      | 'pas<USER_NAME>sword'             |
- | NOT contain a keyboard sequence                | 'qwerty12', '12345678', 'q1234567'|
- | NOT contain the same character                 | 'password'                        |
- | NOT contain whitespace                         | 'pas sword'                       |
+ |    Description                                 |  Invalid examples                 | Default  |
+ |------------------------------------------------|-----------------------------------|----------|
+ | Contain minimum 8 characters                   | 'pasword'                         | enabled  |
+ | Contain both lowercase and uppercase letters   | 'password', 'PASSWORD'            | enabled  |
+ | Contain at least one numeric character         | 'password'                        | enabled  |
+ | Contain at least one special character         | 'password'                        | enabled  |
+ | NOT contain your username                      | 'pas<USER_NAME>sword'             | enabled  |
+ | NOT contain a keyboard sequence                | 'qwerty12', '12345678', 'q1234567'| disabled |
+ | NOT contain the same character                 | 'password'                        | disabled |
+ | NOT contain whitespace                         | 'pas sword'                       | disabled |
+ | NOT contain two consecutive whitespaces        | 'Michael &bnsp; &nbsp; Jordan'    | enabled  |
 
 ## API
 
@@ -44,6 +45,9 @@ Module provides next API:
  | PUT    | /tenant/rules                 | Change a rule for a tenant                                        |
  | GET    | /tenant/rules/{ruleId}        | Returns a particular rule by id                                   |
  | POST   | /password/validate            | Validates a user credentials provided within the request body     |
+
+The initial rules are in
+https://github.com/folio-org/mod-password-validator/blob/master/src/main/resources/db/changelog/changes/v1.9.0/populate-initial-rules.sql
 
 ## Compiling
 
